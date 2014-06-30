@@ -2,8 +2,9 @@
 #include <algorithm>
 
 
-ParticleFilter::ParticleFilter()
+ParticleFilter::ParticleFilter(const std::vector <Particle>& particles)
 {
+  this->particles = particles;
 }
 
 ParticleFilter::~ParticleFilter()
@@ -41,3 +42,8 @@ void ParticleFilter::sortParticles()
 bool ParticleFilter::resample()
 {
 }
+
+
+void ParticleFilter::correct(){}
+
+void ParticleFilter::predict(){}

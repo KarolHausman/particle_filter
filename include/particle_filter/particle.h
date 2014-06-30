@@ -2,6 +2,8 @@
 #define PARTICLE_H
 
 #include <vector>
+#include <Eigen/Core>
+
 
 class Particle
 {
@@ -10,7 +12,7 @@ public:
     virtual ~Particle();
     double weight;
     bool operator < (const Particle& p) const { return this->weight < p.weight;}
-    std::vector <double> state;
+    Eigen::VectorXd state;
 };
 
 #endif // PARTICLE_H

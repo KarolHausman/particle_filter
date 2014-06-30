@@ -6,11 +6,13 @@
 class ParticleFilter
 {
 public:
-  ParticleFilter();
+  ParticleFilter(const std::vector <Particle>& particles);
   virtual ~ParticleFilter();
 
   bool normalizeWeights();
   void sortParticles();
+  virtual void predict();
+  virtual void correct();
 
 
   std::vector <Particle> particles;
