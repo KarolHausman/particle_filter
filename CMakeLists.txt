@@ -99,7 +99,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(particle_filter_node src/main.cpp src/particle.cpp)
+add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_filter.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
