@@ -14,24 +14,18 @@ public:
   virtual ~ParticleFilter();
 
   bool normalizeWeights();
+
   void sortParticles();
+
   virtual void propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
                          const MotionModel& model);
 
   virtual void correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
                        const SensorModel& model);
 
+  virtual bool resample(const int& particles_number);
 
   std::vector <Particle> particles;
-
-protected:
-  virtual bool resample();
-
-
 };
-
-
-
-
 
 #endif // PARTICLE_FILTER_H

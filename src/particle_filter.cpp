@@ -52,8 +52,34 @@ void ParticleFilter::sortParticles()
   std::sort(particles.begin(), particles.end());
 }
 
-bool ParticleFilter::resample()
+bool ParticleFilter::resample(const int& particles_number)
 {
+  std::vector <Particle> new_particles;
+  new_particles.resize(particles_number);
+  sortParticles();
+  std::vector <double> cumultative_weights;
+  double cumultative_weight = 0;
+  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+       it++)
+  {
+    cumultative_weight += it->weight;
+    cumultative_weights.push_back(cumultative_weight);
+  }
+  for (int i = 0; i < particles_number; i++)
+  {
+    double random_double = Random::uniform(0.0, 1.0);
+    int idx = 0;
+    for (std::vector <double>::iterator it = cumultative_weights.begin(); it != cumultative_weights.end();
+         ++it, ++idx)
+    {
+      if (random_double < *it)
+      {
+        new_particles.push_back(particles[idx]);
+        break;
+      }
+    }
+  }
+  particles = new_particles;
 }
 
 void ParticleFilter::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
@@ -75,7 +101,7 @@ void ParticleFilter::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noi
                        it++)
   {
     Eigen::VectorXd noise = Random::multivariateGaussian(noiseCov);
-    it->weight = model.senseLikelihood(z, it->state, noise);
+    it->weight *= model.senseLikelihood(z, it->state, noise);
   }
   normalizeWeights();
 }
