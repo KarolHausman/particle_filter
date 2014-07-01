@@ -6,6 +6,7 @@
 
 class MotionModel
 {
+public:
   MotionModel();
   virtual ~MotionModel();
 

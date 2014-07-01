@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(particle_filter)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x") 
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -101,7 +103,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp)
+add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

@@ -9,9 +9,11 @@ public:
   SensorModel();
   virtual ~SensorModel();
 
-  virtual Eigen::VectorXd sense (const Eigen::VectorXd& state, const Eigen::VectorXd& noise) const = 0;
+  virtual Eigen::VectorXd sense (const Eigen::VectorXd& state, const Eigen::VectorXd& noise)
+                                  const = 0;
 
-
+  virtual double senseLikelihood (const Eigen::VectorXd& z, const Eigen::VectorXd& state,
+                                  const Eigen::VectorXd& noise) const = 0;
 
 
 
