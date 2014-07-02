@@ -46,8 +46,8 @@ int main(int argc, char **argv)
       std::cout << "Correction step executed." << std::endl;
       z += (Eigen::VectorXd(3) << 1, 1, 1).finished();
       pf.correct(z, sensorNoiseCov, *sensorModel);
+      pf.resample(particles_number);
     }
-    pf.resample(particles_number);
     Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();
     ++loop_count;
