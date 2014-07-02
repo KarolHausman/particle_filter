@@ -101,8 +101,8 @@ void ParticleFilter::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noi
   for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
                        it++)
   {
-    Eigen::VectorXd noise = Random::multivariateGaussian(noiseCov);
-    it->weight *= model.senseLikelihood(z, it->state, noise);
+//    Eigen::VectorXd noise = Random::multivariateGaussian(noiseCov);
+    it->weight *= model.senseLikelihood(z, it->state, noiseCov);
   }
   normalizeWeights();
 }

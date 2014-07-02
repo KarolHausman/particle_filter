@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <random>
 #include <iostream>
+#include <Eigen/LU>
 
 namespace Random
 {
@@ -48,6 +49,27 @@ namespace Random
 //    std::cout << mL*sample << std::endl;
 //    std::cout << std::endl;
     return mL*sample;
+  }
+
+  double gaussianProbility(double mean, double stddev, double z)
+  {
+    const double var = stddev* stddev;
+    return exp(-1.0 * ((z - mean) * (z - mean) / (2 * var)))/ sqrt(2 * M_PI * var);
+  }
+
+
+  double multivariateGaussianProbability(const Eigen::VectorXd& mean,
+                                         const Eigen::MatrixXd& cov,
+                                         const Eigen::VectorXd& z)
+  {
+    Eigen::VectorXd diff = mean - z;
+
+    Eigen::VectorXd exponent = -0.5 * (diff.transpose() * cov.inverse() * diff);
+
+    // TODO: What if det(cov) < 0?
+    return pow(2 * M_PI, (double) z.size() / -2.0) * pow(cov.determinant(), -0.5) *
+    exp(exponent(0));
+
   }
 
 }

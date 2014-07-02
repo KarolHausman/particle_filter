@@ -10,7 +10,7 @@ public:
   virtual ~GaussianSensorModel();
 
   Eigen::VectorXd sense(const Eigen::VectorXd &state, const Eigen::VectorXd &noise) const;
-  double senseLikelihood(const Eigen::VectorXd &z, const Eigen::VectorXd &state, const Eigen::VectorXd &noise) const;
+  double senseLikelihood(const Eigen::VectorXd &z, const Eigen::VectorXd &state, const Eigen::MatrixXd &cov) const;
 };
 
 

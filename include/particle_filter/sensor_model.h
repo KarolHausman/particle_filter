@@ -13,7 +13,7 @@ public:
                                   const = 0;
 
   virtual double senseLikelihood (const Eigen::VectorXd& z, const Eigen::VectorXd& state,
-                                  const Eigen::VectorXd& noise) const = 0;
+                                  const Eigen::MatrixXd& cov) const = 0;
 
 
 
