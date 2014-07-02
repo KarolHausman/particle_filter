@@ -24,27 +24,33 @@ int main(int argc, char **argv)
   SensorModel* sensorModel = new GaussianSensorModel;
 
   Eigen::Vector3d u = Eigen::Vector3d::Ones();
-  Eigen::Matrix3d motionNoiseCov = cov / 10;
+  Eigen::Matrix3d motionNoiseCov = cov / 1;
 
   Eigen::Vector3d z = Eigen::Vector3d::Ones();
-  Eigen::Matrix3d sensorNoiseCov = cov / 15;
+  Eigen::Matrix3d sensorNoiseCov = cov / 2;
 
 
   ros::Rate r(2);
-  int loop_count = 0;
+  int loop_count = 1;
   while (ros::ok())
   {
+    std::cerr << "loop_count: " << loop_count << std::endl;
     pf.propagate(u, motionNoiseCov, *motionModel);
 
     if (loop_count % 10 == 0)
     {
+      std::cout << "Correction step executed." << std::endl;
       pf.correct(z, sensorNoiseCov, *sensorModel);
     }
-    std::cerr << "loop_count: " << loop_count << std::endl;
     pf.resample(particles_number);
     Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();
     ++loop_count;
+
+    z += Eigen::Vector3d::Ones();
+
+    double fraction = 0.1;
+    std::cerr << "weighted average of " << fraction << " equals: \n" << pf.getWeightedAvg(fraction) << std::endl;
   }
 
 

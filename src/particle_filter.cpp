@@ -53,6 +53,28 @@ void ParticleFilter::sortParticles()
   std::sort(particles.begin(), particles.end());
 }
 
+Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
+{
+  sortParticles();
+  int weighted_num = particles.size() * particles_fraction;
+  int i = 0;
+  double weights_sum = 0;
+
+  //FIXME: Hard coded Vector3d for this state, can be readed from stateDim maybe
+  Eigen::VectorXd state_sum = Eigen::Vector3d::Zero();
+
+  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+       it++, i++)
+  {
+    if(i >= weighted_num)
+    {
+      return state_sum/ weights_sum;
+    }
+    weights_sum += it->weight;
+    state_sum += it->state * it->weight;
+  }
+}
+
 bool ParticleFilter::resample(const int& particles_number)
 {
   std::vector <Particle> new_particles;

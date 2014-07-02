@@ -17,6 +17,8 @@ public:
 
   void sortParticles();
 
+  Eigen::VectorXd getWeightedAvg(const double& particles_fraction);
+
   virtual void propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
                          const MotionModel& model);
 
