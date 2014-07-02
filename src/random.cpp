@@ -2,6 +2,7 @@
 #include <Eigen/Cholesky>
 #include <unistd.h>
 #include <random>
+#include <iostream>
 
 namespace Random
 {
@@ -22,7 +23,8 @@ namespace Random
   //! returns random sample of the gaussian N(0, 1) distribution
   double gaussian()
   {
-    std::default_random_engine generator;
+    std::random_device rd;
+    std::default_random_engine generator( rd() );
     std::normal_distribution <double> distribution(0.0,1.0);
 
     return distribution(generator);
@@ -36,10 +38,15 @@ namespace Random
   Eigen::VectorXd multivariateGaussian(const Eigen::MatrixXd &covariance){
     int size = covariance.rows();
     Eigen::VectorXd sample(size);
-    for (int i=0; i<size; ++i)
+    for (int i=0; i<size; i++)
+    {
       sample(i) = gaussian();
+    }
+    //std::cout << sample << std::endl;
 
     Eigen::MatrixXd mL = covariance.llt().matrixL(); // Cholesky decomposition
+//    std::cout << mL*sample << std::endl;
+//    std::cout << std::endl;
     return mL*sample;
   }
 

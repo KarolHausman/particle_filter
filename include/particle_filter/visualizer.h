@@ -3,7 +3,7 @@
 
 #include <Eigen/Core>
 #include <ros/ros.h>
-
+#include "particle_filter/particle.h"
 
 class Visualizer
 {
@@ -12,7 +12,9 @@ public:
 
   void init();
 
-  void publishPoints (const std::vector <Eigen::Vector3d>& points);
+  void publishPoints (const std::vector <Eigen::VectorXd>& points, const double& scale);
+  void publishParticles (const std::vector <Particle> &particles);
+
 
 private:
   Visualizer (){}

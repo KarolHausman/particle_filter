@@ -18,8 +18,21 @@ void Visualizer::init()
   marker_pub_ = nh_.advertise<visualization_msgs::Marker>("visualizion_marker", 10);
 }
 
+void Visualizer::publishParticles(const std::vector <Particle> &particles)
+{
+  std::vector <Eigen::VectorXd> points;
+  points.reserve(particles.size());
 
-void Visualizer::publishPoints(const std::vector <Eigen::Vector3d> &points)
+  for (std::vector <Particle>::const_iterator it = particles.begin(); it != particles.end();
+      ++it)
+  {
+    points.push_back(it->state);
+  }
+  publishPoints(points, 0.2);
+}
+
+
+void Visualizer::publishPoints(const std::vector <Eigen::VectorXd> &points, const double& scale)
 {
   visualization_msgs::Marker marker_points;
   marker_points.header.frame_id = "/world";
@@ -32,20 +45,20 @@ void Visualizer::publishPoints(const std::vector <Eigen::Vector3d> &points)
   marker_points.type = visualization_msgs::Marker::POINTS;
 
   // POINTS markers use x and y scale for width/height respectively
-  marker_points.scale.x = 0.2;
-  marker_points.scale.y = 0.2;
+  marker_points.scale.x = scale;
+  marker_points.scale.y = scale;
 
   // Points are green
   marker_points.color.g = 1.0f;
   marker_points.color.a = 1.0;
 
-  for (std::vector <Eigen::Vector3d>::const_iterator it = points.begin(); it != points.end();
-       ++it)
+
+  for (uint i = 0; i < points.size(); i++)
   {
     geometry_msgs::Point p;
-//    p.x = *it(0);
-//    p.y = *it(1);
-//    p.z = *it(2);
+    p.x = points[i](0);
+    p.y = points[i](1);
+    p.z = points[i](2);
 
     marker_points.points.push_back(p);
   }

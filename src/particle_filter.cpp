@@ -1,6 +1,7 @@
 #include "particle_filter/paricle_filter.h"
 #include <algorithm>
 #include "particle_filter/random.h"
+#include <iostream>
 
 
 ParticleFilter::ParticleFilter(const std::vector <Particle>& particles)
@@ -55,7 +56,7 @@ void ParticleFilter::sortParticles()
 bool ParticleFilter::resample(const int& particles_number)
 {
   std::vector <Particle> new_particles;
-  new_particles.resize(particles_number);
+  new_particles.reserve(particles_number);
   sortParticles();
   std::vector <double> cumultative_weights;
   double cumultative_weight = 0;
