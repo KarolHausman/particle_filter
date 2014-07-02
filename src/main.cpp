@@ -6,6 +6,9 @@
 #include "particle_filter/gaussian_sensormodel.h"
 #include "particle_filter/visualizer.h"
 
+
+#include "particle_filter/random.h"
+
 int main(int argc, char **argv)
 {
   const int particles_number = 100;
@@ -24,11 +27,12 @@ int main(int argc, char **argv)
   SensorModel* sensorModel = new GaussianSensorModel;
 
   Eigen::Vector3d u = Eigen::Vector3d::Ones();
-  Eigen::Matrix3d motionNoiseCov = cov / 1;
+  Eigen::Matrix3d motionNoiseCov = cov / 10;
 
   Eigen::Vector3d z = Eigen::Vector3d::Ones();
   Eigen::Matrix3d sensorNoiseCov = cov / 2;
 
+  std::cout << "probability for mean: " << Random::multivariateGaussianProbability(mean, sensorNoiseCov, mean) << std::endl;
 
   ros::Rate r(2);
   int loop_count = 1;
@@ -40,6 +44,7 @@ int main(int argc, char **argv)
     if (loop_count % 10 == 0)
     {
       std::cout << "Correction step executed." << std::endl;
+      z += (Eigen::VectorXd(3) << 1, 1, 1).finished();
       pf.correct(z, sensorNoiseCov, *sensorModel);
     }
     pf.resample(particles_number);
@@ -47,11 +52,10 @@ int main(int argc, char **argv)
     r.sleep();
     ++loop_count;
 
-    z += Eigen::Vector3d::Ones();
-
-    double fraction = 0.1;
+    double fraction = 0.02;
+    std::cerr << "measurement equals: \n" << z << std::endl;
     std::cerr << "weighted average of " << fraction << " equals: \n" << pf.getWeightedAvg(fraction) << std::endl;
   }
-
-
+  delete motionModel;
+  delete sensorModel;
 }

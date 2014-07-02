@@ -28,7 +28,7 @@ void Visualizer::publishParticles(const std::vector <Particle> &particles)
   {
     points.push_back(it->state);
   }
-  publishPoints(points, 0.2);
+  publishPoints(points, 0.1);
 }
 
 

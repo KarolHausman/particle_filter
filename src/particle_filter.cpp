@@ -33,10 +33,13 @@ bool ParticleFilter::normalizeWeights()
     it != particles.end(); it++)
     {
       weights_sum += it->weight;
+      std::cout << "it->weight: " << it->weight << std::endl;
     }
 
   if (weights_sum  <= 0.0)
     {
+      std::cerr << "weights_sum: " << weights_sum << std::endl;
+      std::cerr << "WEIGHTS_SUM <= 0!!!" << std::endl;
       return false;
     }
 
@@ -53,6 +56,18 @@ void ParticleFilter::sortParticles()
   std::sort(particles.begin(), particles.end());
 }
 
+double ParticleFilter::getWeightsSum() const
+{
+  double weights_sum = 0;
+  for (std::vector <Particle>::const_iterator it = particles.begin(); it != particles.end();
+       it++)
+  {
+    weights_sum += it->weight;
+  }
+  return weights_sum;
+}
+
+
 Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
 {
   sortParticles();
@@ -60,19 +75,26 @@ Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
   int i = 0;
   double weights_sum = 0;
 
+
   //FIXME: Hard coded Vector3d for this state, can be readed from stateDim maybe
   Eigen::VectorXd state_sum = Eigen::Vector3d::Zero();
 
-  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+  for (std::vector <Particle>::reverse_iterator it = particles.rbegin(); it != particles.rend();
        it++, i++)
   {
     if(i >= weighted_num)
     {
+      if (weights_sum <= 0)
+      {
+        std::cerr << "WEIGHTS_SUM <= 0";
+        return Eigen::Vector3d::Zero();
+      }
       return state_sum/ weights_sum;
     }
     weights_sum += it->weight;
     state_sum += it->state * it->weight;
   }
+  return Eigen::Vector3d::Zero();
 }
 
 bool ParticleFilter::resample(const int& particles_number)
@@ -98,6 +120,7 @@ bool ParticleFilter::resample(const int& particles_number)
       if (random_double < *it)
       {
         new_particles.push_back(particles[idx]);
+        new_particles.back().weight = 1.0 / particles_number;
         break;
       }
     }
@@ -114,7 +137,6 @@ void ParticleFilter::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& 
     Eigen::VectorXd noise = Random::multivariateGaussian(noiseCov);
     it->state = model.move(it->state, u, noise);
   }
-
 }
 
 void ParticleFilter::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,

@@ -18,6 +18,7 @@ public:
 
 private:
   Visualizer (){}
+  ~Visualizer (){delete instance_;}
   Visualizer (Visualizer const&){}
   Visualizer& operator = (Visualizer const&){}
 
