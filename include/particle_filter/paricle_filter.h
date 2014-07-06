@@ -15,6 +15,8 @@ public:
 
   bool normalizeWeights();
 
+  bool normalizeLogWeights();
+
   void sortParticles();
 
   double getWeightsSum()const;

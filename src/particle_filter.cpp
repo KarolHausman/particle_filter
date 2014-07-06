@@ -25,6 +25,53 @@ ParticleFilter::~ParticleFilter()
 {
 }
 
+bool ParticleFilter::normalizeLogWeights()
+{
+  /*
+  //first method
+
+  //find max and subtract max form every weight
+  Particle maxParticle = *(std::max(particles.begin(), particles.end()));
+  double sumLikelihoodsTemp = 0;
+
+  for (std::vector <Particle>::iterator it = particles.begin();
+      it != particles.end(); it++)
+  {
+    double tempWeight = it->weight - maxParticle.weight;
+    sumLikelihoodsTemp += exp(tempWeight);
+  }
+  double sumLikelihoods = maxParticle.weight + log(sumLikelihoodsTemp);
+  for (std::vector <Particle>::iterator it = particles.begin();
+      it != particles.end(); it++)
+  {
+    it->weight = it->weight / sumLikelihoods;
+  }
+  return true;
+  */
+
+  //second method
+  Particle maxParticle = *(std::max(particles.begin(), particles.end()));
+  double sumLikelihoods= 0;
+
+  for (std::vector <Particle>::iterator it = particles.begin();
+      it != particles.end(); it++)
+  {
+    it->weight = it->weight - maxParticle.weight;
+//    if (it->weight < -40)
+//    {
+//    }
+    it->weight = exp(it->weight);
+    sumLikelihoods += it->weight;
+  }
+  for (std::vector <Particle>::iterator it = particles.begin();
+      it != particles.end(); it++)
+  {
+    it->weight = it->weight / sumLikelihoods;
+  }
+  return true;
+
+
+}
 
 bool ParticleFilter::normalizeWeights()
 {
@@ -44,7 +91,7 @@ bool ParticleFilter::normalizeWeights()
     }
 
   for (std::vector <Particle>::iterator it = particles.begin();
-    it != particles.end(); it++)
+      it != particles.end(); it++)
     {
       it->weight = it->weight / weights_sum;
     }
@@ -99,6 +146,9 @@ Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
 
 bool ParticleFilter::resample(const int& particles_number)
 {
+  normalizeLogWeights();
+//  normalizeWeights();
+
   std::vector <Particle> new_particles;
   new_particles.reserve(particles_number);
   sortParticles();
@@ -125,7 +175,15 @@ bool ParticleFilter::resample(const int& particles_number)
       }
     }
   }
+  // use swap maybe?
   particles = new_particles;
+
+  //change to log
+  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+       it++)
+  {
+    it->weight = log(it->weight);
+  }
 }
 
 void ParticleFilter::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
@@ -146,9 +204,10 @@ void ParticleFilter::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noi
                        it++)
   {
 //    Eigen::VectorXd noise = Random::multivariateGaussian(noiseCov);
-    it->weight *= model.senseLikelihood(z, it->state, noiseCov);
+//    it->weight *= model.senseLikelihood(z, it->state, noiseCov);
+    it->weight += model.senseLogLikelihood(z, it->state, noiseCov);
   }
-  normalizeWeights();
+//  normalizeWeights();
 }
 
 

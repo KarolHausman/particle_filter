@@ -15,6 +15,8 @@ public:
   virtual double senseLikelihood (const Eigen::VectorXd& z, const Eigen::VectorXd& state,
                                   const Eigen::MatrixXd& cov) const = 0;
 
+  virtual double senseLogLikelihood (const Eigen::VectorXd& z, const Eigen::VectorXd& state,
+                                  const Eigen::MatrixXd& cov) const;
 
 
 
