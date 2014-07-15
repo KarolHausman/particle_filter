@@ -5,8 +5,6 @@
 #include "particle_filter/identity_motionmodel.h"
 #include "particle_filter/gaussian_sensormodel.h"
 #include "particle_filter/visualizer.h"
-
-
 #include "particle_filter/random.h"
 
 int main(int argc, char **argv)
@@ -32,40 +30,34 @@ int main(int argc, char **argv)
   Eigen::Vector3d z = Eigen::Vector3d::Ones();
   Eigen::Matrix3d sensorNoiseCov = cov / 2;
 
-  std::cout << "probability for mean: " << Random::multivariateGaussianProbability(mean, sensorNoiseCov, mean) << std::endl;
-
   ros::Rate r(2);
   int loop_count = 1;
   while (ros::ok())
   {
-    std::cerr << "loop_count: " << loop_count << std::endl;
-    pf.propagate(u, motionNoiseCov, *motionModel);    
+    ROS_INFO_STREAM ("loop_count: " << loop_count);
+    pf.propagate(u, motionNoiseCov, *motionModel);
 
     if (loop_count % 10 == 0)
     {
-      std::cout << "Correction step started." << std::endl;
+      ROS_INFO ("Correction step started.");
       z += (Eigen::VectorXd(3) << 1, 1, 1).finished();
+      ROS_INFO_STREAM ("measurement equals: \n" << z);
       pf.correct(z, sensorNoiseCov, *sensorModel);
-      std::cout << "Correction step executed." << std::endl;
+      ROS_INFO ("Correction step executed.");
       if (!pf.resample(particles_number))
       {
-        std::cerr << "no particles left, quiting" << std::endl;
+        ROS_ERROR ("no particles left, quiting");
         return -1;
       }
-//      for (std::vector <Particle>::iterator it = pf.particles.begin(); it != pf.particles.end();
-//          it++)
-//      {
-//        std::cerr << "weight: " << it->weight << std::endl;
-//      }
-      std::cout << "Resample step executed." << std::endl;
+      ROS_INFO ("Resample step executed.");
     }
     Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();
     ++loop_count;
 
     double fraction = 0.02;
-    std::cerr << "measurement equals: \n" << z << std::endl;
-//    std::cerr << "weighted average of " << fraction << " equals: \n" << pf.getWeightedAvg(fraction) << std::endl;
+    ROS_INFO_STREAM ("weighted average of " << fraction << " equals: \n" <<
+                     pf.getWeightedAvg(fraction));
   }
   delete motionModel;
   delete sensorModel;

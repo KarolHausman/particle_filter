@@ -43,11 +43,8 @@ namespace Random
     {
       sample(i) = gaussian();
     }
-    //std::cout << sample << std::endl;
 
     Eigen::MatrixXd mL = covariance.llt().matrixL(); // Cholesky decomposition
-//    std::cout << mL*sample << std::endl;
-//    std::cout << std::endl;
     return mL*sample;
   }
 

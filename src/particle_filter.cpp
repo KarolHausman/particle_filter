@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "particle_filter/random.h"
 #include <iostream>
+#include <ros/console.h>
 
 
 ParticleFilter::ParticleFilter(const std::vector <Particle>& particles)
@@ -31,31 +32,7 @@ ParticleFilter::~ParticleFilter()
 bool ParticleFilter::normalizeLogWeights()
 {
   sortParticles();
-  /*
-  //first method
-
-  //find max and subtract max form every weight
   Particle maxParticle = particles.back();
-  double sumLikelihoodsTemp = 0;
-
-  for (std::vector <Particle>::iterator it = particles.begin();
-      it != particles.end(); it++)
-  {
-    double tempWeight = it->weight - maxParticle.weight;
-    sumLikelihoodsTemp += exp(tempWeight);
-  }
-  double sumLikelihoods = maxParticle.weight + log(sumLikelihoodsTemp);
-  for (std::vector <Particle>::iterator it = particles.begin();
-      it != particles.end(); it++)
-  {
-    it->weight = it->weight / sumLikelihoods;
-  }
-  return true;
-  */
-
-  //second method
-  Particle maxParticle = particles.back();
-
   double sumLikelihoods= 0;
 
   for (std::vector <Particle>::iterator it = particles.begin();
@@ -70,9 +47,9 @@ bool ParticleFilter::normalizeLogWeights()
     sumLikelihoods += it->weight;
   }
   if (sumLikelihoods  <= 0.0)
-  {
-    std::cerr << "sumLikelihoods: " << sumLikelihoods << std::endl;
-    std::cerr << " , sumLikelihoods <= 0!!! " << std::endl;
+  {    
+    ROS_ERROR_STREAM ("sumLikelihoods: " << sumLikelihoods <<
+                 " , sumLikelihoods <= 0!!! returning false in normalizeLogweights()");
     return false;
   }
   for (std::vector <Particle>::iterator it = particles.begin();
@@ -94,8 +71,8 @@ bool ParticleFilter::normalizeWeights()
 
   if (weights_sum  <= 0.0)
   {
-    std::cerr << "weights_sum: " << weights_sum << std::endl;
-    std::cerr << " , WEIGHTS_SUM <= 0!!! " << std::endl;
+    ROS_ERROR_STREAM ("weights_sum: " << weights_sum <<
+                 " , WEIGHTS_SUM <= 0!!! returning false in normalizeWeights()");
     return false;
   }
 
@@ -156,7 +133,6 @@ Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
   int i = 0;
   double weights_sum = 0;
 
-
   //FIXME: Hard coded Vector3d for this state, can be readed from stateDim maybe
   Eigen::VectorXd state_sum = Eigen::Vector3d::Zero();
 
@@ -167,33 +143,49 @@ Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
     {
       if (weights_sum <= 0)
       {
-        std::cerr << "WEIGHTS_SUM <= 0";
+        ROS_ERROR ("WEIGHTS_SUM <= 0 returning 0 in getWeightedAvg");
         if (logLikelihoods)
+        {
           weightsToLogWeights();
+        }
         return Eigen::Vector3d::Zero();
       }
       if (logLikelihoods)
+      {
         weightsToLogWeights();
+      }
       return state_sum/ weights_sum;
     }
     weights_sum += it->weight;
     state_sum += it->state * it->weight;
   }
   if (logLikelihoods)
+  {
     weightsToLogWeights();
+  }
+  ROS_ERROR ("returning 0 in getWeightedAvg because i was never >= weighted_num");
   return Eigen::Vector3d::Zero();
 }
 
 bool ParticleFilter::resample(const int& particles_number)
 {
+
   if (logLikelihoods)
+    {
     if (!normalizeLogWeights())
-      return false;
+      {
+        return false;
+      }
+    }
   else
+    {
     if (!normalizeWeights())
-      return false;
+      {
+        return false;
+      }
+    }
 
-
+  //at this point these are normal likelihoods, not log
   std::vector <Particle> new_particles;
   new_particles.reserve(particles_number);
   sortParticles();
@@ -229,7 +221,7 @@ bool ParticleFilter::resample(const int& particles_number)
 
 void ParticleFilter::logWeightsToWeights()
 {
-  std::cout << "switching to normal likelihoods" << std::endl;
+  ROS_INFO ("switching to normal likelihoods");
   for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
        it++)
   {
@@ -239,7 +231,7 @@ void ParticleFilter::logWeightsToWeights()
 
 void ParticleFilter::weightsToLogWeights()
 {
-  std::cout << "switching to log likelihoods" << std::endl;
+  ROS_INFO ("switching to log likelihoods");
   for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
        it++)
   {
