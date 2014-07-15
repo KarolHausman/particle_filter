@@ -103,7 +103,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp)
+add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
