@@ -23,6 +23,8 @@ public:
 
   void logWeightsToWeights();
 
+  void printParticles();
+
   bool getLogLikelihoodsFlag()const;
 
   void setLogLikelihoodsFlag(const bool& flag);

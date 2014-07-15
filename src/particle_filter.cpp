@@ -29,6 +29,16 @@ ParticleFilter::~ParticleFilter()
 {
 }
 
+void ParticleFilter::printParticles()
+{
+  std::cout << "printing particles: " << std::endl;
+  for (std::vector <Particle>::iterator it = particles.begin();
+      it != particles.end(); it++)
+  {
+    std::cout << *it;
+  }
+}
+
 bool ParticleFilter::normalizeLogWeights()
 {
   sortParticles();
