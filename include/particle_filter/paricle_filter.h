@@ -19,6 +19,14 @@ public:
 
   void sortParticles();
 
+  void weightsToLogWeights();
+
+  void logWeightsToWeights();
+
+  bool getLogLikelihoodsFlag()const;
+
+  void setLogLikelihoodsFlag(const bool& flag);
+
   double getWeightsSum()const;
 
   Eigen::VectorXd getWeightedAvg(const double& particles_fraction);
@@ -32,6 +40,10 @@ public:
   virtual bool resample(const int& particles_number);
 
   std::vector <Particle> particles;
+
+
+private:
+  bool logLikelihoods;
 };
 
 #endif // PARTICLE_FILTER_H

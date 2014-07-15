@@ -39,14 +39,25 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     std::cerr << "loop_count: " << loop_count << std::endl;
-    pf.propagate(u, motionNoiseCov, *motionModel);
+    pf.propagate(u, motionNoiseCov, *motionModel);    
 
     if (loop_count % 10 == 0)
     {
-      std::cout << "Correction step executed." << std::endl;
+      std::cout << "Correction step started." << std::endl;
       z += (Eigen::VectorXd(3) << 1, 1, 1).finished();
       pf.correct(z, sensorNoiseCov, *sensorModel);
-      pf.resample(particles_number);
+      std::cout << "Correction step executed." << std::endl;
+      if (!pf.resample(particles_number))
+      {
+        std::cerr << "no particles left, quiting" << std::endl;
+        return -1;
+      }
+//      for (std::vector <Particle>::iterator it = pf.particles.begin(); it != pf.particles.end();
+//          it++)
+//      {
+//        std::cerr << "weight: " << it->weight << std::endl;
+//      }
+      std::cout << "Resample step executed." << std::endl;
     }
     Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();
@@ -54,7 +65,7 @@ int main(int argc, char **argv)
 
     double fraction = 0.02;
     std::cerr << "measurement equals: \n" << z << std::endl;
-    std::cerr << "weighted average of " << fraction << " equals: \n" << pf.getWeightedAvg(fraction) << std::endl;
+//    std::cerr << "weighted average of " << fraction << " equals: \n" << pf.getWeightedAvg(fraction) << std::endl;
   }
   delete motionModel;
   delete sensorModel;
