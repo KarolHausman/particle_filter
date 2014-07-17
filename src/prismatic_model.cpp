@@ -2,7 +2,7 @@
 
 PrismaticModel::PrismaticModel()
 {
-
+  model = PRISMATIC;
 }
 
 PrismaticModel::~PrismaticModel()

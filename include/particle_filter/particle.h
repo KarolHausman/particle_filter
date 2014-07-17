@@ -5,13 +5,13 @@
 #include <Eigen/Core>
 
 
-class Particle
+template <class StateType> class Particle
 {
 public:
     Particle();
     virtual ~Particle();
     double weight;
-    Eigen::VectorXd state;
+    StateType state;
     bool operator < (const Particle& p) const { return this->weight < p.weight;}
     friend std::ostream& operator << (std::ostream& stream, const Particle& p)
     {

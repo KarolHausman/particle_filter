@@ -19,7 +19,7 @@ int main(int argc, char **argv)
   cov << 1.0, 0.0, 0.0,
          0.0, 1.0, 0.0,
          0.0, 0.0, 1.0;
-  ParticleFilter pf(particles_number, mean, cov);
+  ParticleFilter<Eigen::VectorXd> pf (particles_number, mean, cov);
 
   MotionModel* motionModel = new IdentityMotionModel;
   SensorModel* sensorModel = new GaussianSensorModel;

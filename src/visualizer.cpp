@@ -18,12 +18,12 @@ void Visualizer::init()
   marker_pub_ = nh_.advertise<visualization_msgs::Marker>("visualizion_marker", 10);
 }
 
-void Visualizer::publishParticles(const std::vector <Particle> &particles)
+void Visualizer::publishParticles(const std::vector <Particle <Eigen::VectorXd> > &particles)
 {
   std::vector <Eigen::VectorXd> points;
   points.reserve(particles.size());
 
-  for (std::vector <Particle>::const_iterator it = particles.begin(); it != particles.end();
+  for (std::vector <Particle <Eigen::VectorXd> >::const_iterator it = particles.begin(); it != particles.end();
       ++it)
   {
     points.push_back(it->state);

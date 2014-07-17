@@ -5,17 +5,17 @@
 #include <ros/console.h>
 
 
-ParticleFilter::ParticleFilter(const std::vector <Particle>& particles)
+template <class ParticleType> ParticleFilter<ParticleType>::ParticleFilter(const std::vector <Particle <ParticleType> > &particles)
 {
   this->particles = particles;
 }
 
-ParticleFilter::ParticleFilter(const int& size, const Eigen::VectorXd& mean,
+template <class ParticleType> ParticleFilter<ParticleType>::ParticleFilter(const int& size, const Eigen::VectorXd& mean,
                                const Eigen::MatrixXd& cov)
 {
   logLikelihoods = true;
   this->particles.resize(size);
-  for (std::vector <Particle>::iterator it = particles.begin();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
     it != particles.end(); it++)
   {
     it->state = mean + Random::multivariateGaussian(cov);
@@ -25,27 +25,27 @@ ParticleFilter::ParticleFilter(const int& size, const Eigen::VectorXd& mean,
     weightsToLogWeights();
 }
 
-ParticleFilter::~ParticleFilter()
+template <class ParticleType> ParticleFilter<ParticleType>::~ParticleFilter()
 {
 }
 
-void ParticleFilter::printParticles()
+template <class ParticleType> void ParticleFilter<ParticleType>::printParticles()
 {
   std::cout << "printing particles: " << std::endl;
-  for (std::vector <Particle>::iterator it = particles.begin();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
       it != particles.end(); it++)
   {
     std::cout << *it;
   }
 }
 
-bool ParticleFilter::normalizeLogWeights()
+template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWeights()
 {
   sortParticles();
-  Particle maxParticle = particles.back();
+  Particle <ParticleType> maxParticle = particles.back();
   double sumLikelihoods= 0;
 
-  for (std::vector <Particle>::iterator it = particles.begin();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
       it != particles.end(); it++)
   {
     it->weight = it->weight - maxParticle.weight;
@@ -62,7 +62,7 @@ bool ParticleFilter::normalizeLogWeights()
                  " , sumLikelihoods <= 0!!! returning false in normalizeLogweights()");
     return false;
   }
-  for (std::vector <Particle>::iterator it = particles.begin();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
       it != particles.end(); it++)
   {
     it->weight = it->weight / sumLikelihoods;
@@ -70,10 +70,10 @@ bool ParticleFilter::normalizeLogWeights()
   return true;
 }
 
-bool ParticleFilter::normalizeWeights()
+template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeWeights()
 {
   double weights_sum = 0.0;
-  for (std::vector <Particle>::iterator it = particles.begin();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
     it != particles.end(); it++)
   {
     weights_sum += it->weight;
@@ -86,7 +86,7 @@ bool ParticleFilter::normalizeWeights()
     return false;
   }
 
-  for (std::vector <Particle>::iterator it = particles.begin();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
       it != particles.end(); it++)
   {
     it->weight = it->weight / weights_sum;
@@ -95,12 +95,12 @@ bool ParticleFilter::normalizeWeights()
   return true;
 }
 
-bool ParticleFilter::getLogLikelihoodsFlag() const
+template <class ParticleType> bool ParticleFilter<ParticleType>::getLogLikelihoodsFlag() const
 {
   return logLikelihoods;
 }
 
-void ParticleFilter::setLogLikelihoodsFlag(const bool &flag)
+template <class ParticleType> void ParticleFilter<ParticleType>::setLogLikelihoodsFlag(const bool &flag)
 {
   if (logLikelihoods != flag)
   {
@@ -116,15 +116,15 @@ void ParticleFilter::setLogLikelihoodsFlag(const bool &flag)
   logLikelihoods = flag;
 }
 
-void ParticleFilter::sortParticles()
+template <class ParticleType> void ParticleFilter<ParticleType>::sortParticles()
 {
   std::sort(particles.begin(), particles.end());
 }
 
-double ParticleFilter::getWeightsSum() const
+template <class ParticleType> double ParticleFilter<ParticleType>::getWeightsSum() const
 {
   double weights_sum = 0;
-  for (std::vector <Particle>::const_iterator it = particles.begin(); it != particles.end();
+  for (typename std::vector <Particle <ParticleType> >::const_iterator it = particles.begin(); it != particles.end();
        it++)
   {
     weights_sum += it->weight;
@@ -132,8 +132,8 @@ double ParticleFilter::getWeightsSum() const
   return weights_sum;
 }
 
-
-Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
+//FIXME: This is not generic - works for Eigen::VectorXd
+template <class ParticleType> Eigen::VectorXd ParticleFilter<ParticleType>::getWeightedAvg(const double& particles_fraction)
 {
   if (logLikelihoods)
     logWeightsToWeights();
@@ -146,7 +146,7 @@ Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
   //FIXME: Hard coded Vector3d for this state, can be readed from stateDim maybe
   Eigen::VectorXd state_sum = Eigen::Vector3d::Zero();
 
-  for (std::vector <Particle>::reverse_iterator it = particles.rbegin(); it != particles.rend();
+  for (typename std::vector <Particle <ParticleType> >::reverse_iterator it = particles.rbegin(); it != particles.rend();
        it++, i++)
   {
     if(i >= weighted_num)
@@ -177,7 +177,7 @@ Eigen::VectorXd ParticleFilter::getWeightedAvg(const double& particles_fraction)
   return Eigen::Vector3d::Zero();
 }
 
-bool ParticleFilter::resample(const int& particles_number)
+template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const int& particles_number)
 {
 
   if (logLikelihoods)
@@ -196,12 +196,12 @@ bool ParticleFilter::resample(const int& particles_number)
     }
 
   //at this point these are normal likelihoods, not log
-  std::vector <Particle> new_particles;
+  typename std::vector <Particle <ParticleType> > new_particles;
   new_particles.reserve(particles_number);
   sortParticles();
   std::vector <double> cumultative_weights;
   double cumultative_weight = 0;
-  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
        it++)
   {
     cumultative_weight += it->weight;
@@ -211,7 +211,7 @@ bool ParticleFilter::resample(const int& particles_number)
   {
     double random_double = Random::uniform(0.0, 1.0);
     int idx = 0;
-    for (std::vector <double>::iterator it = cumultative_weights.begin(); it != cumultative_weights.end();
+    for (typename std::vector <double>::iterator it = cumultative_weights.begin(); it != cumultative_weights.end();
          ++it, ++idx)
     {
       if (random_double < *it)
@@ -229,30 +229,30 @@ bool ParticleFilter::resample(const int& particles_number)
   return true;
 }
 
-void ParticleFilter::logWeightsToWeights()
+template <class ParticleType> void ParticleFilter<ParticleType>::logWeightsToWeights()
 {
   ROS_INFO ("switching to normal likelihoods");
-  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
        it++)
   {
     it->weight = exp(it->weight);
   }
 }
 
-void ParticleFilter::weightsToLogWeights()
+template <class ParticleType> void ParticleFilter<ParticleType>::weightsToLogWeights()
 {
   ROS_INFO ("switching to log likelihoods");
-  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
        it++)
   {
     it->weight = log(it->weight);
   }
 }
 
-void ParticleFilter::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
+template <class ParticleType> void ParticleFilter<ParticleType>::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
                        const MotionModel& model)
 {
-  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
                        it++)
   {
     Eigen::VectorXd noise = Random::multivariateGaussian(noiseCov);
@@ -260,10 +260,10 @@ void ParticleFilter::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& 
   }
 }
 
-void ParticleFilter::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
+template <class ParticleType> void ParticleFilter<ParticleType>::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
                      const SensorModel& model)
 {
-  for (std::vector <Particle>::iterator it = particles.begin(); it != particles.end();
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
                        it++)
   {
     if (!logLikelihoods)
@@ -273,4 +273,4 @@ void ParticleFilter::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noi
   }
 }
 
-
+template class ParticleFilter <Eigen::VectorXd>;

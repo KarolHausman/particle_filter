@@ -6,10 +6,11 @@
 #include "particle_filter/motion_model.h"
 #include "particle_filter/sensor_model.h"
 
+template <class ParticleType>
 class ParticleFilter
 {
 public:
-  ParticleFilter(const std::vector <Particle>& particles);
+  ParticleFilter(const std::vector <Particle <ParticleType> >& particles);
   ParticleFilter(const int& size, const Eigen::VectorXd& mean, const Eigen::MatrixXd& cov);
   virtual ~ParticleFilter();
 
@@ -41,7 +42,7 @@ public:
 
   virtual bool resample(const int& particles_number);
 
-  std::vector <Particle> particles;
+  std::vector <Particle <ParticleType> > particles;
 
 
 private:

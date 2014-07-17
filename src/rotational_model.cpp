@@ -2,7 +2,7 @@
 
 RotationalModel::RotationalModel()
 {
-
+  model = ROTATIONAL;
 }
 
 RotationalModel::~RotationalModel()

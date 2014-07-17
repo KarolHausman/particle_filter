@@ -2,7 +2,7 @@
 
 RigidModel::RigidModel()
 {
-
+  model = RIGID;
 }
 
 RigidModel::~RigidModel()

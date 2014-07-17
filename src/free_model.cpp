@@ -2,7 +2,7 @@
 
 FreeModel::FreeModel()
 {
-
+  model = FREE;
 }
 
 FreeModel::~FreeModel()
