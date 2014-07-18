@@ -252,9 +252,6 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(cons
 
 template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const int& particles_number)
 {
-
-  std::cerr << "before normalizing" << std::endl;
-
   if (logLikelihoods)
     {
     if (!normalizeLogWeights())
@@ -270,9 +267,6 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
       }
     }
 
-  std::cerr << "after normalizing" << std::endl;
-
-
   //at this point these are normal likelihoods, not log
   typename std::vector <Particle <ParticleType> > new_particles;
   new_particles.reserve(particles_number);
@@ -285,7 +279,6 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
     cumultative_weight += it->weight;
     cumultative_weights.push_back(cumultative_weight);
   }
-  std::cerr << "cumultative weights calculated" << std::endl;
   for (int i = 0; i < particles_number; i++)
   {
     double random_double = Random::uniform(0.0, 1.0);
@@ -301,10 +294,8 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
       }
     }
   }
-  std::cerr << "new particles calculated" << std::endl;
   // TODO: use swap maybe?
   particles = new_particles;
-  std::cerr << "after swapping" << std::endl;
 
   if (logLikelihoods)
     weightsToLogWeights();

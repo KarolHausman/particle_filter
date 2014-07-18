@@ -9,3 +9,4 @@ template <class StateType> MotionModel<StateType>::~MotionModel()
 }
 
 template class MotionModel<Eigen::VectorXd>;
+template class MotionModel<ArticulationModelPtr>;

@@ -17,8 +17,8 @@ public:
     return stream;
   }
 
-protected:
   Model model;
+protected:
 };
 
 typedef boost::shared_ptr<ArticulationModel> ArticulationModelPtr;

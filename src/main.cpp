@@ -35,8 +35,11 @@ int main(int argc, char **argv)
 //  MotionModel<Eigen::VectorXd>* motionModel = new IdentityMotionModel<Eigen::VectorXd>;
 //  SensorModel<Eigen::VectorXd>* sensorModel = new GaussianSensorModel<Eigen::VectorXd>;
 
+  MotionModel<ArticulationModelPtr>* motionModel = new IdentityMotionModel<ArticulationModelPtr>;
+
+
   Eigen::Vector3d u = Eigen::Vector3d::Ones();
-  Eigen::Matrix3d motionNoiseCov = cov / 10;
+  Eigen::MatrixXd motionNoiseCov = rotational_cov / 10;
 
 //  Eigen::Vector3d z = Eigen::Vector3d::Ones();
 //  Eigen::Matrix3d sensorNoiseCov = cov / 2;
@@ -46,7 +49,7 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     ROS_INFO_STREAM ("loop_count: " << loop_count);
-//    pf.propagate(u, motionNoiseCov, *motionModel);
+    pf.propagate(u, motionNoiseCov, *motionModel);
 
     if (loop_count % 10 == 0)
     {
