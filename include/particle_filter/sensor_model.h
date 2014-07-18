@@ -2,6 +2,8 @@
 #define SENSOR_MODEL_H
 
 #include <Eigen/Core>
+#include <particle_filter/articulation_model.h>
+
 template <class StateType>
 class SensorModel
 {

@@ -14,8 +14,8 @@ int main(int argc, char **argv)
 
   Visualizer::getInstance()->init();
 
-  Eigen::Vector3d mean = Eigen::Vector3d::Ones();
-  Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
+//  Eigen::Vector3d mean = Eigen::Vector3d::Ones();
+//  Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
 
 
 
@@ -36,13 +36,15 @@ int main(int argc, char **argv)
 //  SensorModel<Eigen::VectorXd>* sensorModel = new GaussianSensorModel<Eigen::VectorXd>;
 
   MotionModel<ArticulationModelPtr>* motionModel = new IdentityMotionModel<ArticulationModelPtr>;
+  SensorModel<ArticulationModelPtr>* sensorModel = new GaussianSensorModel<ArticulationModelPtr>;
 
 
-  Eigen::Vector3d u = Eigen::Vector3d::Ones();
+
+  Eigen::VectorXd u = Eigen::VectorXd::Ones(9);
   Eigen::MatrixXd motionNoiseCov = rotational_cov / 10;
 
-//  Eigen::Vector3d z = Eigen::Vector3d::Ones();
-//  Eigen::Matrix3d sensorNoiseCov = cov / 2;
+  Eigen::VectorXd z = Eigen::VectorXd::Ones(9);
+  Eigen::MatrixXd sensorNoiseCov = rotational_cov / 2;
 
   ros::Rate r(2);
   int loop_count = 1;
@@ -53,17 +55,17 @@ int main(int argc, char **argv)
 
     if (loop_count % 10 == 0)
     {
-//      ROS_INFO ("Correction step started.");
-//      z += (Eigen::VectorXd(3) << 1, 1, 1).finished();
-//      ROS_INFO_STREAM ("measurement equals: \n" << z);
-//      pf.correct(z, sensorNoiseCov, *sensorModel);
-//      ROS_INFO ("Correction step executed.");
+      ROS_INFO ("Correction step started.");
+      z += (Eigen::VectorXd(9) << 1, 1, 1, 1, 1, 1, 1, 1, 1).finished();
+      ROS_INFO_STREAM ("measurement equals: \n" << z);
+      pf.correct(z, sensorNoiseCov, *sensorModel);
+      ROS_INFO ("Correction step executed.");
       if (!pf.resample(particles_number))
       {
         ROS_ERROR ("no particles left, quiting");
         return -1;
       }
-//      ROS_INFO ("Resample step executed.");
+      ROS_INFO ("Resample step executed.");
     }
 //    Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();
@@ -73,6 +75,6 @@ int main(int argc, char **argv)
 //    ROS_INFO_STREAM ("weighted average of " << fraction << " equals: \n" <<
 //                     pf.getWeightedAvg(fraction));
   }
-//  delete motionModel;
-//  delete sensorModel;
+  delete motionModel;
+  delete sensorModel;
 }

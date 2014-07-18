@@ -15,3 +15,5 @@ template <class StateType> double SensorModel<StateType>::senseLogLikelihood(con
 }
 
 template class SensorModel<Eigen::VectorXd>;
+template class SensorModel<ArticulationModelPtr>;
+
