@@ -35,8 +35,8 @@ int main(int argc, char **argv)
 //  MotionModel<Eigen::VectorXd>* motionModel = new IdentityMotionModel<Eigen::VectorXd>;
 //  SensorModel<Eigen::VectorXd>* sensorModel = new GaussianSensorModel<Eigen::VectorXd>;
 
-//  Eigen::Vector3d u = Eigen::Vector3d::Ones();
-//  Eigen::Matrix3d motionNoiseCov = cov / 10;
+  Eigen::Vector3d u = Eigen::Vector3d::Ones();
+  Eigen::Matrix3d motionNoiseCov = cov / 10;
 
 //  Eigen::Vector3d z = Eigen::Vector3d::Ones();
 //  Eigen::Matrix3d sensorNoiseCov = cov / 2;
@@ -55,11 +55,11 @@ int main(int argc, char **argv)
 //      ROS_INFO_STREAM ("measurement equals: \n" << z);
 //      pf.correct(z, sensorNoiseCov, *sensorModel);
 //      ROS_INFO ("Correction step executed.");
-//      if (!pf.resample(particles_number))
-//      {
-//        ROS_ERROR ("no particles left, quiting");
-//        return -1;
-//      }
+      if (!pf.resample(particles_number))
+      {
+        ROS_ERROR ("no particles left, quiting");
+        return -1;
+      }
 //      ROS_INFO ("Resample step executed.");
     }
 //    Visualizer::getInstance()->publishParticles(pf.particles);

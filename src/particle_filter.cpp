@@ -54,7 +54,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
     }
     else if (i >= freemodel_samples && i < freemodel_samples + remaining_models)
     {
-      RigidModel* rigid_model = new RigidModel;
+      boost::shared_ptr<RigidModel> rigid_model(new RigidModel);
       Eigen::VectorXd state_vector = rigid_mean + Random::multivariateGaussian(rigid_cov);
       rigid_model->pos_x = state_vector(0);
       rigid_model->pos_y = state_vector(1);
@@ -64,11 +64,10 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       rigid_model->yaw = state_vector(5);
 
       it->state = static_cast<ArticulationModelPtr> (rigid_model);
-      delete rigid_model; //TODO: check if needed
     }
     else if (i >= freemodel_samples + remaining_models && i < freemodel_samples + remaining_models*2)
     {
-      RotationalModel* rotational_model = new RotationalModel;
+      boost::shared_ptr<RotationalModel> rotational_model(new RotationalModel);
       Eigen::VectorXd state_vector = rotational_mean + Random::multivariateGaussian(rotational_cov);
       rotational_model->rot_center_x = state_vector(0);
       rotational_model->rot_center_y = state_vector(1);
@@ -81,11 +80,10 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       rotational_model->axis_y = state_vector(8);
 
       it->state = static_cast<ArticulationModelPtr> (rotational_model);
-      delete rotational_model; //TODO: check if needed
     }
     else
     {
-      PrismaticModel* prismatic_model = new PrismaticModel;
+      boost::shared_ptr<PrismaticModel> prismatic_model(new PrismaticModel);
       Eigen::VectorXd state_vector = prismatic_mean + Random::multivariateGaussian(prismatic_cov);
       prismatic_model->pos_x = state_vector(0);
       prismatic_model->pos_y = state_vector(1);
@@ -94,7 +92,6 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       prismatic_model->pitch = state_vector(4);
 
       it->state = static_cast<ArticulationModelPtr> (prismatic_model);
-      delete prismatic_model; //TODO: check if needed
     }
     it->weight = 1.0 / (double) size;
   }
@@ -256,6 +253,8 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(cons
 template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const int& particles_number)
 {
 
+  std::cerr << "before normalizing" << std::endl;
+
   if (logLikelihoods)
     {
     if (!normalizeLogWeights())
@@ -271,6 +270,9 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
       }
     }
 
+  std::cerr << "after normalizing" << std::endl;
+
+
   //at this point these are normal likelihoods, not log
   typename std::vector <Particle <ParticleType> > new_particles;
   new_particles.reserve(particles_number);
@@ -283,6 +285,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
     cumultative_weight += it->weight;
     cumultative_weights.push_back(cumultative_weight);
   }
+  std::cerr << "cumultative weights calculated" << std::endl;
   for (int i = 0; i < particles_number; i++)
   {
     double random_double = Random::uniform(0.0, 1.0);
@@ -298,8 +301,11 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
       }
     }
   }
+  std::cerr << "new particles calculated" << std::endl;
   // TODO: use swap maybe?
   particles = new_particles;
+  std::cerr << "after swapping" << std::endl;
+
   if (logLikelihoods)
     weightsToLogWeights();
   return true;
