@@ -9,8 +9,8 @@ public:
   RotationalModel();
   virtual ~RotationalModel();
 
-protected:
   double rot_center_x, rot_center_y, rot_center_z, roll, pitch, yaw, radius, axis_x, axis_y;
+protected:
 
 
 };

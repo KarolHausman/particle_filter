@@ -9,8 +9,8 @@ public:
   PrismaticModel();
   virtual ~PrismaticModel();
 
-protected:
   double pos_x, pos_y, pos_z, roll, pitch;
+protected:
 
 
 };

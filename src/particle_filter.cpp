@@ -3,6 +3,11 @@
 #include "particle_filter/random.h"
 #include <iostream>
 #include <ros/console.h>
+#include "particle_filter/articulation_model.h"
+#include "particle_filter/prismatic_model.h"
+#include "particle_filter/rigid_model.h"
+#include "particle_filter/rotational_model.h"
+#include "particle_filter/free_model.h"
 
 
 template <class ParticleType> ParticleFilter<ParticleType>::ParticleFilter(const std::vector <Particle <ParticleType> > &particles)
@@ -10,12 +15,14 @@ template <class ParticleType> ParticleFilter<ParticleType>::ParticleFilter(const
   this->particles = particles;
 }
 
-template <class ParticleType> ParticleFilter<ParticleType>::ParticleFilter(const int& size, const Eigen::VectorXd& mean,
+//initialization for localization
+template <> ParticleFilter<Eigen::VectorXd>::ParticleFilter(const int& size, const Eigen::VectorXd& mean,
                                const Eigen::MatrixXd& cov)
 {
   logLikelihoods = true;
   this->particles.resize(size);
-  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
+
+  for (typename std::vector <Particle <Eigen::VectorXd> >::iterator it = particles.begin();
     it != particles.end(); it++)
   {
     it->state = mean + Random::multivariateGaussian(cov);
@@ -23,6 +30,74 @@ template <class ParticleType> ParticleFilter<ParticleType>::ParticleFilter(const
   }
   if (logLikelihoods)
     weightsToLogWeights();
+}
+
+//initialization of state for articulation models
+template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size,
+                                                                 const Eigen::VectorXd& rigid_mean, const Eigen::MatrixXd& rigid_cov,
+                                                                 const Eigen::VectorXd& rotational_mean, const Eigen::MatrixXd& rotational_cov,
+                                                                 const Eigen::VectorXd& prismatic_mean, const Eigen::MatrixXd& prismatic_cov)
+{
+  logLikelihoods = true;
+  this->particles.resize(size);
+
+  const uint freemodel_samples = 10;
+  const double remaining_models_temp = static_cast<double> ((size - freemodel_samples) / (MODELS_NUMBER - 1));
+  const int remaining_models = static_cast<uint> (remaining_models_temp);
+  uint i = 0;
+  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin();
+    it != particles.end(); it++, i++)
+  {
+    if (i < freemodel_samples)
+    {
+      it->state.reset(new FreeModel);
+    }
+    else if (i >= freemodel_samples && i < freemodel_samples + remaining_models)
+    {
+      RigidModel* rigid_model = new RigidModel;
+      Eigen::VectorXd state_vector = rigid_mean + Random::multivariateGaussian(rigid_cov);
+      rigid_model->pos_x = state_vector(0);
+      rigid_model->pos_y = state_vector(1);
+      rigid_model->pos_z = state_vector(2);
+      rigid_model->roll = state_vector(3);
+      rigid_model->pitch = state_vector(4);
+      rigid_model->yaw = state_vector(5);
+
+      it->state = static_cast<ArticulationModelPtr> (rigid_model);
+      delete rigid_model; //TODO: check if needed
+    }
+    else if (i >= freemodel_samples + remaining_models && i < freemodel_samples + remaining_models*2)
+    {
+      RotationalModel* rotational_model = new RotationalModel;
+      Eigen::VectorXd state_vector = rotational_mean + Random::multivariateGaussian(rotational_cov);
+      rotational_model->rot_center_x = state_vector(0);
+      rotational_model->rot_center_y = state_vector(1);
+      rotational_model->rot_center_z = state_vector(2);
+      rotational_model->roll = state_vector(3);
+      rotational_model->pitch = state_vector(4);
+      rotational_model->yaw = state_vector(5);
+      rotational_model->radius = state_vector(6);
+      rotational_model->axis_x = state_vector(7);
+      rotational_model->axis_y = state_vector(8);
+
+      it->state = static_cast<ArticulationModelPtr> (rotational_model);
+      delete rotational_model; //TODO: check if needed
+    }
+    else
+    {
+      PrismaticModel* prismatic_model = new PrismaticModel;
+      Eigen::VectorXd state_vector = prismatic_mean + Random::multivariateGaussian(prismatic_cov);
+      prismatic_model->pos_x = state_vector(0);
+      prismatic_model->pos_y = state_vector(1);
+      prismatic_model->pos_z = state_vector(2);
+      prismatic_model->roll = state_vector(3);
+      prismatic_model->pitch = state_vector(4);
+
+      it->state = static_cast<ArticulationModelPtr> (prismatic_model);
+      delete prismatic_model; //TODO: check if needed
+    }
+    it->weight = 1.0 / (double) size;
+  }
 }
 
 template <class ParticleType> ParticleFilter<ParticleType>::~ParticleFilter()
@@ -52,6 +127,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWei
 // to do with precision -> disgard very low weights; not sure if needed
 //    if (it->weight < -40)
 //    {
+//      continue;
 //    }
     it->weight = exp(it->weight);
     sumLikelihoods += it->weight;
@@ -132,8 +208,8 @@ template <class ParticleType> double ParticleFilter<ParticleType>::getWeightsSum
   return weights_sum;
 }
 
-//FIXME: This is not generic - works for Eigen::VectorXd
-template <class ParticleType> Eigen::VectorXd ParticleFilter<ParticleType>::getWeightedAvg(const double& particles_fraction)
+//FIXME: This is not generic - works for Eigen::VectorXd or even Eigen::Vector3d
+template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(const double& particles_fraction)
 {
   if (logLikelihoods)
     logWeightsToWeights();
@@ -146,7 +222,7 @@ template <class ParticleType> Eigen::VectorXd ParticleFilter<ParticleType>::getW
   //FIXME: Hard coded Vector3d for this state, can be readed from stateDim maybe
   Eigen::VectorXd state_sum = Eigen::Vector3d::Zero();
 
-  for (typename std::vector <Particle <ParticleType> >::reverse_iterator it = particles.rbegin(); it != particles.rend();
+  for (std::vector <Particle <Eigen::VectorXd> >::reverse_iterator it = particles.rbegin(); it != particles.rend();
        it++, i++)
   {
     if(i >= weighted_num)
@@ -250,7 +326,7 @@ template <class ParticleType> void ParticleFilter<ParticleType>::weightsToLogWei
 }
 
 template <class ParticleType> void ParticleFilter<ParticleType>::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
-                       const MotionModel& model)
+                       const MotionModel<ParticleType>& model)
 {
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
                        it++)
@@ -261,7 +337,7 @@ template <class ParticleType> void ParticleFilter<ParticleType>::propagate(const
 }
 
 template <class ParticleType> void ParticleFilter<ParticleType>::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
-                     const SensorModel& model)
+                     const SensorModel<ParticleType> &model)
 {
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
                        it++)
@@ -274,3 +350,7 @@ template <class ParticleType> void ParticleFilter<ParticleType>::correct(const E
 }
 
 template class ParticleFilter <Eigen::VectorXd>;
+template class ParticleFilter <double>;
+template class ParticleFilter <ArticulationModelPtr>;
+
+

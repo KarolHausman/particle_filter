@@ -2,20 +2,20 @@
 #define SENSOR_MODEL_H
 
 #include <Eigen/Core>
-
+template <class StateType>
 class SensorModel
 {
 public:
   SensorModel();
   virtual ~SensorModel();
 
-  virtual Eigen::VectorXd sense (const Eigen::VectorXd& state, const Eigen::VectorXd& noise)
+  virtual Eigen::VectorXd sense (const StateType& state, const Eigen::VectorXd& noise)
                                   const = 0;
 
-  virtual double senseLikelihood (const Eigen::VectorXd& z, const Eigen::VectorXd& state,
+  virtual double senseLikelihood (const Eigen::VectorXd& z, const StateType& state,
                                   const Eigen::MatrixXd& cov) const = 0;
 
-  virtual double senseLogLikelihood (const Eigen::VectorXd& z, const Eigen::VectorXd& state,
+  virtual double senseLogLikelihood (const Eigen::VectorXd& z, const StateType& state,
                                   const Eigen::MatrixXd& cov) const;
 
 

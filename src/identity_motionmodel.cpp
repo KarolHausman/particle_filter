@@ -1,15 +1,17 @@
 #include "particle_filter/identity_motionmodel.h"
 
-IdentityMotionModel::IdentityMotionModel()
+template <class StateType> IdentityMotionModel<StateType>::IdentityMotionModel()
 {
 }
 
-IdentityMotionModel::~IdentityMotionModel()
+template <class StateType> IdentityMotionModel<StateType>::~IdentityMotionModel()
 {
 }
 
-Eigen::VectorXd IdentityMotionModel::move(const Eigen::VectorXd &state, const Eigen::VectorXd &controls,
+template <class StateType> StateType IdentityMotionModel<StateType>::move(const StateType &state, const Eigen::VectorXd &controls,
                           const Eigen::VectorXd &noise) const
 {
   return state + noise;
 }
+
+template class IdentityMotionModel<Eigen::VectorXd>;

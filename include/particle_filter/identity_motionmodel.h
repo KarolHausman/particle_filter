@@ -3,14 +3,15 @@
 
 #include "particle_filter/motion_model.h"
 
-class IdentityMotionModel : public MotionModel
+template <class StateType>
+class IdentityMotionModel : public MotionModel <StateType>
 {
 public:
   IdentityMotionModel();
   virtual ~IdentityMotionModel();
 
 
-  Eigen::VectorXd move (const Eigen::VectorXd& state, const Eigen::VectorXd&
+  StateType move (const StateType& state, const Eigen::VectorXd&
                                 controls, const Eigen::VectorXd& noise)const;
 };
 

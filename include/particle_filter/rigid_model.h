@@ -9,8 +9,8 @@ public:
   RigidModel();
   virtual ~RigidModel();
 
-protected:
   double pos_x, pos_y, pos_z, roll, pitch, yaw;
+protected:
 
 
 };

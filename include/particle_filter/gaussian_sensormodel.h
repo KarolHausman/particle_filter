@@ -3,14 +3,15 @@
 
 #include "particle_filter/sensor_model.h"
 
-class GaussianSensorModel : public SensorModel
+template <class StateType>
+class GaussianSensorModel : public SensorModel<StateType>
 {
 public:
   GaussianSensorModel();
   virtual ~GaussianSensorModel();
 
-  Eigen::VectorXd sense(const Eigen::VectorXd &state, const Eigen::VectorXd &noise) const;
-  double senseLikelihood(const Eigen::VectorXd &z, const Eigen::VectorXd &state, const Eigen::MatrixXd &cov) const;
+  Eigen::VectorXd sense(const StateType &state, const Eigen::VectorXd &noise) const;
+  double senseLikelihood(const Eigen::VectorXd &z, const StateType &state, const Eigen::MatrixXd &cov) const;
 };
 
 

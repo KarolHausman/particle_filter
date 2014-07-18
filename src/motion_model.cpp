@@ -1,9 +1,11 @@
 #include "particle_filter/motion_model.h"
 
-MotionModel::MotionModel()
+template <class StateType> MotionModel<StateType>::MotionModel()
 {
 }
 
-MotionModel::~MotionModel()
+template <class StateType> MotionModel<StateType>::~MotionModel()
 {
 }
+
+template class MotionModel<Eigen::VectorXd>;
