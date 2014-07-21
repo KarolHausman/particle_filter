@@ -111,37 +111,6 @@ template <class ParticleType> void ParticleFilter<ParticleType>::printParticles(
   }
 }
 
-template <> void ParticleFilter<ArticulationModelPtr>::printParticles()
-{
-  std::cout << "printing particles: " << std::endl;
-  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin();
-      it != particles.end(); it++)
-  {
-    std::cout << *it;
-    switch (it->state->model)
-    {
-      case (RIGID):
-        {
-          boost::shared_ptr<RigidModel> rigid = boost::dynamic_pointer_cast< RigidModel > (it->state);
-          std::cout << *rigid;
-          break;
-        }
-      case (PRISMATIC):
-        {
-          boost::shared_ptr<PrismaticModel> prismatic = boost::dynamic_pointer_cast< PrismaticModel > (it->state);
-          std::cout << *prismatic;
-          break;
-        }
-      case (ROTATIONAL):
-        {
-          boost::shared_ptr<RotationalModel> rotational = boost::dynamic_pointer_cast< RotationalModel > (it->state);
-          std::cout << *rotational;
-          break;
-        }
-    }
-  }
-}
-
 
 template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWeights()
 {

@@ -4,8 +4,10 @@
 #include <iostream>
 #include "boost/shared_ptr.hpp"
 
-
+class ArticulationModel;
+typedef boost::shared_ptr<ArticulationModel> ArticulationModelPtr;
 enum Model{ RIGID, FREE, PRISMATIC, ROTATIONAL, MODELS_NUMBER};
+
 class ArticulationModel
 {
 public:
@@ -16,11 +18,12 @@ public:
     stream << "model= " << am.model << "\n";
     return stream;
   }
+  friend std::ostream& operator << (std::ostream& stream, const ArticulationModelPtr& amptr);
 
   Model model;
 protected:
 };
 
-typedef boost::shared_ptr<ArticulationModel> ArticulationModelPtr;
+
 
 #endif // ARTICULATION_MODEL_H

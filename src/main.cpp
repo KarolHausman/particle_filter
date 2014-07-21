@@ -7,6 +7,8 @@
 #include "particle_filter/visualizer.h"
 #include "particle_filter/random.h"
 
+#include "particle_filter/rigid_model.h"
+
 int main(int argc, char **argv)
 {
   const int particles_number = 100;
@@ -48,6 +50,23 @@ int main(int argc, char **argv)
 
   ros::Rate r(2);
   int loop_count = 1;
+
+
+
+  boost::shared_ptr<RigidModel> rigid_model(new RigidModel);
+  rigid_model->pos_x = 1;
+  rigid_model->pos_y = 1;
+  rigid_model->pos_z = 1;
+  rigid_model->roll = 1;
+  rigid_model->pitch = 1;
+  rigid_model->yaw = 1;
+
+  ArticulationModelPtr artptr = static_cast<ArticulationModelPtr> (rigid_model);
+  std::cerr << "rigid model: " << artptr << std::endl;
+
+
+
+
   while (ros::ok())
   {
     ROS_INFO_STREAM ("loop_count: " << loop_count);
