@@ -3,22 +3,30 @@
 
 #include <vector>
 #include <Eigen/Core>
+#include "particle_filter/articulation_model.h"
 
 
 template <class StateType> class Particle
 {
 public:
     Particle();
+    Particle(const Particle<ArticulationModelPtr>& p2);
+    Particle<ArticulationModelPtr>& operator = (const Particle<ArticulationModelPtr>& p2);
     virtual ~Particle();
-    double weight;
-    StateType state;
-    bool operator < (const Particle& p) const { return this->weight < p.weight;}
-    //TODO: template specialization here
+
+    bool operator < (const Particle& p) const
+    {
+      return this->weight < p.weight;
+    }
     friend std::ostream& operator << (std::ostream& stream, const Particle& p)
     {
       stream << "weight= " << p.weight << "\n" << "state= \n" << p.state << "\n";
       return stream;
     }
+
+    double weight;
+    StateType state;
+protected:
 };
 
 #endif // PARTICLE_H

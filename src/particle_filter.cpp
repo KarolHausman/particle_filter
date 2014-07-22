@@ -348,7 +348,6 @@ template <class ParticleType> void ParticleFilter<ParticleType>::correct(const E
 }
 
 template class ParticleFilter <Eigen::VectorXd>;
-template class ParticleFilter <double>;
 template class ParticleFilter <ArticulationModelPtr>;
 
 

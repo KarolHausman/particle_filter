@@ -7,7 +7,7 @@
 #include "particle_filter/visualizer.h"
 #include "particle_filter/random.h"
 
-#include "particle_filter/rigid_model.h"
+#include "particle_filter/articulation_io_utils.h"
 
 int main(int argc, char **argv)
 {
@@ -49,23 +49,7 @@ int main(int argc, char **argv)
   Eigen::MatrixXd sensorNoiseCov = rotational_cov / 2;
 
   ros::Rate r(2);
-  int loop_count = 1;
-
-
-
-  boost::shared_ptr<RigidModel> rigid_model(new RigidModel);
-  rigid_model->pos_x = 1;
-  rigid_model->pos_y = 1;
-  rigid_model->pos_z = 1;
-  rigid_model->roll = 1;
-  rigid_model->pitch = 1;
-  rigid_model->yaw = 1;
-
-  ArticulationModelPtr artptr = static_cast<ArticulationModelPtr> (rigid_model);
-  std::cerr << "rigid model: " << artptr << std::endl;
-
-
-
+  uint loop_count = 1;
 
   while (ros::ok())
   {
@@ -79,6 +63,7 @@ int main(int argc, char **argv)
       ROS_INFO_STREAM ("measurement equals: \n" << z);
       pf.correct(z, sensorNoiseCov, *sensorModel);
       ROS_INFO ("Correction step executed.");
+      pf.printParticles();
       if (!pf.resample(particles_number))
       {
         ROS_ERROR ("no particles left, quiting");

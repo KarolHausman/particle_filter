@@ -6,19 +6,18 @@
 
 class ArticulationModel;
 typedef boost::shared_ptr<ArticulationModel> ArticulationModelPtr;
-enum Model{ RIGID, FREE, PRISMATIC, ROTATIONAL, MODELS_NUMBER};
+enum Model { RIGID, FREE, PRISMATIC, ROTATIONAL, MODELS_NUMBER };
 
 class ArticulationModel
 {
 public:
   ArticulationModel();
   virtual ~ArticulationModel();
-  friend std::ostream& operator << (std::ostream& stream, const ArticulationModel& am)
+
+  virtual ArticulationModelPtr getCopy()
   {
-    stream << "model= " << am.model << "\n";
-    return stream;
+     return ArticulationModelPtr(new ArticulationModel(*this));
   }
-  friend std::ostream& operator << (std::ostream& stream, const ArticulationModelPtr& amptr);
 
   Model model;
 protected:

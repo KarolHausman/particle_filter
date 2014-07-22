@@ -8,6 +8,10 @@ class FreeModel : public ArticulationModel
 public:
   FreeModel();
   virtual ~FreeModel();
+  virtual ArticulationModelPtr getCopy()
+  {
+   return static_cast<ArticulationModelPtr>(new FreeModel(*this));
+  }
 
 protected:
 };
