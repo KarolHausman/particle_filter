@@ -11,7 +11,7 @@
 
 int main(int argc, char **argv)
 {
-  const int particles_number = 100;
+  const int particles_number = 20;
   ros::init(argc, argv, "particle_filter");
 
   Visualizer::getInstance()->init();
@@ -23,12 +23,16 @@ int main(int argc, char **argv)
 
   Eigen::VectorXd rigid_mean = Eigen::VectorXd::Ones(6);
   Eigen::MatrixXd rigid_cov = Eigen::MatrixXd::Identity(6, 6);
+  rigid_cov = rigid_cov / 10;
 
   Eigen::VectorXd rotational_mean = Eigen::VectorXd::Ones(9);
   Eigen::MatrixXd rotational_cov = Eigen::MatrixXd::Identity(9, 9);
+  rotational_cov = rotational_cov / 10;
 
   Eigen::VectorXd prismatic_mean = Eigen::VectorXd::Ones(5);
   Eigen::MatrixXd prismatic_cov = Eigen::MatrixXd::Identity(5, 5);
+  prismatic_cov = prismatic_cov / 10;
+
 
   ParticleFilter<ArticulationModelPtr> pf (particles_number, rigid_mean, rigid_cov,
                                            rotational_mean, rotational_cov,
@@ -58,21 +62,20 @@ int main(int argc, char **argv)
 
     if (loop_count % 10 == 0)
     {
+
       ROS_INFO ("Correction step started.");
-      z += (Eigen::VectorXd(9) << 1, 1, 1, 1, 1, 1, 1, 1, 1).finished();
+      z = (Eigen::VectorXd(9) << 1, 1, 1, 1, 1, 1, 1, 1, 1).finished();
       ROS_INFO_STREAM ("measurement equals: \n" << z);
-      pf.printParticles();
 
       pf.correct(z, sensorNoiseCov, *sensorModel);
       ROS_INFO ("Correction step executed.");
-      pf.printParticles();
       if (!pf.resample(particles_number))
       {
         ROS_ERROR ("no particles left, quiting");
         return -1;
       }
       ROS_INFO ("Resample step executed.");
-//      pf.printParticles();
+      pf.printParticles();
     }
 //    Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();

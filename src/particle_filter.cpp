@@ -39,7 +39,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
                                                                  const Eigen::VectorXd& rigid_mean, const Eigen::MatrixXd& rigid_cov,
                                                                  const Eigen::VectorXd& rotational_mean, const Eigen::MatrixXd& rotational_cov,
                                                                  const Eigen::VectorXd& prismatic_mean, const Eigen::MatrixXd& prismatic_cov):
-  logLikelihoods_(true), freemodel_samples_(10)
+  logLikelihoods_(true), freemodel_samples_(1)
 {
   this->particles.resize(size);
 
@@ -272,6 +272,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
       }
     }
   ROS_INFO ("switching to normal likelihoods for resampling");
+  printParticles();
 
   //at this point these are normal likelihoods, not log
   typename std::vector <Particle <ParticleType> > new_particles;
