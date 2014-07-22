@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         return -1;
       }
       ROS_INFO ("Resample step executed.");
-      pf.printParticles();
+//      pf.printParticles();
     }
 //    Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();

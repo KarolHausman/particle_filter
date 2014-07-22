@@ -96,6 +96,8 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
     }
     it->weight = 1.0 / (double) size;
   }
+  if (logLikelihoods_)
+    weightsToLogWeights();
 }
 
 template <class ParticleType> ParticleFilter<ParticleType>::~ParticleFilter()
@@ -254,6 +256,7 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(cons
 
 template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const int& particles_number)
 {
+
   if (logLikelihoods_)
     {
     if (!normalizeLogWeights())
@@ -268,6 +271,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
         return false;
       }
     }
+  ROS_INFO ("switching to normal likelihoods for resampling");
 
   //at this point these are normal likelihoods, not log
   typename std::vector <Particle <ParticleType> > new_particles;

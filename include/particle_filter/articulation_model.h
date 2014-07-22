@@ -6,7 +6,7 @@
 
 class ArticulationModel;
 typedef boost::shared_ptr<ArticulationModel> ArticulationModelPtr;
-enum Model { RIGID, FREE, PRISMATIC, ROTATIONAL, MODELS_NUMBER };
+enum Model { FREE, PRISMATIC, RIGID, ROTATIONAL, MODELS_NUMBER };
 
 class ArticulationModel
 {
