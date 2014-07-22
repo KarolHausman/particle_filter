@@ -45,6 +45,9 @@ template <> ArticulationModelPtr IdentityMotionModel<ArticulationModelPtr>::move
         prismatic->pos_z += noise(2);
         prismatic->roll += noise(3);
         prismatic->pitch += noise(4);
+        prismatic->yaw += noise(5);
+        prismatic->axis_roll += noise(6);
+        prismatic->axis_pitch += noise(7);
         state_result = static_cast<ArticulationModelPtr> (prismatic);
         break;
       }

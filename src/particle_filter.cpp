@@ -91,6 +91,9 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       prismatic_model->pos_z = state_vector(2);
       prismatic_model->roll = state_vector(3);
       prismatic_model->pitch = state_vector(4);
+      prismatic_model->yaw = state_vector(5);
+      prismatic_model->axis_roll = state_vector(6);
+      prismatic_model->axis_pitch = state_vector(7);
 
       it->state = static_cast<ArticulationModelPtr> (prismatic_model);
     }

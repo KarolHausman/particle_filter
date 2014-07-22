@@ -50,14 +50,18 @@ template <> double GaussianSensorModel<ArticulationModelPtr>::senseLikelihood(co
     case (PRISMATIC):
       {
         boost::shared_ptr<PrismaticModel> prismatic = boost::dynamic_pointer_cast< PrismaticModel > (state);
-        state_adjusted = Eigen::VectorXd::Zero(5);
-        z_adjusted = z.head(5);
-        cov_adjusted = cov.block(0, 0, 5, 5);
+        state_adjusted = Eigen::VectorXd::Zero(8);
+        z_adjusted = z.head(8);
+        cov_adjusted = cov.block(0, 0, 8, 8);
         state_adjusted(0) = prismatic->pos_x;
         state_adjusted(1) = prismatic->pos_y;
         state_adjusted(2) = prismatic->pos_z;
         state_adjusted(3) = prismatic->roll;
         state_adjusted(4) = prismatic->pitch;
+        state_adjusted(5) = prismatic->yaw;
+        state_adjusted(6) = prismatic->axis_roll;
+        state_adjusted(7) = prismatic->axis_pitch;
+
         break;
       }
     case (ROTATIONAL):

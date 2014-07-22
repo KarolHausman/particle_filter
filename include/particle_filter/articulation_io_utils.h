@@ -20,7 +20,10 @@ inline std::ostream& operator << (std::ostream& stream, const PrismaticModel& pm
   stream << "pos_y = " << pm.pos_y << "\n";
   stream << "pos_z = " << pm.pos_z << "\n";
   stream << "roll = " << pm.roll << "\n";
-  stream << "pitch = " << pm.pitch << "\n \n";
+  stream << "pitch = " << pm.pitch << "\n";
+  stream << "yaw = " << pm.yaw << "\n";
+  stream << "axis_roll = " << pm.axis_roll << "\n";
+  stream << "axis_pitch = " << pm.axis_pitch << "\n \n";
   return stream;
 }
 

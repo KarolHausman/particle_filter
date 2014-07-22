@@ -14,7 +14,7 @@ public:
    return static_cast<ArticulationModelPtr>(new PrismaticModel(*this));
   }
 
-  double pos_x, pos_y, pos_z, roll, pitch;
+  double pos_x, pos_y, pos_z, roll, pitch, yaw, axis_roll, axis_pitch;
 protected:
 
 

@@ -29,8 +29,8 @@ int main(int argc, char **argv)
   Eigen::MatrixXd rotational_cov = Eigen::MatrixXd::Identity(9, 9);
   rotational_cov = rotational_cov / 10;
 
-  Eigen::VectorXd prismatic_mean = Eigen::VectorXd::Ones(5);
-  Eigen::MatrixXd prismatic_cov = Eigen::MatrixXd::Identity(5, 5);
+  Eigen::VectorXd prismatic_mean = Eigen::VectorXd::Ones(8);
+  Eigen::MatrixXd prismatic_cov = Eigen::MatrixXd::Identity(8, 8);
   prismatic_cov = prismatic_cov / 10;
 
 
