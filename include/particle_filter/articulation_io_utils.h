@@ -3,16 +3,17 @@
 #include "particle_filter/rigid_model.h"
 #include "particle_filter/prismatic_model.h"
 #include "particle_filter/rotational_model.h"
+#include "particle_filter/free_model.h"
 #include "particle_filter/articulation_model.h"
 
 
-std::ostream& operator << (std::ostream& stream, const ArticulationModel& am)
+inline std::ostream& operator << (std::ostream& stream, const ArticulationModel& am)
 {
   stream << "model= " << am.model << "\n";
   return stream;
 }
 
-std::ostream& operator << (std::ostream& stream, const PrismaticModel& pm)
+inline std::ostream& operator << (std::ostream& stream, const PrismaticModel& pm)
 {
   stream << "MODEL = " << pm.model << "\n";
   stream << "pos_x = " << pm.pos_x << "\n";
@@ -23,7 +24,7 @@ std::ostream& operator << (std::ostream& stream, const PrismaticModel& pm)
   return stream;
 }
 
-std::ostream& operator << (std::ostream& stream, const RigidModel& pm)
+inline std::ostream& operator << (std::ostream& stream, const RigidModel& pm)
 {
   stream << "MODEL = " << pm.model << "\n";
   stream << "pos_x = " << pm.pos_x << "\n";
@@ -35,7 +36,7 @@ std::ostream& operator << (std::ostream& stream, const RigidModel& pm)
   return stream;
 }
 
-std::ostream& operator << (std::ostream& stream, const RotationalModel& rm)
+inline std::ostream& operator << (std::ostream& stream, const RotationalModel& rm)
 {
   stream << "MODEL = " << rm.model << "\n";
   stream << "rot_center_x = " << rm.rot_center_x << "\n";
@@ -49,7 +50,15 @@ std::ostream& operator << (std::ostream& stream, const RotationalModel& rm)
   stream << "axis_y = " << rm.axis_y << "\n \n";
   return stream;
 }
-std::ostream& operator << (std::ostream& stream, const ArticulationModelPtr& amptr)
+
+inline std::ostream& operator << (std::ostream& stream, const FreeModel& fm)
+{
+  stream << "MODEL = " << fm.model << "\n";
+  return stream;
+}
+
+
+inline std::ostream& operator << (std::ostream& stream, const ArticulationModelPtr& amptr)
 {
   switch (amptr->model)
   {
@@ -72,6 +81,13 @@ std::ostream& operator << (std::ostream& stream, const ArticulationModelPtr& amp
         boost::shared_ptr<RotationalModel> rotational = boost::dynamic_pointer_cast< RotationalModel > (amptr);
         stream << "memory address: " << rotational << std::endl;
         stream << *rotational;
+        break;
+      }
+    case (FREE):
+      {
+        boost::shared_ptr<FreeModel> free = boost::dynamic_pointer_cast< FreeModel > (amptr);
+        stream << "memory address: " << free << std::endl;
+        stream << *free;
         break;
       }
   }

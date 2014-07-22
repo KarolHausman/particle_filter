@@ -13,7 +13,6 @@ class ArticulationModel
 public:
   ArticulationModel();
   virtual ~ArticulationModel();
-
   virtual ArticulationModelPtr getCopy()
   {
      return ArticulationModelPtr(new ArticulationModel(*this));

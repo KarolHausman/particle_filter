@@ -9,12 +9,9 @@ class Visualizer
 {
 public:
   static Visualizer* getInstance ();
-
   void init();
-
   void publishPoints (const std::vector <Eigen::VectorXd>& points, const double& scale);
   void publishParticles (const std::vector <Particle <Eigen::VectorXd> > &particles);
-
 
 private:
   Visualizer (){}

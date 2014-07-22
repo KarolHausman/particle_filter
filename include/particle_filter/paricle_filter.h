@@ -31,9 +31,9 @@ public:
 
   void logWeightsToWeights();
 
-  void printParticles();
+  void printParticles() const;
 
-  bool getLogLikelihoodsFlag()const;
+  bool getLogLikelihoodsFlag() const;
 
   void setLogLikelihoodsFlag(const bool& flag);
 
@@ -53,7 +53,9 @@ public:
 
 
 private:
-  bool logLikelihoods;
+  bool logLikelihoods_;
+  uint freemodel_samples_;
+
 };
 
 #endif // PARTICLE_FILTER_H

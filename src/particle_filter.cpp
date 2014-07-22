@@ -1,6 +1,6 @@
 #include "particle_filter/paricle_filter.h"
-#include <algorithm>
 #include "particle_filter/random.h"
+#include <algorithm>
 #include <iostream>
 #include <ros/console.h>
 #include "particle_filter/articulation_model.h"
@@ -8,6 +8,8 @@
 #include "particle_filter/rigid_model.h"
 #include "particle_filter/rotational_model.h"
 #include "particle_filter/free_model.h"
+
+#include "particle_filter/articulation_io_utils.h"
 
 
 template <class ParticleType> ParticleFilter<ParticleType>::ParticleFilter(const std::vector <Particle <ParticleType> > &particles)
@@ -17,9 +19,9 @@ template <class ParticleType> ParticleFilter<ParticleType>::ParticleFilter(const
 
 //initialization for localization
 template <> ParticleFilter<Eigen::VectorXd>::ParticleFilter(const int& size, const Eigen::VectorXd& mean,
-                               const Eigen::MatrixXd& cov)
+                               const Eigen::MatrixXd& cov):
+  logLikelihoods_(true)
 {
-  logLikelihoods = true;
   this->particles.resize(size);
 
   for (typename std::vector <Particle <Eigen::VectorXd> >::iterator it = particles.begin();
@@ -28,7 +30,7 @@ template <> ParticleFilter<Eigen::VectorXd>::ParticleFilter(const int& size, con
     it->state = mean + Random::multivariateGaussian(cov);
     it->weight = 1.0 / (double) size;
   }
-  if (logLikelihoods)
+  if (logLikelihoods_)
     weightsToLogWeights();
 }
 
@@ -36,23 +38,22 @@ template <> ParticleFilter<Eigen::VectorXd>::ParticleFilter(const int& size, con
 template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size,
                                                                  const Eigen::VectorXd& rigid_mean, const Eigen::MatrixXd& rigid_cov,
                                                                  const Eigen::VectorXd& rotational_mean, const Eigen::MatrixXd& rotational_cov,
-                                                                 const Eigen::VectorXd& prismatic_mean, const Eigen::MatrixXd& prismatic_cov)
+                                                                 const Eigen::VectorXd& prismatic_mean, const Eigen::MatrixXd& prismatic_cov):
+  logLikelihoods_(true), freemodel_samples_(10)
 {
-  logLikelihoods = true;
   this->particles.resize(size);
 
-  const uint freemodel_samples = 10;
-  const double remaining_models_temp = static_cast<double> ((size - freemodel_samples) / (MODELS_NUMBER - 1));
+  const double remaining_models_temp = static_cast<double> ((size - freemodel_samples_) / (MODELS_NUMBER - 1));
   const int remaining_models = static_cast<uint> (remaining_models_temp);
   uint i = 0;
   for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin();
     it != particles.end(); it++, i++)
   {
-    if (i < freemodel_samples)
+    if (i < freemodel_samples_)
     {
       it->state.reset(new FreeModel);
     }
-    else if (i >= freemodel_samples && i < freemodel_samples + remaining_models)
+    else if (i >= freemodel_samples_ && i < freemodel_samples_ + remaining_models)
     {
       boost::shared_ptr<RigidModel> rigid_model(new RigidModel);
       Eigen::VectorXd state_vector = rigid_mean + Random::multivariateGaussian(rigid_cov);
@@ -65,7 +66,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
 
       it->state = static_cast<ArticulationModelPtr> (rigid_model);
     }
-    else if (i >= freemodel_samples + remaining_models && i < freemodel_samples + remaining_models*2)
+    else if (i >= freemodel_samples_ + remaining_models && i < freemodel_samples_ + remaining_models*2)
     {
       boost::shared_ptr<RotationalModel> rotational_model(new RotationalModel);
       Eigen::VectorXd state_vector = rotational_mean + Random::multivariateGaussian(rotational_cov);
@@ -101,10 +102,10 @@ template <class ParticleType> ParticleFilter<ParticleType>::~ParticleFilter()
 {
 }
 
-template <class ParticleType> void ParticleFilter<ParticleType>::printParticles()
+template <class ParticleType> void ParticleFilter<ParticleType>::printParticles() const
 {
   std::cout << "printing particles: " << std::endl;
-  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
+  for (typename std::vector <Particle <ParticleType> >::const_iterator it = particles.begin();
       it != particles.end(); it++)
   {
     std::cout << *it;
@@ -122,7 +123,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWei
       it != particles.end(); it++)
   {
     it->weight = it->weight - maxParticle.weight;
-// to do with precision -> disgard very low weights; not sure if needed
+// TODO: TRY to do with precision -> disgard very low weights; not sure if needed
 //    if (it->weight < -40)
 //    {
 //      continue;
@@ -171,12 +172,12 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeWeight
 
 template <class ParticleType> bool ParticleFilter<ParticleType>::getLogLikelihoodsFlag() const
 {
-  return logLikelihoods;
+  return logLikelihoods_;
 }
 
 template <class ParticleType> void ParticleFilter<ParticleType>::setLogLikelihoodsFlag(const bool &flag)
 {
-  if (logLikelihoods != flag)
+  if (logLikelihoods_ != flag)
   {
     if (flag)
     {
@@ -187,7 +188,7 @@ template <class ParticleType> void ParticleFilter<ParticleType>::setLogLikelihoo
       logWeightsToWeights();
     }
   }
-  logLikelihoods = flag;
+  logLikelihoods_ = flag;
 }
 
 template <class ParticleType> void ParticleFilter<ParticleType>::sortParticles()
@@ -209,7 +210,7 @@ template <class ParticleType> double ParticleFilter<ParticleType>::getWeightsSum
 //FIXME: This is not generic - works for Eigen::VectorXd or even Eigen::Vector3d
 template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(const double& particles_fraction)
 {
-  if (logLikelihoods)
+  if (logLikelihoods_)
     logWeightsToWeights();
 
   sortParticles();
@@ -228,13 +229,13 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(cons
       if (weights_sum <= 0)
       {
         ROS_ERROR ("WEIGHTS_SUM <= 0 returning 0 in getWeightedAvg");
-        if (logLikelihoods)
+        if (logLikelihoods_)
         {
           weightsToLogWeights();
         }
         return Eigen::Vector3d::Zero();
       }
-      if (logLikelihoods)
+      if (logLikelihoods_)
       {
         weightsToLogWeights();
       }
@@ -243,7 +244,7 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(cons
     weights_sum += it->weight;
     state_sum += it->state * it->weight;
   }
-  if (logLikelihoods)
+  if (logLikelihoods_)
   {
     weightsToLogWeights();
   }
@@ -253,7 +254,7 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(cons
 
 template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const int& particles_number)
 {
-  if (logLikelihoods)
+  if (logLikelihoods_)
     {
     if (!normalizeLogWeights())
       {
@@ -298,7 +299,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
   // TODO: use swap maybe?
   particles = new_particles;
 
-  if (logLikelihoods)
+  if (logLikelihoods_)
     weightsToLogWeights();
   return true;
 }
@@ -340,7 +341,7 @@ template <class ParticleType> void ParticleFilter<ParticleType>::correct(const E
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
                        it++)
   {
-    if (!logLikelihoods)
+    if (!logLikelihoods_)
       it->weight *= model.senseLikelihood(z, it->state, noiseCov);
     else
       it->weight += model.senseLogLikelihood(z, it->state, noiseCov);

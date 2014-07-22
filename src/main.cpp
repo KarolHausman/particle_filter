@@ -61,6 +61,8 @@ int main(int argc, char **argv)
       ROS_INFO ("Correction step started.");
       z += (Eigen::VectorXd(9) << 1, 1, 1, 1, 1, 1, 1, 1, 1).finished();
       ROS_INFO_STREAM ("measurement equals: \n" << z);
+      pf.printParticles();
+
       pf.correct(z, sensorNoiseCov, *sensorModel);
       ROS_INFO ("Correction step executed.");
       pf.printParticles();

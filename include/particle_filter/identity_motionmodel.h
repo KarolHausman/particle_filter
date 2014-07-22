@@ -10,7 +10,6 @@ public:
   IdentityMotionModel();
   virtual ~IdentityMotionModel();
 
-
   StateType move (const StateType& state, const Eigen::VectorXd&
                                 controls, const Eigen::VectorXd& noise)const;
 };
