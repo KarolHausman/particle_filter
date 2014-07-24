@@ -69,6 +69,13 @@ public:
   virtual V_Configuration getMinConfigurationObserved();
   virtual V_Configuration getMaxConfigurationObserved();
   virtual V_Configuration getConfiguration(size_t index);
+  bool check_values(const tf::Vector3 &vec);
+  bool check_values(const tf::Quaternion &vec);
+  bool check_values(double v);
+  bool check_values(float v);
+
+
+
 
   articulation_model_msgs::ModelMsg model_msg;
   Model model;

@@ -26,9 +26,8 @@ ArticulationModel::ArticulationModel()
   complexity = 0;
   jacobian = Eigen::MatrixXd();
   hessian = Eigen::MatrixXd();
-
-
 }
+
 ArticulationModel::~ArticulationModel()
 {}
 
@@ -641,6 +640,17 @@ V_Configuration ArticulationModel::getConfiguration(size_t index)
 }
 
 
-
+bool ArticulationModel::check_values(const tf::Vector3 &vec) {
+  return(check_values(vec.x()) && check_values(vec.y()) && check_values(vec.z()) );
+}
+bool ArticulationModel::check_values(const tf::Quaternion &vec) {
+  return(check_values(vec.x()) && check_values(vec.y()) && check_values(vec.z()) && check_values(vec.w()));
+}
+bool ArticulationModel::check_values(double v) {
+  return(!isnan(v) && !isinf(v));
+}
+bool ArticulationModel::check_values(float v) {
+  return(!isnan(v) && !isinf(v));
+}
 
 
