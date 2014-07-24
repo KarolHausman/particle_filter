@@ -1,5 +1,7 @@
 #include "particle_filter/articulation_model.h"
 #include <limits>
+#include <gsl/gsl_multimin.h>
+#include <gsl/gsl_blas.h>
 
 ArticulationModel::ArticulationModel()
 {
@@ -16,7 +18,7 @@ ArticulationModel::ArticulationModel()
   supress_similar = true;
   outlier_ratio = 0.5;
   sac_iterations = 100;
-//  optimizer_iterations = 10;
+  optimizer_iterations = 10;
 //  optimizer_iterations = 0;
 
   prior_outlier_ratio = log(0.01) / (- 0.05); // prior over outlier ratio
@@ -410,6 +412,235 @@ int ArticulationModel::openChannel(articulation_model_msgs::TrackMsg &track, std
   // return channel number
   return i;
 }
+
+
+
+
+double my_f (const gsl_vector *v, void *params)
+{
+  ArticulationModel *p = (ArticulationModel *)params;
+
+  std::vector<double> delta( v->size );
+  for(size_t i=0;i<v->size;i++)
+  {
+    delta[i] = gsl_vector_get (v, i);
+//  cout <<"delta["<<i<<"]="<<delta[i]<<" ";
+  }
+
+  p->model_msg.params = p->params_initial;
+  p->readParamsFromModel();
+  p->updateParameters(delta);
+  p->writeParamsToModel();
+  double likelihood = p->getLogLikelihood(true);
+//  cout <<"likelihood="<<likelihood<<endl;
+  return -likelihood;
+}
+
+/* The gradient of f, df = (df/dx, df/dy). */
+void my_df (const gsl_vector *v, void *params,gsl_vector *df)
+{
+  double likelihood = my_f(v,params);
+
+  gsl_vector * v_delta =gsl_vector_alloc (v->size);
+
+  double DELTA = 1e-3;
+  for(size_t i=0;i<v->size;i++)
+  {
+    v_delta = gsl_vector_alloc (v->size);
+    gsl_vector_memcpy(v_delta,v);
+    gsl_vector_set(v_delta, i,gsl_vector_get(v, i)+DELTA);
+
+    double likelihood_delta = my_f(v_delta,params);
+    gsl_vector_set(df, i,(likelihood_delta-likelihood)/DELTA);
+  }
+  gsl_vector_free (v_delta);
+}
+
+/* Compute both f and df together. */
+void my_fdf (const gsl_vector *x, void *params, double *f, gsl_vector *df)
+{
+  *f = my_f(x, params);
+  my_df(x, params, df);
+}
+
+
+bool ArticulationModel::optimizeParameters()
+{
+  // using gsl minimizer
+  // dofs to optimize: complexity
+  // stores current parameter vector as params_initial
+  writeParamsToModel();
+  params_initial = model_msg.params;
+  // calls updateParameters(..) to set new params vector
+
+  size_t iter = 0;
+  int status;
+
+  const gsl_multimin_fdfminimizer_type *T;
+  gsl_multimin_fdfminimizer *s;
+
+  gsl_vector *x;
+  gsl_multimin_function_fdf my_func;
+
+  my_func.n = (int)complexity;
+  my_func.f = my_f;
+  my_func.df = my_df;
+  my_func.fdf = my_fdf;
+  my_func.params = this;
+
+  x = gsl_vector_alloc ((int)complexity);
+  gsl_vector_set_zero (x);
+//    double likelihood_initial= -my_f(x,this);
+
+  T = gsl_multimin_fdfminimizer_vector_bfgs2;
+  s = gsl_multimin_fdfminimizer_alloc (T, (int)complexity);
+
+  gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 0.1);
+
+//    cout <<"optimizing "<<complexity<<" DOFs"<<endl;
+
+//    for(size_t i=0;i<model.params.size();i++) {
+//    	if(model.params[i].type != ParamMsg::PARAM) continue;
+//    	cout <<" param "<<model.params[i].name<<"="<<model.params[i].value<<endl;
+//    }
+
+  if(optimizer_iterations > 0) do
+    {
+      iter++;
+//        cout <<"iter "<<iter<<".."<<endl;
+      status = gsl_multimin_fdfminimizer_iterate (s);
+
+      if (status)
+        break;
+
+      status = gsl_multimin_test_gradient (s->gradient, 1e-1);
+
+//        if (status == GSL_SUCCESS)
+//          printf ("Minimum found at:\n");
+
+//        printf ("i=%5d ", (int)iter);
+//        for(size_t i=0;i<s->x->size;i++) {
+//            printf ("%5f ", gsl_vector_get(s->x,i));
+//        }
+//        printf("\n");
+    } while (status == GSL_CONTINUE && iter < optimizer_iterations);
+
+//    double likelihood_final = -my_f(s->x,this);
+//    cout <<"likelihood_initial="<<likelihood_initial<<" ";
+//    cout <<"likelihood_final="<<likelihood_final<<" ";
+//    cout <<"after "<<iter<<" iterations";
+//    cout << endl;
+
+  gsl_multimin_fdfminimizer_free (s);
+  gsl_vector_free (x);
+
+  if(!fitMinMaxConfigurations())
+    return false;
+
+//	cout <<"type="<<getModelName()<<endl;
+//    for(size_t i=0;i<model.params.size();i++) {
+//    	if(model.params[i].type != ParamMsg::PARAM) continue;
+//    	cout <<" param "<<model.params[i].name<<"="<<model.params[i].value<<endl;
+//    }
+
+  return true;
+}
+
+bool ArticulationModel::fitMinMaxConfigurations()
+{
+  setParam("q_min",getMinConfigurationObserved(),articulation_model_msgs::ParamMsg::PARAM);
+  setParam("q_max",getMaxConfigurationObserved(),articulation_model_msgs::ParamMsg::PARAM);
+  return true;
+}
+
+void ArticulationModel::updateParameters(std::vector<double> delta)
+{
+}
+
+bool ArticulationModel::normalizeParameters()
+{
+  return true;
+}
+
+bool ArticulationModel::fitModel() {
+  if(!sampleConsensus())
+  {
+    std::cout << "sampleConsesus failed" << std::endl;
+          return false;
+  }
+  if(!optimizeParameters()) {
+    std::cout << "optimizeParameters failed "<< std::endl;
+          return false;
+  }
+  if(!normalizeParameters()) {
+          return false;
+  }
+    return true;
+}
+
+V_Configuration ArticulationModel::getMinConfigurationObserved()
+{
+  if(getDOFs()==0) return V_Configuration();
+  V_Configuration q_min(getDOFs());
+  for(size_t j=0;j<getDOFs();j++)
+  {
+    q_min[j] = std::numeric_limits<float>::max();
+  }
+
+  for(size_t i=0;i<model_msg.track.pose.size();i++)
+  {
+    V_Configuration q = getConfiguration(i);
+    for(size_t j=0; j<getDOFs(); j++)
+    {
+      q_min[j] = std::min(q_min[j], q[j]);
+    }
+  }
+
+  return q_min;
+}
+
+V_Configuration ArticulationModel::getMaxConfigurationObserved()
+{
+  if(getDOFs()==0) return V_Configuration();
+  V_Configuration q_max(getDOFs());
+  for(size_t j=0;j<getDOFs();j++)
+  {
+    q_max[j] = -std::numeric_limits<float>::max();
+  }
+
+  for(size_t i=0;i<model_msg.track.pose.size();i++)
+  {
+    V_Configuration q = getConfiguration(i);
+    for(size_t j=0;j<getDOFs();j++)
+    {
+      q_max[j] = std::max( q_max[j], q[j] );
+    }
+  }
+
+  return q_max;
+}
+
+V_Configuration ArticulationModel::getConfiguration(size_t index)
+{
+  std::map<int,int> channel;
+  // get channel ids and prepare channels
+  for(size_t ch=0; ch<getDOFs(); ch++)
+  {
+    std::stringstream s;
+    s << "q" << ch;
+    channel[ch] = openChannel( model_msg.track, s.str() );
+  }
+
+  V_Configuration q;
+  if (getDOFs()) q.resize(getDOFs());
+  for(int j=0;j<q.rows();j++)
+  {
+    q[j] = model_msg.track.channels[ channel[j] ].values[index];
+  }
+  return(q);
+}
+
+
 
 
 

@@ -8,9 +8,21 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp std_msgs visualization_msgs articulation_model_msgs)
 find_package(eigen REQUIRED)
+#find_package(PkgConfig REQUIRED)
 
+find_library(GSL_LIBRARY NAMES gsl
+          HINTS ${GSL_LIBRARIES} ${GSL_LIBRARY_DIRS})
+
+find_library(GSLCBLAS_LIBRARY NAMES gslcblas
+          HINTS ${GSL_LIBRARIES} ${GSL_LIBRARY_DIRS})
+
+
+
+
+#set( CMAKE_VERBOSE_MAKEFILE on )
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -95,6 +107,8 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Eigen_INCLUDE_DIRS}
+  ${GSL_INCLUDE_DIRS}
+  ${GSLCBLAS_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -105,13 +119,17 @@ include_directories(
 ## Declare a cpp executable
 add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp)
 
+add_dependencies(particle_filter_node articulation_model_msgs_generate_messages_cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(particle_filter_node particle_filter_generate_messages_cpp)
 
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(particle_filter_node
    ${catkin_LIBRARIES}
+   ${GSL_LIBRARY}
+   ${GSLCBLAS_LIBRARY}
 )
 
 #############

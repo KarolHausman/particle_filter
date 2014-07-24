@@ -44,6 +44,7 @@ public:
   int openChannel(articulation_model_msgs::TrackMsg &track,std::string name,bool autocreate=true);
   virtual void readParamsFromModel();
   virtual void writeParamsToModel();
+  virtual bool optimizeParameters();
 
 
   bool hasParam(std::string name);
@@ -61,7 +62,13 @@ public:
   void setParam(std::string name,const Eigen::VectorXd &vec,int type);
   void setParam(std::string name,const Eigen::MatrixXd &mat,int type);
 
-
+  virtual void updateParameters(std::vector<double> delta);
+  virtual bool fitMinMaxConfigurations();
+  virtual bool normalizeParameters();
+  virtual bool fitModel();
+  virtual V_Configuration getMinConfigurationObserved();
+  virtual V_Configuration getMaxConfigurationObserved();
+  virtual V_Configuration getConfiguration(size_t index);
 
   articulation_model_msgs::ModelMsg model_msg;
   Model model;
@@ -76,7 +83,7 @@ public:
   double supress_similar;
   double outlier_ratio;
   double sac_iterations;
-//  TODO: not needed yet: double optimizer_iterations;
+  double optimizer_iterations;
 
   // cached variables
   double complexity;
@@ -90,6 +97,8 @@ public:
 
   double last_error_jacobian;
   double evaluated;
+
+  std::vector<articulation_model_msgs::ParamMsg> params_initial;
 
 protected:
 };
