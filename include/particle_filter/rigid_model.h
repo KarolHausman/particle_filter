@@ -24,11 +24,12 @@ public:
 
   bool guessParameters();
   void updateParameters(std::vector<double> delta);
-
+  virtual void updateStateParametersToModel();
+  virtual void updateModelToStateParameters();
 
   tf::Vector3 rigid_position;
   tf::Quaternion rigid_orientation;
-  double rigid_width,rigid_height;
+//  double rigid_width,rigid_height; TODO: Not needed now
   double pos_x, pos_y, pos_z, roll, pitch, yaw;
 protected:
 

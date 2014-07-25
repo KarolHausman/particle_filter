@@ -14,6 +14,8 @@
 #include "articulation_model_msgs/ParamMsg.h"
 #include "particle_filter/articulation_model.h"
 #include "particle_filter/rotational_model.h"
+#include "particle_filter/rigid_model.h"
+
 
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -35,7 +37,7 @@ int main(int argc, char** argv)
   while (ros::ok())
   {
     articulation_model_msgs::ModelMsg model_msg;
-    model_msg.name = "rotational";
+//    model_msg.name = "rotational";
     articulation_model_msgs::ParamMsg sigma_param;
     sigma_param.name = "sigma_position";
     sigma_param.value = 0.02;
@@ -49,8 +51,8 @@ int main(int argc, char** argv)
     for (int i = 0; i < 100; i++)
     {
       geometry_msgs::Pose pose;
-      pose.position.x = cos(i / 100.0 + count / 10.0)+var_nor();
-      pose.position.y = sin(i / 100.0 + count / 10.0)+var_nor();
+      pose.position.x = /*cos(i / 100.0 + count / 10.0)+*/5 + var_nor();
+      pose.position.y = /*sin(i / 100.0 + count / 10.0)+*/8 + var_nor();
       pose.position.z = var_nor();
       pose.orientation.x = 0;
       pose.orientation.y = 0;
@@ -60,7 +62,7 @@ int main(int argc, char** argv)
     }
 
     std::cout << "creating object" << std::endl;
-    ArticulationModelPtr model_instance(new RotationalModel);//factory.restoreModel(model_msg);
+    ArticulationModelPtr model_instance(new RigidModel);//factory.restoreModel(model_msg);
     model_instance->setModel(model_msg);
 
     std::cout << "fitting" << std::endl;
@@ -72,7 +74,17 @@ int main(int argc, char** argv)
 
 
 //    std::cout << "model class = "<< model_instance->getModelName() << std::endl;
-    std::cout << "       radius = "<<model_instance->getParam("rot_radius")<< std::endl;
+//    std::cout << "       radius = "<<model_instance->getParam("rot_radius")<< std::endl;
+
+//    boost::shared_ptr<RotationalModel> rotational = boost::dynamic_pointer_cast< RotationalModel > (model_instance);
+//    std::cout << "    rotational   radius = "<<rotational->rot_radius<< std::endl;
+
+    std::cout << "       rigid_position.x = "<<model_instance->getParam("rigid_position.x")<< std::endl;
+    boost::shared_ptr<RigidModel> rigid = boost::dynamic_pointer_cast< RigidModel > (model_instance);
+    std::cout << "     pos.x = " << rigid->pos_x << std::endl;
+
+
+
     std::cout << "       center.x = "<<model_instance->getParam("rot_center.x")<< std::endl;
     std::cout << "       center.y = "<<model_instance->getParam("rot_center.y")<< std::endl;
     std::cout << "       center.z = "<<model_instance->getParam("rot_center.z")<< std::endl;

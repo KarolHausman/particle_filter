@@ -9,10 +9,32 @@ RotationalModel::RotationalModel()
   rot_orientation = tf::Quaternion (0,0,0,1);
   complexity = 3+2+1+3;	// rotation center + rotation axis + radius + orientation
   rot_mode = 0;// use position (=0) or orientation (=1) for configuration estimation
+  updateStateParametersToModel();
 }
 
 RotationalModel::~RotationalModel()
 {
+}
+
+void RotationalModel::updateStateParametersToModel()
+{
+  rot_center_x = rot_center.getX();
+  rot_center_y = rot_center.getY();
+  rot_center_z = rot_center.getZ();
+  tf::Matrix3x3 m(rot_orientation);
+  m.getEulerYPR(yaw, pitch, roll);
+  radius = rot_radius;
+  //TODO::update axis_x, axis_y
+}
+
+void RotationalModel::updateModelToStateParameters()
+{
+  rot_center.setX(rot_center_x);
+  rot_center.setY(rot_center_y);
+  rot_center.setZ(rot_center_z);
+  rot_orientation.setRPY(roll, pitch, yaw);
+  rot_radius = radius;
+  //TODO::update rot_axis
 }
 
 void RotationalModel::readParamsFromModel()
@@ -23,11 +45,15 @@ void RotationalModel::readParamsFromModel()
   getParam("rot_radius",rot_radius);
   getParam("rot_orientation",rot_orientation);
   getParam("rot_mode",rot_mode);
+
+  updateStateParametersToModel();
 }
 
 void RotationalModel::writeParamsToModel()
 {
   ArticulationModel::writeParamsToModel();
+  updateModelToStateParameters();
+
   setParam("rot_center",rot_center,articulation_model_msgs::ParamMsg::PARAM);
   setParam("rot_axis",rot_axis,articulation_model_msgs::ParamMsg::PARAM);
   setParam("rot_radius",rot_radius,articulation_model_msgs::ParamMsg::PARAM);
@@ -311,6 +337,8 @@ bool RotationalModel::guessParameters()
   if(!check_values(rot_axis)) return false;
   if(!check_values(rot_radius)) return false;
   if(!check_values(rot_orientation)) return false;
+
+  updateStateParametersToModel();
 
   return true;
 }

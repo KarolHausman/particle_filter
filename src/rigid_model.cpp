@@ -5,8 +5,10 @@ RigidModel::RigidModel()
   model = RIGID;
   rigid_position = tf::Vector3(0,0,0);
   rigid_orientation = tf::Quaternion(0,0,0,1);
-  rigid_width = 1;
-  rigid_height = 1;
+
+  updateStateParametersToModel();
+//  rigid_width = 1;
+//  rigid_height = 1;
   complexity = 6;
 }
 
@@ -14,22 +16,43 @@ RigidModel::~RigidModel()
 {
 }
 
+void RigidModel::updateStateParametersToModel()
+{
+  pos_x = rigid_position.getX();
+  pos_y = rigid_position.getY();
+  pos_z = rigid_position.getZ();
+  tf::Matrix3x3 m(rigid_orientation);
+  m.getEulerYPR(yaw, pitch, roll);
+}
+
+void RigidModel::updateModelToStateParameters()
+{
+  rigid_position.setX(pos_x);
+  rigid_position.setY(pos_y);
+  rigid_position.setZ(pos_z);
+  rigid_orientation.setRPY(roll, pitch, yaw);
+}
+
 void RigidModel::readParamsFromModel()
 {
   ArticulationModel::readParamsFromModel();
   getParam("rigid_position",rigid_position);
   getParam("rigid_orientation",rigid_orientation);
-  getParam("rigid_width",rigid_width);
-  getParam("rigid_height",rigid_height);
+//  getParam("rigid_width",rigid_width);
+//  getParam("rigid_height",rigid_height);
+
+ updateStateParametersToModel();
 }
 
 void RigidModel::writeParamsToModel()
 {
   ArticulationModel::writeParamsToModel();
+  updateModelToStateParameters();
+
   setParam("rigid_position",rigid_position,articulation_model_msgs::ParamMsg::PARAM);
   setParam("rigid_orientation",rigid_orientation,articulation_model_msgs::ParamMsg::PARAM);
-  setParam("rigid_width",rigid_width,articulation_model_msgs::ParamMsg::PARAM);
-  setParam("rigid_height",rigid_height,articulation_model_msgs::ParamMsg::PARAM);
+//  setParam("rigid_width",rigid_width,articulation_model_msgs::ParamMsg::PARAM);
+//  setParam("rigid_height",rigid_height,articulation_model_msgs::ParamMsg::PARAM);
 }
 
 geometry_msgs::Pose RigidModel::predictPose(V_Configuration q)
@@ -51,6 +74,7 @@ bool RigidModel::guessParameters()
   tf::poseMsgToTF(model_msg.track.pose[i], pose);
   rigid_position = pose.getOrigin();
   rigid_orientation = pose.getRotation();
+  updateStateParametersToModel();
   return true;
 }
 

@@ -5,22 +5,38 @@ PrismaticModel::PrismaticModel()
   model = PRISMATIC;
   complexity = 6+2; //rigid + orientation - yaw
   prismatic_dir = tf::Vector3(0,0,0);
+  updateStateParametersToModel();
 }
 
 PrismaticModel::~PrismaticModel()
 {
 }
 
+void PrismaticModel::updateStateParametersToModel()
+{
+  RigidModel::updateStateParametersToModel();
+  //TODO: update axis_x and axis_y with prismatic_dir
+}
+
+void PrismaticModel::updateModelToStateParameters()
+{
+  RigidModel::updateModelToStateParameters();
+  //TODO: update prismatic_dir with axis_x and axis_y
+}
+
+
 // -- params
 void PrismaticModel::readParamsFromModel()
 {
   RigidModel::readParamsFromModel();
   getParam("prismatic_dir",prismatic_dir);
+  updateStateParametersToModel();
 }
 
 void PrismaticModel::writeParamsToModel()
 {
   RigidModel::writeParamsToModel();
+  updateModelToStateParameters();
   setParam("prismatic_dir",prismatic_dir,articulation_model_msgs::ParamMsg::PARAM);
 }
 
@@ -70,6 +86,7 @@ bool PrismaticModel::guessParameters()
   if(!check_values(rigid_orientation)) return false;
   if(!check_values(prismatic_dir)) return false;
 
+  updateStateParametersToModel();
   return true;
 }
 
@@ -90,6 +107,7 @@ bool PrismaticModel::normalizeParameters()
     if(predictConfiguration(model_msg.track.pose.back())[0] < 0)
       prismatic_dir *= -1;
   }
+  updateStateParametersToModel();
   return true;
 }
 

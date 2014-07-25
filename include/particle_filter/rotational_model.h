@@ -19,6 +19,9 @@ public:
   void readParamsFromModel();
   void writeParamsToModel();
 
+  void updateStateParametersToModel();
+  void updateModelToStateParameters();
+
   size_t getDOFs() { return 1; }
 
   V_Configuration predictConfiguration(geometry_msgs::Pose pose);
