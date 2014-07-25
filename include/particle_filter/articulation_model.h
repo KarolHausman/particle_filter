@@ -13,6 +13,7 @@
 class ArticulationModel;
 typedef boost::shared_ptr<ArticulationModel> ArticulationModelPtr;
 typedef Eigen::VectorXd V_Configuration;
+typedef Eigen::MatrixXd M_CartesianJacobian;
 enum Model { FREE, PRISMATIC, RIGID, ROTATIONAL, MODELS_NUMBER };
 
 class ArticulationModel
@@ -75,8 +76,11 @@ public:
   bool check_values(double v);
   bool check_values(float v);
 
-
-
+  virtual bool evaluateModel();
+  virtual double evalLatestJacobian();
+  virtual M_CartesianJacobian predictJacobian(V_Configuration q,double delta = 1e-6);
+  virtual M_CartesianJacobian predictHessian(V_Configuration q,double delta = 1e-6);
+  Eigen::VectorXd pointToEigen(const geometry_msgs::Point& p);
 
   articulation_model_msgs::ModelMsg model_msg;
   Model model;

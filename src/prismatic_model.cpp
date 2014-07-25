@@ -92,3 +92,11 @@ bool PrismaticModel::normalizeParameters()
   }
   return true;
 }
+
+M_CartesianJacobian PrismaticModel::predictHessian(V_Configuration q,double delta)
+{
+  M_CartesianJacobian H;
+  H.setZero(3*getDOFs(),getDOFs());
+  return H;
+}
+

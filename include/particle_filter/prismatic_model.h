@@ -22,6 +22,7 @@ public:
 
   V_Configuration predictConfiguration(geometry_msgs::Pose pose);
   geometry_msgs::Pose predictPose(V_Configuration q);
+  M_CartesianJacobian predictHessian(V_Configuration q,double delta=1e-6);
 
   bool guessParameters();
   void updateParameters(std::vector<double> delta);

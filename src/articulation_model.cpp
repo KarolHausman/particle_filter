@@ -659,4 +659,170 @@ bool ArticulationModel::check_values(float v) {
   return(!isnan(v) && !isinf(v));
 }
 
+// -- evaluate model
+bool ArticulationModel::evaluateModel()
+{
+  // need at least one data point
+  if(model_msg.track.pose.size() == 0)
+          return false;
+
+  // let getLogLikelihood() do the projection
+  loglikelihood = getLogLikelihood(false);
+  // evaluate some extra statistics
+
+  // get params
+  size_t n = model_msg.track.pose.size();
+
+  // compute pose difference and likelihoods
+  double sum_position2 = 0;
+  double sum_orientation2 = 0;
+
+  double sum_position = 0;
+  double sum_orientation = 0;
+//  double sum_loglikelihood = 0;
+
+  for(size_t i=0;i<n;i++)
+  {
+    tf::Transform p1, p2;
+    tf::poseMsgToTF(model_msg.track.pose[i], p1);
+    tf::poseMsgToTF(model_msg.track.pose_projected[i], p2);
+
+    tf::Transform diff = p1.inverseTimes(p2);
+    double err_position2 = diff.getOrigin().length2();
+    double err_orientation2 = (diff.getRotation().getAngle())*(diff.getRotation().getAngle());
+//    sum_loglikelihood += model.track.channels[channelInlierLogLikelihood].values[i];
+
+    sum_position2 += err_position2;
+    sum_orientation2 += err_orientation2;
+    sum_position += sqrt(err_position2);
+    sum_orientation += sqrt(err_orientation2);
+  }
+
+  // store into cache
+  avg_error_position = sum_position/n;
+  avg_error_orientation = sum_orientation/n;
+  loglikelihood += - ((double)n)*getDOFs()*log(n);
+
+  bic =
+        -2*(loglikelihood )
+        +complexity
+        * log( n );
+
+  last_error_jacobian = evalLatestJacobian();
+
+  evaluated = true;
+
+  if(model_msg.track.pose.size()>=2)
+  {
+    Eigen::VectorXd q1 = predictConfiguration( model_msg.track.pose.front() );
+    Eigen::VectorXd q2 = predictConfiguration( model_msg.track.pose.back() );
+
+    jacobian = predictJacobian( q2 );
+    hessian = predictHessian( q2 );
+    if(getDOFs() >= 1 )
+    {
+      Eigen::VectorXd p(3);
+      for(size_t i=0;i<model_msg.track.pose.size();i++)
+      {
+        p += pointToEigen(model_msg.track.pose[i].position) - pointToEigen(model_msg.track.pose.front().position);
+      }
+      if(p.dot(jacobian.col(0))<0)	// make Jacobian point into current direction (of dof 1)
+        jacobian *= -1;
+        hessian *= -1;
+    }
+}
+  writeParamsToModel();
+  return true;
+}
+
+double ArticulationModel::evalLatestJacobian()
+{
+  if(model_msg.track.pose.size()<2)
+    return 0.00;
+
+  // observed direction of motion
+  Eigen::VectorXd p1 = pointToEigen( model_msg.track.pose[model_msg.track.pose.size()-1].position );
+  Eigen::VectorXd p2 = pointToEigen( model_msg.track.pose[model_msg.track.pose.size()-2].position );
+  Eigen::VectorXd pD_obs = p1-p2;
+  if(pD_obs.norm() == 0)
+          return 0.00;
+  pD_obs.normalize();
+//	cout << "p1="<<p1<<endl;
+//	cout << "p2="<<p2<<endl;
+//	cout << "pD_obs="<<pD_obs<<endl;
+  if(getDOFs()==0)
+    return 2*M_PI;
+
+  // predicted direction of motion
+  Eigen::VectorXd q1 = predictConfiguration( model_msg.track.pose[model_msg.track.pose.size()-1] );
+  Eigen::VectorXd q2 = predictConfiguration( model_msg.track.pose[model_msg.track.pose.size()-2] );
+//	cout << "q1="<<q1<<endl;
+//	cout << "q2="<<q2<<endl;
+  Eigen::MatrixXd J2 = predictJacobian( q2 );
+//	cout << "J2="<<J2<<endl;
+  Eigen::VectorXd qD = (q1 - q2);
+//	cout << "qD="<<qD<<endl;
+  Eigen::VectorXd pD_pred = J2 * qD; // reduce Jacobian
+//	cout << "pD_pred="<<pD_pred<<endl;
+  if(pD_pred.norm() == 0)
+    return 0.00;
+  pD_pred.normalize();
+//	cout << "qD_pred.normalized="<<pD_pred<<endl;
+//
+//	cout << "angle_diff="<<acos( pD_obs.dot( pD_pred ) )<<endl;
+//
+//	// return angle between predicted motion and observed motion
+  return acos( pD_obs.dot( pD_pred ) );
+}
+
+Eigen::VectorXd ArticulationModel::pointToEigen(const geometry_msgs::Point& p)
+{
+  Eigen::VectorXd vec(3);
+  vec << p.x , p.y , p.z;
+  return vec;
+}
+
+M_CartesianJacobian ArticulationModel::predictJacobian(V_Configuration vq,double delta)
+{
+  M_CartesianJacobian J;
+  J.resize(3,getDOFs());
+  Eigen::VectorXd p = pointToEigen(predictPose(vq).position);
+  for(size_t i=0;i<getDOFs();i++)
+  {
+    V_Configuration q = vq;
+    q(i) += delta;
+    J.col(i) = (pointToEigen( predictPose(q).position ) - p)/delta;
+  }
+  return J;
+}
+
+M_CartesianJacobian ArticulationModel::predictHessian(V_Configuration q,double delta)
+{
+  M_CartesianJacobian H;
+  H.resize(3*getDOFs(),getDOFs());
+//	cout <<"dofs="<<getDOFs()<<" q.size"<<vq.size()<<endl;
+  for(size_t i=0;i<getDOFs();i++)
+  {
+    V_Configuration qd = q;
+    q(i) += delta;
+    M_CartesianJacobian H_part;
+
+    M_CartesianJacobian J = predictJacobian(q);
+    M_CartesianJacobian Jd = predictJacobian(qd);
+
+//		cout << J(0,0) << " "<< J(1,0) << " "<< J(2,0) << endl;
+//		cout << "H_part "<<Jd(0,0) << " "<< Jd(1,0) << " "<< Jd(2,0) << endl;
+
+    H_part = (Jd - J)/delta;
+//		cout << "H_part "<<H_part(0,0) << " "<< H_part(1,0) << " "<< H_part(2,0) << endl;
+    for(size_t r=0;r<3;r++)
+    {
+      for(size_t c=0;c<getDOFs();c++)
+      {
+        H(r+3*i,c) = H_part(r,c);
+      }
+    }
+  }
+  return H;
+}
 
