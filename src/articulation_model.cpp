@@ -86,7 +86,7 @@ double ArticulationModel::getParam(std::string name)
       return(model_msg.params[i].value);
     }
   }
-  std::cerr << "WARNING (in ArticulationModel::getParam): undefined parameter '"<<name<<"'" << std::endl;
+//  std::cerr << "WARNING (in ArticulationModel::getParam): undefined parameter '"<<name<<"'" << std::endl;
   return 0.00;
 }
 
@@ -194,6 +194,12 @@ bool ArticulationModel::hasParam(std::string name)
   return false;
 }
 
+void ArticulationModel::setModel(const articulation_model_msgs::ModelMsg& model_m)
+{
+  this->model_msg = model_m;
+  readParamsFromModel();
+  prepareChannels();
+}
 
 
 bool ArticulationModel::sampleConsensus()

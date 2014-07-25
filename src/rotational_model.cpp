@@ -120,8 +120,8 @@ bool RotationalModel::guessParameters()
 
   tf::Transform pose1, pose2, pose3;
   tf::poseMsgToTF(model_msg.track.pose[i], pose1);
-  tf::poseMsgToTF(model_msg.track.pose[i], pose2);
-  tf::poseMsgToTF(model_msg.track.pose[i], pose3);
+  tf::poseMsgToTF(model_msg.track.pose[j], pose2);
+  tf::poseMsgToTF(model_msg.track.pose[k], pose3);
 
 //	if( pose1.getOrigin().distance(pose2.getOrigin())/sigma_position <
 //		pose1.getRotation().angle(pose2.getRotation())/sigma_orientation
@@ -146,7 +146,6 @@ bool RotationalModel::guessParameters()
     rot_radius = 0.0;
 
     rot_radius = (dist_12 * 0.5) / sin( angle_12 * 0.5 );
-
 //  PRINT(pose1.getOrigin());
 //  PRINT(pose2.getOrigin());
     tf::Vector3 c1 = (pose1.getOrigin() + pose2.getOrigin())/2;
@@ -162,6 +161,7 @@ bool RotationalModel::guessParameters()
 //  PRINT(rot_12);
     rot_center = c1 + v1.cross(rot_12) * rot_radius * cos(angle_12/2);
 //  PRINT(rot_center);
+
 
     tf::Vector3 d(1,0,0);
     d = pose1.getOrigin() - rot_center;
@@ -304,6 +304,8 @@ bool RotationalModel::guessParameters()
 //	PRINT(rot_center);
 //	PRINT(rot_axis);
 //	PRINT(rot_orientation);
+
+
 
   if(!check_values(rot_center)) return false;
   if(!check_values(rot_axis)) return false;
