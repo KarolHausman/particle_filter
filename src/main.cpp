@@ -25,12 +25,12 @@ int main(int argc, char **argv)
   Eigen::MatrixXd rigid_cov = Eigen::MatrixXd::Identity(6, 6);
   rigid_cov = rigid_cov / 10;
 
-  Eigen::VectorXd rotational_mean = Eigen::VectorXd::Ones(9);
-  Eigen::MatrixXd rotational_cov = Eigen::MatrixXd::Identity(9, 9);
+  Eigen::VectorXd rotational_mean = Eigen::VectorXd::Ones(10);
+  Eigen::MatrixXd rotational_cov = Eigen::MatrixXd::Identity(10, 10);
   rotational_cov = rotational_cov / 10;
 
-  Eigen::VectorXd prismatic_mean = Eigen::VectorXd::Ones(8);
-  Eigen::MatrixXd prismatic_cov = Eigen::MatrixXd::Identity(8, 8);
+  Eigen::VectorXd prismatic_mean = Eigen::VectorXd::Ones(9);
+  Eigen::MatrixXd prismatic_cov = Eigen::MatrixXd::Identity(9, 9);
   prismatic_cov = prismatic_cov / 10;
 
 
@@ -46,10 +46,10 @@ int main(int argc, char **argv)
 
 
 
-  Eigen::VectorXd u = Eigen::VectorXd::Ones(9);
+  Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
   Eigen::MatrixXd motionNoiseCov = rotational_cov / 10;
 
-  Eigen::VectorXd z = Eigen::VectorXd::Ones(9);
+  Eigen::VectorXd z = Eigen::VectorXd::Ones(10);
   Eigen::MatrixXd sensorNoiseCov = rotational_cov / 2;
 
   ros::Rate r(2);
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     {
 
       ROS_INFO ("Correction step started.");
-      z = (Eigen::VectorXd(9) << 1, 1, 1, 1, 1, 1, 1, 1, 1).finished();
+      z = (Eigen::VectorXd(10) << 1, 1, 1, 1, 1, 1, 1, 1, 1, 1).finished();
       ROS_INFO_STREAM ("measurement equals: \n" << z);
 
       pf.correct(z, sensorNoiseCov, *sensorModel);

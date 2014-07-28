@@ -22,8 +22,9 @@ inline std::ostream& operator << (std::ostream& stream, const PrismaticModel& pm
   stream << "roll = " << pm.roll << "\n";
   stream << "pitch = " << pm.pitch << "\n";
   stream << "yaw = " << pm.yaw << "\n";
-  stream << "axis_roll = " << pm.axis_roll << "\n";
-  stream << "axis_pitch = " << pm.axis_pitch << "\n \n";
+  stream << "axis_x = " << pm.axis_x << "\n";
+  stream << "axis_y = " << pm.axis_y << "\n";
+  stream << "axis_z = " << pm.axis_z << "\n \n";
   return stream;
 }
 
@@ -49,8 +50,9 @@ inline std::ostream& operator << (std::ostream& stream, const RotationalModel& r
   stream << "pitch = " << rm.pitch << "\n";
   stream << "yaw = " << rm.yaw << "\n";
   stream << "radius = " << rm.radius << "\n";
-  stream << "axis_x = " << rm.axis_x << "\n";
-  stream << "axis_y = " << rm.axis_y << "\n \n";
+  stream << "axis_roll = " << rm.axis_roll << "\n";
+  stream << "axis_pitch = " << rm.axis_pitch << "\n";
+  stream << "axis_yaw = " << rm.axis_yaw << "\n \n";
   return stream;
 }
 

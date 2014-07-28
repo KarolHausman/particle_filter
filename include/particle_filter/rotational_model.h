@@ -38,7 +38,7 @@ public:
   double rot_radius;
   tf::Quaternion rot_orientation;
 
-  double rot_center_x, rot_center_y, rot_center_z, roll, pitch, yaw, radius, axis_x, axis_y;
+  double rot_center_x, rot_center_y, rot_center_z, roll, pitch, yaw, radius, axis_roll, axis_pitch, axis_yaw;
 protected:
 
 

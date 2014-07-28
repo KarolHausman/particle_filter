@@ -77,8 +77,9 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       rotational_model->pitch = state_vector(4);
       rotational_model->yaw = state_vector(5);
       rotational_model->radius = state_vector(6);
-      rotational_model->axis_x = state_vector(7);
-      rotational_model->axis_y = state_vector(8);
+      rotational_model->axis_roll = state_vector(7);
+      rotational_model->axis_pitch = state_vector(8);
+      rotational_model->axis_yaw = state_vector(9);
 
       it->state = static_cast<ArticulationModelPtr> (rotational_model);
     }
@@ -92,8 +93,9 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       prismatic_model->roll = state_vector(3);
       prismatic_model->pitch = state_vector(4);
       prismatic_model->yaw = state_vector(5);
-      prismatic_model->axis_roll = state_vector(6);
-      prismatic_model->axis_pitch = state_vector(7);
+      prismatic_model->axis_x = state_vector(6);
+      prismatic_model->axis_y = state_vector(7);
+      prismatic_model->axis_z = state_vector(8);
 
       it->state = static_cast<ArticulationModelPtr> (prismatic_model);
     }

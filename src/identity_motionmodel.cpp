@@ -46,8 +46,9 @@ template <> ArticulationModelPtr IdentityMotionModel<ArticulationModelPtr>::move
         prismatic->roll += noise(3);
         prismatic->pitch += noise(4);
         prismatic->yaw += noise(5);
-        prismatic->axis_roll += noise(6);
-        prismatic->axis_pitch += noise(7);
+        prismatic->axis_x += noise(6);
+        prismatic->axis_y += noise(7);
+        prismatic->axis_z += noise(8);
         state_result = static_cast<ArticulationModelPtr> (prismatic);
         break;
       }
@@ -61,8 +62,9 @@ template <> ArticulationModelPtr IdentityMotionModel<ArticulationModelPtr>::move
         rotational->pitch += noise(4);
         rotational->yaw += noise(5);
         rotational->radius += noise(6);
-        rotational->axis_x += noise(7);
-        rotational->axis_y += noise(8);
+        rotational->axis_roll += noise(7);
+        rotational->axis_pitch += noise(8);
+        rotational->axis_yaw += noise(9);
         state_result = static_cast<ArticulationModelPtr> (rotational);
         break;
       }
