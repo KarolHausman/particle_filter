@@ -28,6 +28,8 @@ public:
 
   virtual void setTrack(const articulation_model_msgs::TrackMsg& track);
   virtual void setModel(const articulation_model_msgs::ModelMsg& model_m);
+  virtual articulation_model_msgs::ModelMsg getModel();
+
   virtual bool sampleConsensus();
   virtual bool guessParameters();
 

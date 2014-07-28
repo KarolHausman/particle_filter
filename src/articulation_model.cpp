@@ -201,6 +201,12 @@ void ArticulationModel::setModel(const articulation_model_msgs::ModelMsg& model_
   prepareChannels();
 }
 
+articulation_model_msgs::ModelMsg ArticulationModel::getModel()
+{
+  writeParamsToModel();
+  return this->model_msg;
+}
+
 
 bool ArticulationModel::sampleConsensus()
 {

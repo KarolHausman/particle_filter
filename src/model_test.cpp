@@ -32,6 +32,8 @@ int main(int argc, char** argv)
   boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
                   var_nor(rng, nd);
 
+  ros::Publisher model_pub = n.advertise<articulation_model_msgs::ModelMsg> ("model_track", 5);
+
 //  MultiModelFactory factory;
 
   while (ros::ok())
@@ -45,7 +47,7 @@ int main(int argc, char** argv)
     model_msg.params.push_back(sigma_param);
 
     model_msg.track.header.stamp = ros::Time();
-    model_msg.track.header.frame_id = "/";
+    model_msg.track.header.frame_id = "/world";
 //    model_msg.track.track_type = articulation_model_msgs::TrackMsg::TRACK_POSITION_ONLY;
 
     for (int i = 0; i < 100; i++)
@@ -99,6 +101,7 @@ int main(int argc, char** argv)
     std::cout << "       log LH = " << model_instance->getParam("loglikelihood") << std::endl; //TODO: change back to getLikelihood
     std::cout << " points= "<<model_msg.track.pose.size()<< std::endl;
 
+    model_pub.publish(model_instance->getModel());
 //    ModelMsg fitted_model_msg = model_instance->getModel();
 
     ros::spinOnce();
