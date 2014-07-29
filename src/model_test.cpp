@@ -55,7 +55,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < 300; i++)
     {
       geometry_msgs::Pose pose;
-      pose.position.x = (static_cast<float> (i)/100.0) + var_nor()/*cos(i / 100.0 + count / 10.0) + var_nor()*/;
+      pose.position.x = 100 + (static_cast<float> (i)/100.0) + var_nor()/*cos(i / 100.0 + count / 10.0) + var_nor()*/;
       pose.position.y = /*sin(i / 100.0 + count / 10.0)+*/(static_cast<float> (i)/100.0) + var_nor();
       pose.position.z = (static_cast<float> (i)/100.0) + var_nor();
       pose.orientation.x = 0;

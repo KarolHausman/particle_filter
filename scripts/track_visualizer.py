@@ -66,6 +66,40 @@ class trackVisualizer:
         self.render_rotational_model(model, marker_array)
     if model.name == "prismatic":
         self.render_prismatic_model(model, marker_array)
+    if model.name == "rigid"
+        self.render_rigid_model(model, marker_array)
+
+
+  def render_rigid_model(self, model, marker_array):
+    rigid_position_x = 0
+    rigid_position_y = 0
+    rigid_position_z = 0
+    rigid_orientation_x = 0
+    rigid_orientation_y = 0
+    rigid_orientation_z = 0
+    rigid_orientation_w = 0
+    
+    for param in model.params:
+      if param.name == "rigid_position.x":
+        rigid_position_x = param.value
+      if param.name == "rigid_position.y":
+        rigid_position_y = param.value
+      if param.name == "rigid_position.z":
+        rigid_position_z = param.value
+
+      if param.name == "rigid_orientation.x":
+        rigid_orientation_x = param.value
+      if param.name == "rigid_orientation.y":
+        rigid_orientation_y = param.value
+      if param.name == "rigid_orientation.z":
+        rigid_orientation_z = param.value
+      if param.name == "rigid_orientation.w":
+        rigid_orientation_w = param.value
+
+      rigid_pose_orientation = Quaternion(rigid_orientation_x, rigid_orientation_y, rigid_orientation_z, rigid_orientation_w)  
+      identity_pose_orientation = Quaternion(0, 0, 0, 1)                  
+      rigid_pose_position = Point(rigid_position_x, rigid_position_y, rigid_position_z)
+      rigid_pose = Pose(rigid_pose_position, identity_pose_orientation)
 
 
   def render_prismatic_model(self, model, marker_array):
@@ -117,7 +151,6 @@ class trackVisualizer:
     marker.action = Marker.ADD
 
     marker.scale = Vector3(0.01,0.01,0.01)
-    #marker.color = self.generate_color_axis(track.id, i,axis)
     marker.color.a = 1
     marker.color.b = 1
 
