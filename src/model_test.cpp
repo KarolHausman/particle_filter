@@ -62,6 +62,8 @@ int main(int argc, char** argv)
       pose.orientation.w = 1;
       model_msg.track.pose.push_back(pose);
     }
+    model_msg.track.header.stamp =  ros::Time::now();
+    model_msg.track.header.seq = 0;
 
     std::cout << "creating object" << std::endl;
     ArticulationModelPtr model_instance(new RotationalModel);//factory.restoreModel(model_msg);

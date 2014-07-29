@@ -53,7 +53,7 @@ class trackVisualizer:
     self.render_points(model.track,marker_array)
     
 
-    self.delete_old_markers(model.track,marker_array)	
+    #self.delete_old_markers(model.track,marker_array)	
 
     rospy.loginfo( "publishing MarkerArray, containing %d markers",
     len(marker_array.markers) )
@@ -66,13 +66,17 @@ class trackVisualizer:
       marker.header.frame_id = track.header.frame_id
       marker.ns = "track_visualizer-%d"%(track.id)
       marker.id = self.num_markers[track.id]
-      marker.action = Marker.ADD
+      marker.action = marker.ADD
+      marker.lifetime = rospy.Duration.from_sec(1)
 
       marker.scale = Vector3(0.003,0.003,0.003)
+      marker.color.g = 1
+      marker.color.a = 1
       #marker.color = self.generate_color_rectangle(track.id, i)
 
       marker.type = Marker.SPHERE_LIST
       marker.pose = track.pose[i]
+    
       marker.points.append( Point(0,0,0) )
 
       marker_array.markers.append(marker)
