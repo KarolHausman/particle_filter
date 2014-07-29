@@ -103,9 +103,10 @@ class trackVisualizer:
       if param.name == "prismatic_dir.z":
         prismatic_dir_z = param.value
 
-      rigid_pose_orientation = Quaternion(rigid_orientation_x, rigid_orientation_y, rigid_orientation_z, rigid_orientation_w)          
+      rigid_pose_orientation = Quaternion(rigid_orientation_x, rigid_orientation_y, rigid_orientation_z, rigid_orientation_w)  
+      identity_pose_orientation = Quaternion(0, 0, 0, 1)                  
       rigid_pose_position = Point(rigid_position_x, rigid_position_y, rigid_position_z)
-      rigid_pose = Pose(rigid_pose_position, rigid_pose_orientation)
+      rigid_pose = Pose(rigid_pose_position, identity_pose_orientation)
       prismatic_dir = Point(prismatic_dir_x, prismatic_dir_y, prismatic_dir_z)
 
     marker = Marker()
@@ -124,12 +125,16 @@ class trackVisualizer:
     marker.pose = rigid_pose
     for axis in range(3):
       marker.points.append( Point(0,0,0) )
+      marker.colors.append( ColorRGBA(0,0,0,0) )
       if axis==0:
         marker.points.append( Point(0.3,0,0) )
+        marker.colors.append( ColorRGBA(1,0,0,1) )
       elif axis==1:
         marker.points.append( Point(0,0.3,0) )
+        marker.colors.append( ColorRGBA(0,1,0,1) )
       elif axis==2:
         marker.points.append( Point(0,0,0.3) )
+        marker.colors.append( ColorRGBA(0,0,1,1) )
 
     marker_array.markers.append(marker)
 
@@ -151,6 +156,37 @@ class trackVisualizer:
     marker_dir.points.append( prismatic_dir )
     
     marker_array.markers.append(marker_dir)
+
+    #marker orientation
+    marker_orient = Marker()
+    marker_orient.header.stamp = model.track.header.stamp
+    marker_orient.header.frame_id = model.track.header.frame_id
+    marker_orient.ns = "model_visualizer_orientation"
+    marker_orient.id = 0#self.num_markers[model.track.id]
+    marker_orient.action = Marker.ADD
+
+    marker_orient.scale = Vector3(0.01,0.01,0.01)
+    marker_orient.color.a = 1
+    marker_orient.color.b = 1
+
+    marker_orient.type = Marker.LINE_STRIP
+    marker_pose = Pose( Point(rigid_pose_position.x + prismatic_dir.x, rigid_pose_position.y + prismatic_dir.y, rigid_pose_position.z + prismatic_dir.z), rigid_pose_orientation)
+
+    marker_orient.pose = marker_pose
+    for axis in range(3):
+      marker_orient.points.append( Point(0,0,0) )
+      marker_orient.colors.append( ColorRGBA(0,0,0,0) )
+      if axis==0:
+        marker_orient.points.append( Point(0.3,0,0) )
+        marker_orient.colors.append( ColorRGBA(1,0,0,1) )
+      elif axis==1:
+        marker_orient.points.append( Point(0,0.3,0) )
+        marker_orient.colors.append( ColorRGBA(0,1,0,1) )
+      elif axis==2:
+        marker_orient.points.append( Point(0,0,0.3) )
+        marker_orient.colors.append( ColorRGBA(0,0,1,1) )
+    
+    marker_array.markers.append(marker_orient)
 
 
   def render_rotational_model(self, model, marker_array):

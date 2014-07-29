@@ -59,9 +59,9 @@ int main(int argc, char** argv)
       pose.position.y = /*sin(i / 100.0 + count / 10.0)+*/(static_cast<float> (i)/100.0) + var_nor();
       pose.position.z = (static_cast<float> (i)/100.0) + var_nor();
       pose.orientation.x = 0;
-      pose.orientation.y = 0;
+      pose.orientation.y = 0.7071;
       pose.orientation.z = 0;
-      pose.orientation.w = 1;
+      pose.orientation.w = 0.7071;
       model_msg.track.pose.push_back(pose);
     }
     model_msg.track.header.stamp =  ros::Time::now();
