@@ -35,13 +35,14 @@ int main(int argc, char** argv)
 
   ros::Publisher model_pub = n.advertise<articulation_model_msgs::ModelMsg> ("model_track", 5);
 
-//  MultiModelFactory factory;
 
   while (ros::ok())
   {
     articulation_model_msgs::ModelMsg model_msg;
 //    model_msg.name = "rotational";
-    model_msg.name = "prismatic";
+//    model_msg.name = "prismatic";
+    model_msg.name = "rigid";
+
     articulation_model_msgs::ParamMsg sigma_param;
     sigma_param.name = "sigma_position";
     sigma_param.value = 0.02;
@@ -55,9 +56,20 @@ int main(int argc, char** argv)
     for (int i = 0; i < 300; i++)
     {
       geometry_msgs::Pose pose;
-      pose.position.x = 100 + (static_cast<float> (i)/100.0) + var_nor()/*cos(i / 100.0 + count / 10.0) + var_nor()*/;
-      pose.position.y = /*sin(i / 100.0 + count / 10.0)+*/(static_cast<float> (i)/100.0) + var_nor();
-      pose.position.z = (static_cast<float> (i)/100.0) + var_nor();
+//      pose.position.x = 2 + (static_cast<float> (i)/100.0) + var_nor();
+//      pose.position.x = cos(i / 100.0 + count / 10.0) + var_nor();
+      pose.position.x = 2 + var_nor();
+
+
+//      pose.position.y = (static_cast<float> (i)/100.0) + var_nor();
+//      pose.position.y = sin(i / 100.0 + count / 10.0) + var_nor();
+      pose.position.y = 4 + var_nor();
+
+
+//      pose.position.z = var_nor();
+//      pose.position.z = (static_cast<float> (i)/100.0) + var_nor();
+      pose.position.z = 1 + var_nor();
+
       pose.orientation.x = 0;
       pose.orientation.y = 0.7071;
       pose.orientation.z = 0;
@@ -68,8 +80,10 @@ int main(int argc, char** argv)
     model_msg.track.header.seq = 0;
 
     std::cout << "creating object" << std::endl;
-//    ArticulationModelPtr model_instance(new RotationalModel);//factory.restoreModel(model_msg);
-    ArticulationModelPtr model_instance(new PrismaticModel);
+//    ArticulationModelPtr model_instance(new RotationalModel);
+//    ArticulationModelPtr model_instance(new PrismaticModel);
+    ArticulationModelPtr model_instance(new RigidModel);
+
     model_instance->setModel(model_msg);
 
     std::cout << "fitting" << std::endl;
