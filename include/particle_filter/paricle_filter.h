@@ -44,8 +44,8 @@ public:
   virtual void propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
                          const MotionModel<ParticleType>& model);
 
-  virtual void correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
-                       const SensorModel<ParticleType>& model);
+  template <class ZType> void correct(const ZType z, const Eigen::MatrixXd& noiseCov,
+                       const SensorModel<ParticleType, ZType>& model);
 
   virtual bool resample(const int& particles_number);
 

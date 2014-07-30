@@ -1,19 +1,19 @@
 #include "particle_filter/sensor_model.h"
 
-template <class StateType> SensorModel<StateType>::SensorModel()
+template <class StateType, class ZType> SensorModel<StateType, ZType>::SensorModel()
 {
 }
 
-template <class StateType> SensorModel<StateType>::~SensorModel()
+template <class StateType, class ZType> SensorModel<StateType, ZType>::~SensorModel()
 {
 }
 
-template <class StateType> double SensorModel<StateType>::senseLogLikelihood(const Eigen::VectorXd &z, const StateType &state,
+template <class StateType, class ZType> double SensorModel<StateType, ZType>::senseLogLikelihood(const ZType &z, const StateType &state,
                                        const Eigen::MatrixXd &cov) const
 {
   return log(senseLikelihood(z, state, cov));
 }
 
-template class SensorModel<Eigen::VectorXd>;
-template class SensorModel<ArticulationModelPtr>;
+template class SensorModel<Eigen::VectorXd, Eigen::VectorXd>;
+template class SensorModel<ArticulationModelPtr, Eigen::VectorXd>;
 

@@ -4,20 +4,20 @@
 #include <Eigen/Core>
 #include <particle_filter/articulation_model.h>
 
-template <class StateType>
+template <class StateType, class ZType>
 class SensorModel
 {
 public:
   SensorModel();
   virtual ~SensorModel();
 
-  virtual Eigen::VectorXd sense (const StateType& state, const Eigen::VectorXd& noise)
+  virtual ZType sense (const StateType& state, const Eigen::VectorXd& noise)
                                   const = 0;
 
-  virtual double senseLikelihood (const Eigen::VectorXd& z, const StateType& state,
+  virtual double senseLikelihood (const ZType& z, const StateType& state,
                                   const Eigen::MatrixXd& cov) const = 0;
 
-  virtual double senseLogLikelihood (const Eigen::VectorXd& z, const StateType& state,
+  virtual double senseLogLikelihood (const ZType& z, const StateType& state,
                                   const Eigen::MatrixXd& cov) const;
 
 

@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 //  SensorModel<Eigen::VectorXd>* sensorModel = new GaussianSensorModel<Eigen::VectorXd>;
 
   MotionModel<ArticulationModelPtr>* motionModel = new IdentityMotionModel<ArticulationModelPtr>;
-  SensorModel<ArticulationModelPtr>* sensorModel = new GaussianSensorModel<ArticulationModelPtr>;
+  SensorModel<ArticulationModelPtr, Eigen::VectorXd>* sensorModel = new GaussianSensorModel<ArticulationModelPtr, Eigen::VectorXd>;
 
 
 
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
       z = (Eigen::VectorXd(10) << 1, 1, 1, 1, 1, 1, 1, 1, 1, 1).finished();
       ROS_INFO_STREAM ("measurement equals: \n" << z);
 
-      pf.correct(z, sensorNoiseCov, *sensorModel);
+      pf.correct<Eigen::VectorXd>(z, sensorNoiseCov, *sensorModel);
       ROS_INFO ("Correction step executed.");
       if (!pf.resample(particles_number))
       {

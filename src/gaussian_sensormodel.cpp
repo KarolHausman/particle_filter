@@ -4,20 +4,20 @@
 #include "particle_filter/prismatic_model.h"
 #include "particle_filter/rotational_model.h"
 
-template <class StateType> GaussianSensorModel<StateType>::GaussianSensorModel()
+template <class StateType, class ZType> GaussianSensorModel<StateType, ZType>::GaussianSensorModel()
 {
 }
 
-template <class StateType> GaussianSensorModel<StateType>::~GaussianSensorModel()
+template <class StateType, class ZType> GaussianSensorModel<StateType, ZType>::~GaussianSensorModel()
 {
 }
 
-template <class StateType> Eigen::VectorXd GaussianSensorModel<StateType>::sense(const StateType &state, const Eigen::VectorXd &noise) const
+template <class StateType, class ZType> ZType GaussianSensorModel<StateType, ZType>::sense(const StateType &state, const Eigen::VectorXd &noise) const
 {
 
 }
 
-template <class StateType> double GaussianSensorModel<StateType>::senseLikelihood(const Eigen::VectorXd &z, const StateType &state, const Eigen::MatrixXd &cov) const
+template <class StateType, class ZType> double GaussianSensorModel<StateType, ZType>::senseLikelihood(const ZType &z, const StateType &state, const Eigen::MatrixXd &cov) const
 {
   // construct a gaussian with state as mean and noiseCov
   // check where z lies in the gaussian
@@ -26,7 +26,7 @@ template <class StateType> double GaussianSensorModel<StateType>::senseLikelihoo
 }
 
 //TODO: add free model
-template <> double GaussianSensorModel<ArticulationModelPtr>::senseLikelihood(const Eigen::VectorXd &z, const ArticulationModelPtr &state, const Eigen::MatrixXd &cov) const
+template <> double GaussianSensorModel<ArticulationModelPtr, Eigen::VectorXd>::senseLikelihood(const Eigen::VectorXd &z, const ArticulationModelPtr &state, const Eigen::MatrixXd &cov) const
 {
   Eigen::VectorXd z_adjusted, state_adjusted;
   Eigen::MatrixXd cov_adjusted;
@@ -89,6 +89,6 @@ template <> double GaussianSensorModel<ArticulationModelPtr>::senseLikelihood(co
   return Random::multivariateGaussianProbability(state_adjusted, cov_adjusted, z_adjusted);
 }
 
-template class GaussianSensorModel<Eigen::VectorXd>;
-template class GaussianSensorModel<ArticulationModelPtr>;
+template class GaussianSensorModel<Eigen::VectorXd, Eigen::VectorXd>;
+template class GaussianSensorModel<ArticulationModelPtr, Eigen::VectorXd>;
 

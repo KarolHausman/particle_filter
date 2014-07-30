@@ -345,8 +345,9 @@ template <class ParticleType> void ParticleFilter<ParticleType>::propagate(const
   }
 }
 
-template <class ParticleType> void ParticleFilter<ParticleType>::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
-                     const SensorModel<ParticleType> &model)
+template <class ParticleType>  template <class ZType>
+void ParticleFilter<ParticleType>::correct(const ZType z, const Eigen::MatrixXd& noiseCov,
+                     const SensorModel<ParticleType, ZType> &model)
 {
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
                        it++)
@@ -360,5 +361,9 @@ template <class ParticleType> void ParticleFilter<ParticleType>::correct(const E
 
 template class ParticleFilter <Eigen::VectorXd>;
 template class ParticleFilter <ArticulationModelPtr>;
+template void ParticleFilter<Eigen::VectorXd>::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorModel<Eigen::VectorXd, Eigen::VectorXd> &model);
+template void ParticleFilter<ArticulationModelPtr>::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorModel<ArticulationModelPtr, Eigen::VectorXd> &model);
 
 
