@@ -16,4 +16,5 @@ template <class StateType, class ZType> double SensorModel<StateType, ZType>::se
 
 template class SensorModel<Eigen::VectorXd, Eigen::VectorXd>;
 template class SensorModel<ArticulationModelPtr, Eigen::VectorXd>;
+template class SensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>;
 
