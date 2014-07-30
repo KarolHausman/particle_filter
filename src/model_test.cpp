@@ -39,9 +39,9 @@ int main(int argc, char** argv)
   while (ros::ok())
   {
     articulation_model_msgs::ModelMsg model_msg;
-//    model_msg.name = "rotational";
+    model_msg.name = "rotational";
 //    model_msg.name = "prismatic";
-    model_msg.name = "rigid";
+//    model_msg.name = "rigid";
 
     articulation_model_msgs::ParamMsg sigma_param;
     sigma_param.name = "sigma_position";
@@ -53,36 +53,49 @@ int main(int argc, char** argv)
     model_msg.track.header.frame_id = "/world";
 //    model_msg.track.track_type = articulation_model_msgs::TrackMsg::TRACK_POSITION_ONLY;
 
-    for (int i = 0; i < 300; i++)
+    for (int i = 0; i < 150; i++)
     {
       geometry_msgs::Pose pose;
 //      pose.position.x = 2 + (static_cast<float> (i)/100.0) + var_nor();
-//      pose.position.x = cos(i / 100.0 + count / 10.0) + var_nor();
-      pose.position.x = 2 + var_nor();
+      pose.position.x = cos(static_cast<float> (i) / 100.0 + count / 10.0) + var_nor();
+//      pose.position.x = 2 + var_nor();
 
 
 //      pose.position.y = (static_cast<float> (i)/100.0) + var_nor();
-//      pose.position.y = sin(i / 100.0 + count / 10.0) + var_nor();
-      pose.position.y = 4 + var_nor();
+      pose.position.y = sin(static_cast<float> (i) / 100.0 + count / 10.0) + var_nor();
+//      pose.position.y = 4 + var_nor();
 
 
-//      pose.position.z = var_nor();
+      pose.position.z = var_nor();
 //      pose.position.z = (static_cast<float> (i)/100.0) + var_nor();
-      pose.position.z = 1 + var_nor();
+//      pose.position.z = 1 + var_nor();
 
-      pose.orientation.x = 0;
-      pose.orientation.y = 0.7071;
-      pose.orientation.z = 0;
-      pose.orientation.w = 0.7071;
+
+      double yaw = static_cast<float> (i)/100;
+      double roll = 0;
+      double pitch = 0;
+
+      tf::Quaternion tf_pose_quat;
+      tf_pose_quat.setRPY(roll, pitch, yaw);
+
+      pose.orientation.x = tf_pose_quat.getX();
+      pose.orientation.y = tf_pose_quat.getY();
+      pose.orientation.z = tf_pose_quat.getZ();
+      pose.orientation.w = tf_pose_quat.getW();
+
+//      pose.orientation.x = 0;
+//      pose.orientation.y = 0;
+//      pose.orientation.z = 0;
+//      pose.orientation.w = 1;
       model_msg.track.pose.push_back(pose);
     }
     model_msg.track.header.stamp =  ros::Time::now();
     model_msg.track.header.seq = 0;
 
     std::cout << "creating object" << std::endl;
-//    ArticulationModelPtr model_instance(new RotationalModel);
+    ArticulationModelPtr model_instance(new RotationalModel);
 //    ArticulationModelPtr model_instance(new PrismaticModel);
-    ArticulationModelPtr model_instance(new RigidModel);
+//    ArticulationModelPtr model_instance(new RigidModel);
 
     model_instance->setModel(model_msg);
 

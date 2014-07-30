@@ -326,35 +326,39 @@ class trackVisualizer:
 
     rot_axis = Quaternion(rot_axis_x, rot_axis_y, rot_axis_z, rot_axis_w) 
     rot_center_position = Point(rot_center_x, rot_center_y, rot_center_z)
-    rot_center_orientation = Quaternion(rot_orientation_x, rot_orientation_y, rot_orientation_z, rot_orientation_w)          
-    rot_center = Pose(rot_center_position, rot_axis)#rot_center_orientation)
+    rot_center_orientation = Quaternion(rot_orientation_x, rot_orientation_y, rot_orientation_z, rot_orientation_w)
+    identity_pose_orientation = Quaternion(0, 0, 0, 1)                            
+    rot_center = Pose(rot_center_position, rot_center_orientation) #rot_axis)#rot_center_orientation)
         
-    marker = Marker()
-    marker.header.stamp = model.track.header.stamp
-    marker.header.frame_id = model.track.header.frame_id
-    marker.ns = "model_visualizer"
-    marker.id = 0#self.num_markers[model.track.id]
-    marker.action = Marker.ADD
+    marker_rot = Marker()
+    marker_rot.header.stamp = model.track.header.stamp
+    marker_rot.header.frame_id = model.track.header.frame_id
+    marker_rot.ns = "model_visualizer"
+    marker_rot.id = 0#self.num_markers[model.track.id]
+    marker_rot.action = Marker.ADD
 
-    marker.scale = Vector3(0.01,0.01,0.01)
-    #marker.color = self.generate_color_axis(track.id, i,axis)
-    marker.color.a = 1
-    marker.color.b = 1
+    marker_rot.scale = Vector3(0.01,0.01,0.01)
+    marker_rot.color.a = 1
+    marker_rot.color.b = 1
 
-    marker.type = Marker.LINE_STRIP
-    marker.pose = rot_center
+    marker_rot.type = Marker.LINE_STRIP
+    marker_rot.pose = rot_center
 
         
     for axis in range(3):
-      marker.points.append( Point(0,0,0) )
+      marker_rot.points.append( Point(0,0,0) )
+      marker_rot.colors.append( ColorRGBA(0,0,0,0) )
       if axis==0:
-        marker.points.append( Point(0.3,0,0) )
+        marker_rot.points.append( Point(0.3,0,0) )
+        marker_rot.colors.append( ColorRGBA(1,0,0,0) )
       elif axis==1:
-        marker.points.append( Point(0,0.3,0) )
+        marker_rot.points.append( Point(0,0.3,0) )
+        marker_rot.colors.append( ColorRGBA(0,1,0,0) )
       elif axis==2:
-        marker.points.append( Point(0,0,0.3) )
+        marker_rot.points.append( Point(0,0,0.3) )
+        marker_rot.colors.append( ColorRGBA(0,0,1,0) )
 
-    marker_array.markers.append(marker)
+    marker_array.markers.append(marker_rot)
 
     #adding radius
     marker_radius = Marker()
@@ -391,10 +395,24 @@ class trackVisualizer:
       marker.color.a = 1
       #marker.color = self.generate_color_rectangle(track.id, i)
 
-      marker.type = Marker.SPHERE_LIST
+      #marker.type = Marker.SPHERE_LIST
+      marker.type = Marker.LINE_STRIP
       marker.pose = track.pose[i]
+
+      for axis in range(3):
+        marker.points.append( Point(0,0,0) )
+        marker.colors.append( ColorRGBA(0,0,0,0) )
+        if axis==0:
+          marker.points.append( Point(0.3,0,0) )
+          marker.colors.append( ColorRGBA(1,0,0,0) )
+        elif axis==1:
+          marker.points.append( Point(0,0.3,0) )
+          marker.colors.append( ColorRGBA(0,1,0,0) )
+        elif axis==2:
+          marker.points.append( Point(0,0,0.3) )
+          marker.colors.append( ColorRGBA(0,0,1,0) )
     
-      marker.points.append( Point(0,0,0) )
+      #marker.points.append( Point(0,0,0) )
 
       marker_array.markers.append(marker)
       self.num_markers[track.id] += 1
