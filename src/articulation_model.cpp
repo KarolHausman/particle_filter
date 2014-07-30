@@ -36,6 +36,12 @@ void ArticulationModel::setTrack(const articulation_model_msgs::TrackMsg& track)
   this->model_msg.track = track;
 }
 
+void ArticulationModel::addTrack(const articulation_model_msgs::TrackMsg& track)
+{
+  this->model_msg.track.pose.insert(this->model_msg.track.pose.end(), track.pose.begin(), track.pose.end());
+}
+
+
 
 void ArticulationModel::readParamsFromModel()
 {
