@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     {
       geometry_msgs::Pose pose;
 //      pose.position.x = 2 + (static_cast<float> (i)/100.0) + var_nor();
-      pose.position.x = cos(static_cast<float> (i) / 100.0 + count / 10.0) + var_nor();
+      pose.position.x = 2 + cos(static_cast<float> (i) / 100.0 + count / 10.0) + var_nor();
 //      pose.position.x = 2 + var_nor();
 
 
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
 
 
       double yaw = static_cast<float> (i)/100;
-      double roll = 0;
+      double roll = M_PI/4;
       double pitch = 0;
 
       tf::Quaternion tf_pose_quat;
