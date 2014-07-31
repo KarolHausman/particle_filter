@@ -1,6 +1,6 @@
 <launch> 
 
 <node pkg="tf" type="static_transform_publisher" name="world" args="0 0 0 0 0 0 /world /something 100"/>
-<node pkg="particle_filter" type="articulation_testing_node" name="articulation_testing_node" />
+<node pkg="particle_filter" type="articulation_testing_node" name="articulation_testing_node" output="screen" />
 
 </launch>

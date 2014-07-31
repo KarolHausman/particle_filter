@@ -137,7 +137,7 @@ class trackVisualizer:
     marker = Marker()
     marker.header.stamp = model.track.header.stamp
     marker.header.frame_id = model.track.header.frame_id
-    marker.ns = "model_visualizer"
+    marker.ns = "model_visualizer_rigid"
     marker.id = 0#self.num_markers[model.track.id]
     marker.action = Marker.ADD
 
@@ -207,7 +207,7 @@ class trackVisualizer:
     marker = Marker()
     marker.header.stamp = model.track.header.stamp
     marker.header.frame_id = model.track.header.frame_id
-    marker.ns = "model_visualizer"
+    marker.ns = "model_visualizer_prismatic"
     marker.id = 0#self.num_markers[model.track.id]
     marker.action = Marker.ADD
 
@@ -236,7 +236,7 @@ class trackVisualizer:
     marker_dir = Marker()
     marker_dir.header.stamp = model.track.header.stamp
     marker_dir.header.frame_id = model.track.header.frame_id
-    marker_dir.ns = "model_visualizer_dir"
+    marker_dir.ns = "model_visualizer_prismatic_dir"
     marker_dir.id = 0#self.num_markers[model.track.id]
     marker_dir.action = Marker.ADD
 
@@ -255,7 +255,7 @@ class trackVisualizer:
     marker_orient = Marker()
     marker_orient.header.stamp = model.track.header.stamp
     marker_orient.header.frame_id = model.track.header.frame_id
-    marker_orient.ns = "model_visualizer_orientation"
+    marker_orient.ns = "model_visualizer_prismatic_orientation"
     marker_orient.id = 0#self.num_markers[model.track.id]
     marker_orient.action = Marker.ADD
 
@@ -351,7 +351,7 @@ class trackVisualizer:
     marker_rot = Marker()
     marker_rot.header.stamp = model.track.header.stamp
     marker_rot.header.frame_id = model.track.header.frame_id
-    marker_rot.ns = "model_visualizer"
+    marker_rot.ns = "model_visualizer_rotational"
     marker_rot.id = 0#self.num_markers[model.track.id]
     marker_rot.action = Marker.ADD
 
@@ -382,7 +382,7 @@ class trackVisualizer:
     marker_radius = Marker()
     marker_radius.header.stamp = model.track.header.stamp
     marker_radius.header.frame_id = model.track.header.frame_id
-    marker_radius.ns = "model_visualizer_radius"
+    marker_radius.ns = "model_visualizer_rotational_radius"
     marker_radius.id = 0#self.num_markers[model.track.id]
     marker_radius.action = Marker.ADD
 
@@ -401,7 +401,7 @@ class trackVisualizer:
     marker_rot_orient = Marker()
     marker_rot_orient.header.stamp = model.track.header.stamp
     marker_rot_orient.header.frame_id = model.track.header.frame_id
-    marker_rot_orient.ns = "model_visualizer_orientation"
+    marker_rot_orient.ns = "model_visualizer__rotational_orientation"
     marker_rot_orient.id = 0#self.num_markers[model.track.id]
     marker_rot_orient.action = Marker.ADD
 

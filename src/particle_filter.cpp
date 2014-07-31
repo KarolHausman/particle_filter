@@ -34,6 +34,54 @@ template <> ParticleFilter<Eigen::VectorXd>::ParticleFilter(const int& size, con
     weightsToLogWeights();
 }
 
+//TODO: take care of free model
+template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size, articulation_model_msgs::ModelMsg& model):
+  logLikelihoods_(true),freemodel_samples_(1)
+{
+  this->particles.resize(size);
+  const double remaining_models_temp = static_cast<double> ((size - freemodel_samples_) / (MODELS_NUMBER - 1));
+  const int remaining_models = static_cast<uint> (remaining_models_temp);
+  uint i = 0;
+  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin();
+    it != particles.end(); it++, i++)
+  {
+    if (i < freemodel_samples_)
+    {
+      it->state.reset(new FreeModel);
+    }
+    else if (i >= freemodel_samples_ && i < freemodel_samples_ + remaining_models)
+    {
+      ArticulationModelPtr rigid_model(new RigidModel);
+      model.name = "rigid";
+      rigid_model->setModel(model);
+      rigid_model->fitModel();
+      it->state = rigid_model;
+    }
+    else if (i >= freemodel_samples_ + remaining_models && i < freemodel_samples_ + remaining_models*2)
+    {
+      ArticulationModelPtr rotational_model(new RotationalModel);
+      model.name = "rotational";
+      rotational_model->setModel(model);
+      rotational_model->fitModel();
+      it->state = rotational_model;
+    }
+    else
+    {
+      ArticulationModelPtr prismatic_model(new PrismaticModel);
+      model.name = "prismatic";
+      prismatic_model->setModel(model);
+      prismatic_model->fitModel();
+      it->state = prismatic_model;
+    }
+    it->weight = 1.0 / (double) size;
+  }
+  if (logLikelihoods_)
+  {
+    weightsToLogWeights();
+  }
+}
+
+
 //initialization of state for articulation models
 template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size,
                                                                  const Eigen::VectorXd& rigid_mean, const Eigen::MatrixXd& rigid_cov,
@@ -365,5 +413,7 @@ template void ParticleFilter<Eigen::VectorXd>::correct(const Eigen::VectorXd z, 
                                                        const SensorModel<Eigen::VectorXd, Eigen::VectorXd> &model);
 template void ParticleFilter<ArticulationModelPtr>::correct(const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
                                                        const SensorModel<ArticulationModelPtr, Eigen::VectorXd> &model);
+template void ParticleFilter<ArticulationModelPtr>::correct(const articulation_model_msgs::TrackMsg z, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg> &model);
 
 

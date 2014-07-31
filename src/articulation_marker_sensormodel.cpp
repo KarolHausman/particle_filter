@@ -24,31 +24,24 @@ template <class StateType, class ZType> double ArtMarkerSensorModel<StateType, Z
 
 }
 
-//TODO: add free model
+// do not use this one as the likelihoods get too big
 template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>::senseLikelihood(const articulation_model_msgs::TrackMsg &z, const ArticulationModelPtr &state, const Eigen::MatrixXd &cov) const
 {
   state->addTrack(z);
-  switch (state->model)
-  {
-    case (RIGID):
-      {
-        boost::shared_ptr<RigidModel> rigid = boost::dynamic_pointer_cast< RigidModel > (state);
+  state->evaluateModel();
+  //TODO: check if loglikelihood knows for which model it is
+  return exp(state->getParam("loglikelihood"));
+}
 
-        break;
-      }
-    case (PRISMATIC):
-      {
-        boost::shared_ptr<PrismaticModel> prismatic = boost::dynamic_pointer_cast< PrismaticModel > (state);
+//TODO: add free model
+template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>::senseLogLikelihood(const articulation_model_msgs::TrackMsg &z, const ArticulationModelPtr &state,
+                                       const Eigen::MatrixXd &cov) const
+{
+  std::cerr << "LOG CALLED!!!!!!!!!!" << std::endl;
+  state->addTrack(z);
+  state->evaluateModel();
 
-        break;
-      }
-    case (ROTATIONAL):
-      {
-        boost::shared_ptr<RotationalModel> rotational = boost::dynamic_pointer_cast< RotationalModel > (state);
-
-        break;
-      }
-  }
+  return (state->getParam("loglikelihood"));
 }
 
 template class ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>;

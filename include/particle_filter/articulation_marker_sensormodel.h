@@ -12,6 +12,7 @@ public:
 
   ZType sense(const StateType &state, const Eigen::VectorXd &noise) const;
   double senseLikelihood(const ZType &z, const StateType &state, const Eigen::MatrixXd &cov) const;
+  double senseLogLikelihood (const ZType& z, const StateType& state, const Eigen::MatrixXd& cov) const;
 };
 
 

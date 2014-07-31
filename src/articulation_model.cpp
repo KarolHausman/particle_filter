@@ -39,6 +39,7 @@ void ArticulationModel::setTrack(const articulation_model_msgs::TrackMsg& track)
 void ArticulationModel::addTrack(const articulation_model_msgs::TrackMsg& track)
 {
   this->model_msg.track.pose.insert(this->model_msg.track.pose.end(), track.pose.begin(), track.pose.end());
+  prepareChannels();
 }
 
 
@@ -339,9 +340,11 @@ double ArticulationModel::getLogLikelihood(bool estimate_outlier_ratio)
 {
   model_msg.track.pose_projected.resize(model_msg.track.pose.size());
 
+
   model_msg.track.channels[channelInlierLogLikelihood].values.resize(model_msg.track.pose.size());
   model_msg.track.channels[channelOutlier].values.resize(model_msg.track.pose.size());
   model_msg.track.channels[channelLogLikelihood].values.resize(model_msg.track.pose.size());
+
   for(size_t i=0; i<(size_t)getDOFs(); i++)
   {
     model_msg.track.channels[channelConfiguration[i]].values.resize(model_msg.track.pose.size());
@@ -362,6 +365,7 @@ double ArticulationModel::getLogLikelihood(bool estimate_outlier_ratio)
     do
     {
       sum_likelihood = 0;
+
       for(size_t i=0; i<n; i++)
       {
         sum_likelihood += getLogLikelihoodForPoseIndex(i);
@@ -678,8 +682,11 @@ bool ArticulationModel::evaluateModel()
   if(model_msg.track.pose.size() == 0)
           return false;
 
+  std::cerr << "size of points: " << model_msg.track.pose.size() << std::endl;
+
   // let getLogLikelihood() do the projection
   loglikelihood = getLogLikelihood(false);
+
   // evaluate some extra statistics
 
   // get params
@@ -743,6 +750,7 @@ bool ArticulationModel::evaluateModel()
         hessian *= -1;
     }
 }
+
   writeParamsToModel();
   return true;
 }
