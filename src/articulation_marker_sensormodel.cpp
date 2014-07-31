@@ -37,7 +37,6 @@ template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model
 template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>::senseLogLikelihood(const articulation_model_msgs::TrackMsg &z, const ArticulationModelPtr &state,
                                        const Eigen::MatrixXd &cov) const
 {
-  std::cerr << "LOG CALLED!!!!!!!!!!" << std::endl;
   state->addTrack(z);
   state->evaluateModel();
 
