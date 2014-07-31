@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 
 
 
-  const int initial_datapoints_number = 30;
+  const int initial_datapoints_number = 20;
 
   articulation_model_msgs::ModelMsg model_msg;
   articulation_model_msgs::ParamMsg sigma_param;
@@ -157,9 +157,9 @@ int main(int argc, char** argv)
   rigid_instance->setModel(model_msg);
 
   std::cout << "fitting" << std::endl;
-  rotational_instance->fitModel();
-  prismatic_instance->fitModel();
-  rigid_instance->fitModel();
+//  rotational_instance->fitModel();
+//  prismatic_instance->fitModel();
+//  rigid_instance->fitModel();
 
 
   int loop_count = 1;
@@ -181,9 +181,9 @@ int main(int argc, char** argv)
 
 
     std::cout << "evaluating" << std::endl;
-//    rotational_instance->fitModel();
-//    prismatic_instance->fitModel();
-//    rigid_instance->fitModel();
+    rotational_instance->fitModel();
+    prismatic_instance->fitModel();
+    rigid_instance->fitModel();
 
 
     rotational_instance->evaluateModel();

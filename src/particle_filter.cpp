@@ -36,7 +36,7 @@ template <> ParticleFilter<Eigen::VectorXd>::ParticleFilter(const int& size, con
 
 //TODO: take care of free model
 template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size, articulation_model_msgs::ModelMsg& model):
-  logLikelihoods_(true),freemodel_samples_(1)
+  logLikelihoods_(true),freemodel_samples_(0)
 {
   this->particles.resize(size);
   const double remaining_models_temp = static_cast<double> ((size - freemodel_samples_) / (MODELS_NUMBER - 1));

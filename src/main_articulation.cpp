@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(10, 10);
   Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
-  Eigen::MatrixXd motionNoiseCov = covariance / 10;
+  Eigen::MatrixXd motionNoiseCov = covariance / 100;
   Eigen::MatrixXd sensorNoiseCov = covariance / 2;
 
 
@@ -74,9 +74,9 @@ int main(int argc, char **argv)
   boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
                   var_nor(rng, nd);
 
-  bool rotational = false;
+  bool rotational = true;
   bool prismatic = false;
-  bool rigid = true;
+  bool rigid = false;
 
   const int datapoints_number = 300;
 
@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 
   //---------------------------------- particle filter initalization ----------
   const int particles_number = 20;
-  const int initial_datapoints_number = 100;
+  const int initial_datapoints_number = 150;
 
   articulation_model_msgs::ModelMsg model_msg;
   articulation_model_msgs::ParamMsg sigma_param;
