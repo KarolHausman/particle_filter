@@ -17,7 +17,7 @@ ArticulationModel::ArticulationModel()
   evaluated = false;
   supress_similar = true;
   outlier_ratio = 0.5;
-  sac_iterations = 100;
+  sac_iterations = 300;
 //  optimizer_iterations = 10;
   optimizer_iterations = 0;
 

@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "model_fitting");
   ros::NodeHandle n;
-  ros::Rate loop_rate(0.5);
+  ros::Rate loop_rate(0.8);
 
   boost::normal_distribution<> nd(0.0, 0.01);
   boost::mt19937 rng;
@@ -88,9 +88,9 @@ int main(int argc, char** argv)
     }
     else if (rotational)
     {
-      pose.position.x = 2 + cos(static_cast<float> (i) / 100.0) + var_nor();
-      pose.position.y = sin(static_cast<float> (i) / 100.0) + var_nor();
-      pose.position.z = var_nor();
+      pose.position.x = 2 + sin(static_cast<float> (i) / 100.0) + var_nor();
+      pose.position.y = var_nor();
+      pose.position.z = cos(static_cast<float> (i) / 100.0) + var_nor();
     }
     else if(rigid)
     {
@@ -101,9 +101,9 @@ int main(int argc, char** argv)
 
     if (rotational)
     {
-      double yaw = static_cast<float> (i)/100;
+      double yaw = 0;//static_cast<float> (i)/100;
       double roll = M_PI/4;
-      double pitch = 0;//static_cast<float> (i)/100;//0;
+      double pitch = static_cast<float> (i)/100;//0;
 
       tf::Quaternion tf_pose_quat;
       tf_pose_quat.setRPY(roll, pitch, yaw);
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 
 
 
-  const int initial_datapoints_number = 200;
+  const int initial_datapoints_number = 40;
 
   articulation_model_msgs::ModelMsg model_msg;
   articulation_model_msgs::ParamMsg sigma_param;
@@ -162,16 +162,17 @@ int main(int argc, char** argv)
 
 
   int loop_count = 1;
+  int generate_measurement_every_so_many = 10;
 
   while (ros::ok())
   {
 
 
-    if (loop_count % 10 == 0)
+    if (loop_count % generate_measurement_every_so_many == 0)
     {
       // ------------------------ generate measurement -------------------------------
       articulation_model_msgs::TrackMsg z;
-      z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number + 10);
+      z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - generate_measurement_every_so_many, loop_count + initial_datapoints_number + 10);
       rotational_instance->addTrack(z);
       prismatic_instance->addTrack(z);
       rigid_instance->addTrack(z);
@@ -255,9 +256,9 @@ int main(int argc, char** argv)
 
     model_pub.publish(rotational_instance->getModel());
 
-//    model_pub.publish(prismatic_instance->getModel());
+    model_pub.publish(prismatic_instance->getModel());
 
-//    model_pub.publish(rigid_instance->getModel());
+    model_pub.publish(rigid_instance->getModel());
 
 
 

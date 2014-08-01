@@ -42,15 +42,6 @@ class trackVisualizer:
       self.num_markers[model.track.id] = 0
       self.num_poses[model.track.id] = len(model.track.pose)
 
-    #channel_w = None
-    #channel_h = None
-    #for channel in track.channels:
-    #if channel.name == 'width':
-    #channel_w = channel
-    #elif channel.name == 'height':
-    #channel_h = channel
-
-
     marker_array = MarkerArray()
     self.render_points(model.track,marker_array)
     
@@ -72,7 +63,7 @@ class trackVisualizer:
     marker.header.stamp = model.track.header.stamp
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_origin"
-    marker.id = 0#self.num_markers[model.track.id]
+    marker.id = 0
     marker.action = Marker.ADD
 
     marker.scale = Vector3(0.01,0.01,0.01)
@@ -131,6 +122,9 @@ class trackVisualizer:
       if param.name == "rigid_orientation.w":
         rigid_orientation_w = param.value
 
+      if param.name == "weight":
+        weight = param.value
+
     rigid_pose_orientation = Quaternion(rigid_orientation_x, rigid_orientation_y, rigid_orientation_z, rigid_orientation_w)  
     rigid_pose_position = Point(rigid_position_x, rigid_position_y, rigid_position_z)
     rigid_pose = Pose(rigid_pose_position, rigid_pose_orientation)
@@ -139,7 +133,7 @@ class trackVisualizer:
     marker.header.stamp = model.track.header.stamp
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_rigid"
-    marker.id = 0#self.num_markers[model.track.id]
+    marker.id = 0
     marker.action = Marker.ADD
 
     marker.scale = Vector3(0.05,0.05,0.05)
@@ -162,6 +156,26 @@ class trackVisualizer:
         marker.colors.append( ColorRGBA(0,0,1,1) )
 
     marker_array.markers.append(marker)    
+
+    marker_weight = Marker()
+    marker_weight.header.stamp = model.track.header.stamp
+    marker_weight.header.frame_id = model.track.header.frame_id
+    marker_weight.ns = "model_visualizer_rigid_weight"
+    marker_weight.id = 0
+    marker_weight.action = Marker.ADD
+
+    if abs(weight) < 0.05:
+      weight = 0.05
+
+    marker_weight.scale = Vector3(weight,weight,weight)
+    marker_weight.color.a = 0.3
+    marker_weight.color.b = 1
+
+    marker_weight.type = Marker.SPHERE
+    marker_weight.pose = rigid_pose
+   
+
+    marker_array.markers.append(marker_weight)    
 
 
   def render_prismatic_model(self, model, marker_array):
@@ -199,6 +213,9 @@ class trackVisualizer:
       if param.name == "prismatic_dir.z":
         prismatic_dir_z = param.value
 
+      if param.name == "weight":
+        weight = param.value
+
     rigid_pose_orientation = Quaternion(rigid_orientation_x, rigid_orientation_y, rigid_orientation_z, rigid_orientation_w)  
     identity_pose_orientation = Quaternion(0, 0, 0, 1)                  
     rigid_pose_position = Point(rigid_position_x, rigid_position_y, rigid_position_z)
@@ -209,7 +226,7 @@ class trackVisualizer:
     marker.header.stamp = model.track.header.stamp
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_prismatic"
-    marker.id = 0#self.num_markers[model.track.id]
+    marker.id = 0
     marker.action = Marker.ADD
 
     marker.scale = Vector3(0.01,0.01,0.01)
@@ -233,17 +250,39 @@ class trackVisualizer:
 
     marker_array.markers.append(marker)
 
+    marker_weight = Marker()
+    marker_weight.header.stamp = model.track.header.stamp
+    marker_weight.header.frame_id = model.track.header.frame_id
+    marker_weight.ns = "model_visualizer_prismatic_weight"
+    marker_weight.id = 0
+    marker_weight.action = Marker.ADD
+
+    if abs(weight) < 0.05:
+      weight = 0.05
+
+    marker_weight.scale = Vector3(weight,weight,weight)
+    marker_weight.color.a = 0.3
+    marker_weight.color.b = 1
+
+    marker_weight.type = Marker.SPHERE
+    marker_weight.pose = rigid_pose
+   
+
+    marker_array.markers.append(marker_weight)
+
+
     #direction
     marker_dir = Marker()
     marker_dir.header.stamp = model.track.header.stamp
     marker_dir.header.frame_id = model.track.header.frame_id
     marker_dir.ns = "model_visualizer_prismatic_dir"
-    marker_dir.id = 0#self.num_markers[model.track.id]
+    marker_dir.id = 0
     marker_dir.action = Marker.ADD
 
     marker_dir.scale = Vector3(0.01,0.01,0.01)
     marker_dir.color.a = 1
     marker_dir.color.r = 1
+    marker_dir.color.b = 1
 
     marker_dir.type = Marker.LINE_STRIP
     marker_dir.pose = rigid_pose
@@ -257,7 +296,7 @@ class trackVisualizer:
     marker_orient.header.stamp = model.track.header.stamp
     marker_orient.header.frame_id = model.track.header.frame_id
     marker_orient.ns = "model_visualizer_prismatic_orientation"
-    marker_orient.id = 0#self.num_markers[model.track.id]
+    marker_orient.id = 0
     marker_orient.action = Marker.ADD
 
     marker_orient.scale = Vector3(0.01,0.01,0.01)
@@ -326,6 +365,9 @@ class trackVisualizer:
       if param.name == "rot_axis.w":
         rot_axis_w = param.value
 
+      if param.name == "weight":
+        weight = param.value
+
     #rotational axis
     rot_axis = Quaternion(rot_axis_x, rot_axis_y, rot_axis_z, rot_axis_w) 
     rot_center_position = Point(rot_center_x, rot_center_y, rot_center_z)
@@ -368,7 +410,7 @@ class trackVisualizer:
     marker_rot.header.stamp = model.track.header.stamp
     marker_rot.header.frame_id = model.track.header.frame_id
     marker_rot.ns = "model_visualizer_rotational"
-    marker_rot.id = 0#self.num_markers[model.track.id]
+    marker_rot.id = 0
     marker_rot.action = Marker.ADD
 
     marker_rot.scale = Vector3(0.01,0.01,0.01)
@@ -389,10 +431,33 @@ class trackVisualizer:
         marker_rot.points.append( Point(0,0.3,0) )
         marker_rot.colors.append( ColorRGBA(0,1,0,0) )
       elif axis==2:
-        marker_rot.points.append( Point(0,0,0.3) )
+        marker_rot.points.append( Point(0,0,0.9) )
         marker_rot.colors.append( ColorRGBA(0,0,1,0) )
 
     marker_array.markers.append(marker_rot)
+
+
+    #weight
+    marker_weight = Marker()
+    marker_weight.header.stamp = model.track.header.stamp
+    marker_weight.header.frame_id = model.track.header.frame_id
+    marker_weight.ns = "model_visualizer_rotational_weight"
+    marker_weight.id = 0
+    marker_weight.action = Marker.ADD
+    if abs(weight) < 0.05:
+      weight = 0.05
+
+
+    marker_weight.scale = Vector3(weight,weight,weight)
+    marker_weight.color.a = 0.3
+    marker_weight.color.b = 1
+
+    marker_weight.type = Marker.SPHERE
+    marker_weight.pose = rot_center
+   
+
+    marker_array.markers.append(marker_weight)
+
 
 
     #adding radius
@@ -400,7 +465,7 @@ class trackVisualizer:
     marker_radius.header.stamp = model.track.header.stamp
     marker_radius.header.frame_id = model.track.header.frame_id
     marker_radius.ns = "model_visualizer_rotational_radius"
-    marker_radius.id = 0#self.num_markers[model.track.id]
+    marker_radius.id = 0
     marker_radius.action = Marker.ADD
 
     marker_radius.scale = Vector3(0.01,0.01,0.01)
@@ -419,7 +484,7 @@ class trackVisualizer:
     marker_rot_orient.header.stamp = model.track.header.stamp
     marker_rot_orient.header.frame_id = model.track.header.frame_id
     marker_rot_orient.ns = "model_visualizer__rotational_orientation"
-    marker_rot_orient.id = 0#self.num_markers[model.track.id]
+    marker_rot_orient.id = 0
     marker_rot_orient.action = Marker.ADD
 
     marker_rot_orient.scale = Vector3(0.01,0.01,0.01)
@@ -445,15 +510,6 @@ class trackVisualizer:
     rot_center_orientation.w = rot_center_quat[3]
 
     marker_rot_orient.pose = Pose( Point(pose[0][3], pose[1][3], pose[2][3]), rot_center_orientation )
-
-    euler = tf.transformations.euler_from_quaternion(quaternion_orient)
-    roll = euler[0]
-    pitch = euler[1]
-    yaw = euler[2]
-    print "roll: ", roll
-    print "pitch: ", pitch
-    print "yaw: ", yaw
-
     #marker_rot_orient.pose = Pose( Point(rot_center.position.x + rot_radius, rot_center.position.y, rot_center.position.z), rot_center_orientation )
 
     for axis in range(3):
