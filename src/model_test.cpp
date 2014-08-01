@@ -88,9 +88,9 @@ int main(int argc, char** argv)
     }
     else if (rotational)
     {
-      pose.position.x = 2 + sin(static_cast<float> (i) / 100.0) + var_nor();
-      pose.position.y = var_nor();
-      pose.position.z = cos(static_cast<float> (i) / 100.0) + var_nor();
+      pose.position.x = 2 + cos(static_cast<float> (i) / 100.0) + var_nor();
+      pose.position.y = sin(static_cast<float> (i) / 100.0) + var_nor();
+      pose.position.z = var_nor();
     }
     else if(rigid)
     {
@@ -101,9 +101,9 @@ int main(int argc, char** argv)
 
     if (rotational)
     {
-      double yaw = 0;//static_cast<float> (i)/100;
+      double yaw = static_cast<float> (i)/100;
       double roll = M_PI/4;
-      double pitch = static_cast<float> (i)/100;//0;
+      double pitch = 0;//static_cast<float> (i)/100;//0;
 
       tf::Quaternion tf_pose_quat;
       tf_pose_quat.setRPY(roll, pitch, yaw);
