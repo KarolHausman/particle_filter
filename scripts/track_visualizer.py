@@ -352,7 +352,13 @@ class trackVisualizer:
 
     z = abs(z)    #HACK: for better visualization - otherwise z keeps changing its sign
     # TODO: find a better way of doing x such that the dot product = 0
-    x = ([1,0, (-z[0]*1 -z[1]*0)/z[2] ])
+    random_vector = [1,1,1]
+    if np.vdot(z,random_vector) == 1 or np.vdot(z,random_vector) == -1:
+      random_vector = [0,1,1] 
+    x = np.cross(z,random_vector)    
+    
+
+#    x = ([1,0, (-z[0]*1 -z[1]*0)/z[2] ])
     print "x = ", x
     x = normalize(x)
     print "x normalized= ", x
@@ -490,7 +496,10 @@ class trackVisualizer:
     marker_rot_orient.color.r = 1
     marker_rot_orient.type = Marker.LINE_STRIP
     
-    marker_rot_orient.pose = Pose( Point(rot_center_x + rot_radius, rot_center_y, rot_center_z), rot_center_orientation )
+# TODO:fix that such that it is at the end of the radius
+    #point = (rot_center.position.x + rot_radius, rot_center.position.y, rot_center.position.z)
+    #multiply this point by a quaternion?
+    marker_rot_orient.pose = Pose( Point(rot_center.position.x + rot_radius, rot_center.position.y, rot_center.position.z), rot_center_orientation )
 
     for axis in range(3):
       marker_rot_orient.points.append( Point(0,0,0) )
