@@ -336,9 +336,9 @@ class trackVisualizer:
 
 
 
-    quaternion = makeQuaternionCanonical(quaternion)
-
-
+    #quaternion = makeQuaternionCanonical(quaternion)
+    #rot_center_orientation_array = makeQuaternionCanonical([rot_orientation_x, rot_orientation_y, rot_orientation_z, rot_orientation_w])
+    #rot_center_orientation = Quaternion(rot_center_orientation_array[0], rot_center_orientation_array[1], rot_center_orientation_array[2], rot_center_orientation_array[3])
 
     euler = tf.transformations.euler_from_quaternion(quaternion)
     roll = euler[0]
@@ -351,40 +351,27 @@ class trackVisualizer:
     z = normalize(matrix[0:3,2])
 
     z = abs(z)    #HACK: for better visualization - otherwise z keeps changing its sign
-    # TODO: find a better way of doing x such that the dot product = 0
-    random_vector = [1,1,1]
-    if np.vdot(z,random_vector) == 1 or np.vdot(z,random_vector) == -1:
-      random_vector = [0,1,1] 
+
+    random_vector = normalize([0,-1,0])
+    if abs(abs(np.vdot(z,random_vector))-1) < 0.1:
+      random_vector = normalize([-1,0,0])
     x = np.cross(z,random_vector)    
-    
-
+#    another way of doing this, but sign change problem
 #    x = ([1,0, (-z[0]*1 -z[1]*0)/z[2] ])
-    print "x = ", x
     x = normalize(x)
-    print "x normalized= ", x
     y = normalize(-np.cross(x,z))
-
-    print "z = ", z
 
     matrix_no_yaw = [[x[0],y[0],z[0],0], [x[1],y[1],z[1],0], [x[2],y[2],z[2],0], [0,0,0,1]]
     quaternion_no_yaw = normalize(tf.transformations.quaternion_from_matrix(matrix_no_yaw))
 
-    print "matrix no yaw = ", matrix_no_yaw
-    print "quaternion no yaw = ", quaternion_no_yaw
-    #quaternion_out = (0, 0, 0, 1)
-    #quaternion_out_end = tf.transformations.quaternion_multiply(quaternion,quaternion_out)
 
     rot_axis.x = quaternion_no_yaw[0]
     rot_axis.y = quaternion_no_yaw[1]
     rot_axis.z = quaternion_no_yaw[2]
     rot_axis.w = quaternion_no_yaw[3]
-    #euler_out = tf.transformations.euler_from_quaternion(quaternion_out)
-    #print "roll = ", euler_out[0]
-    #print "pitch = ", euler_out[1]
-    #print "yaw = ", euler_out[2]    
     
                        
-    rot_center = Pose(rot_center_position, rot_axis) #rot_axis)#rot_center_orientation)
+    rot_center = Pose(rot_center_position, rot_axis) 
         
     marker_rot = Marker()
     marker_rot.header.stamp = model.track.header.stamp
@@ -496,10 +483,24 @@ class trackVisualizer:
     marker_rot_orient.color.r = 1
     marker_rot_orient.type = Marker.LINE_STRIP
     
-# TODO:fix that such that it is at the end of the radius
-    #point = (rot_center.position.x + rot_radius, rot_center.position.y, rot_center.position.z)
-    #multiply this point by a quaternion?
-    marker_rot_orient.pose = Pose( Point(rot_center.position.x + rot_radius, rot_center.position.y, rot_center.position.z), rot_center_orientation )
+    transform_no_yaw = [[matrix_no_yaw[0][0],matrix_no_yaw[0][1],matrix_no_yaw[0][2],rot_center.position.x],[matrix_no_yaw[1][0], matrix_no_yaw[1][1], matrix_no_yaw[1][2],rot_center.position.y], [matrix_no_yaw[2][0], matrix_no_yaw[2][1], matrix_no_yaw[2][2],rot_center.position.z],[0,0,0,1] ]
+    transform_radius = [[1,0,0,rot_radius],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
+
+    pose = np.dot(transform_no_yaw,transform_radius)
+
+
+    marker_rot_orient.pose = Pose( Point(pose[0][3], pose[1][3], pose[2][3]), rot_center_orientation )
+
+    quaternion_orient = (rot_orientation_x, rot_orientation_y, rot_orientation_z, rot_orientation_w)
+    euler = tf.transformations.euler_from_quaternion(quaternion_orient)
+    roll = euler[0]
+    pitch = euler[1]
+    yaw = euler[2]
+    print "roll: ", roll
+    print "pitch: ", pitch
+    print "yaw: ", yaw
+
+    #marker_rot_orient.pose = Pose( Point(rot_center.position.x + rot_radius, rot_center.position.y, rot_center.position.z), rot_center_orientation )
 
     for axis in range(3):
       marker_rot_orient.points.append( Point(0,0,0) )

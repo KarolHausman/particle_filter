@@ -102,7 +102,7 @@ int main(int argc, char** argv)
     if (rotational)
     {
       double yaw = 0;//static_cast<float> (i)/100;
-      double roll = 0;//M_PI/4;
+      double roll = M_PI/4;
       double pitch = static_cast<float> (i)/100;//0;
 
       tf::Quaternion tf_pose_quat;
@@ -255,9 +255,9 @@ int main(int argc, char** argv)
 
     model_pub.publish(rotational_instance->getModel());
 
-    model_pub.publish(prismatic_instance->getModel());
+//    model_pub.publish(prismatic_instance->getModel());
 
-    model_pub.publish(rigid_instance->getModel());
+//    model_pub.publish(rigid_instance->getModel());
 
 
 
