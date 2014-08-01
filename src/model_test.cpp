@@ -56,8 +56,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "model_fitting");
   ros::NodeHandle n;
-  ros::Rate loop_rate(2);
-  int count = 0;
+  ros::Rate loop_rate(0.5);
 
   boost::normal_distribution<> nd(0.0, 0.01);
   boost::mt19937 rng;
@@ -89,9 +88,9 @@ int main(int argc, char** argv)
     }
     else if (rotational)
     {
-      pose.position.x = 2 + cos(static_cast<float> (i) / 100.0) + var_nor();
-      pose.position.y = sin(static_cast<float> (i) / 100.0) + var_nor();
-      pose.position.z = var_nor();
+      pose.position.x = 2 + sin(static_cast<float> (i) / 100.0) + var_nor();
+      pose.position.y = var_nor();
+      pose.position.z = cos(static_cast<float> (i) / 100.0) + var_nor();
     }
     else if(rigid)
     {
@@ -102,9 +101,9 @@ int main(int argc, char** argv)
 
     if (rotational)
     {
-      double yaw = static_cast<float> (i)/100;
+      double yaw = 0;//static_cast<float> (i)/100;
       double roll = 0;//M_PI/4;
-      double pitch = 0;
+      double pitch = static_cast<float> (i)/100;//0;
 
       tf::Quaternion tf_pose_quat;
       tf_pose_quat.setRPY(roll, pitch, yaw);
@@ -126,7 +125,7 @@ int main(int argc, char** argv)
 
 
 
-  const int initial_datapoints_number = 20;
+  const int initial_datapoints_number = 200;
 
   articulation_model_msgs::ModelMsg model_msg;
   articulation_model_msgs::ParamMsg sigma_param;
@@ -241,6 +240,17 @@ int main(int argc, char** argv)
     std::cout << "     rigid normalized likelihood = " << rigid_likelihood << "\n \n" << std::endl;
 
 
+    rotational_instance->setParam("weight",rotational_likelihood,articulation_model_msgs::ParamMsg::EVAL);
+    prismatic_instance->setParam("weight",prismatic_likelihood,articulation_model_msgs::ParamMsg::EVAL);
+    rigid_instance->setParam("weight",rigid_likelihood,articulation_model_msgs::ParamMsg::EVAL);
+
+
+
+    std::cout << "     rotational BIC = " << rotational_instance->getParam("bic")<< "\n " << std::endl;
+    std::cout << "     prismatic BIC = " << prismatic_instance->getParam("bic")<< "\n "  << std::endl;
+    std::cout << "     rigid BIC = " << rigid_instance->getParam("bic") << "\n \n" << std::endl;
+
+
 //    std::cout << " points= "<<model_msg.track.pose.size() << "\n " << std::endl;
 
     model_pub.publish(rotational_instance->getModel());
@@ -254,6 +264,5 @@ int main(int argc, char** argv)
     ros::spinOnce();
     loop_rate.sleep();
     loop_count++;
-//    ++count;
   }
 }

@@ -18,8 +18,8 @@ ArticulationModel::ArticulationModel()
   supress_similar = true;
   outlier_ratio = 0.5;
   sac_iterations = 100;
-  optimizer_iterations = 10;
-//  optimizer_iterations = 0;
+//  optimizer_iterations = 10;
+  optimizer_iterations = 0;
 
   prior_outlier_ratio = log(0.01) / (- 0.05); // prior over outlier ratio
 

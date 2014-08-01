@@ -17,6 +17,7 @@ import logging
 import getopt
 import colorsys
 import tf
+import numpy as np
 
 class trackVisualizer:
 
@@ -141,7 +142,7 @@ class trackVisualizer:
     marker.id = 0#self.num_markers[model.track.id]
     marker.action = Marker.ADD
 
-    marker.scale = Vector3(0.01,0.01,0.01)
+    marker.scale = Vector3(0.05,0.05,0.05)
     marker.color.a = 1
     marker.color.b = 1
 
@@ -332,18 +333,49 @@ class trackVisualizer:
 
     #setting yaw of rot_axis to 0 because it's a configuration space param
     quaternion = (rot_axis.x, rot_axis.y, rot_axis.z, rot_axis.w)
+
+
+
+    quaternion = makeQuaternionCanonical(quaternion)
+
+
+
     euler = tf.transformations.euler_from_quaternion(quaternion)
     roll = euler[0]
     pitch = euler[1]
     yaw = euler[2]
-    #print "roll = ", roll
-    #print "pitch = ", pitch
-    #print "yaw = ", yaw    
-    quaternion_out = tf.transformations.quaternion_from_euler(roll, pitch, 0)
-    rot_axis.x = quaternion_out[0]
-    rot_axis.y = quaternion_out[1]
-    rot_axis.z = quaternion_out[2]
-    rot_axis.w = quaternion_out[3]
+    quaternion_out = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+
+    matrix = tf.transformations.quaternion_matrix(quaternion)
+
+    z = normalize(matrix[0:3,2])
+
+    z = abs(z)    #HACK: for better visualization - otherwise z keeps changing its sign
+    # TODO: find a better way of doing x such that the dot product = 0
+    x = ([1,0, (-z[0]*1 -z[1]*0)/z[2] ])
+    print "x = ", x
+    x = normalize(x)
+    print "x normalized= ", x
+    y = normalize(-np.cross(x,z))
+
+    print "z = ", z
+
+    matrix_no_yaw = [[x[0],y[0],z[0],0], [x[1],y[1],z[1],0], [x[2],y[2],z[2],0], [0,0,0,1]]
+    quaternion_no_yaw = normalize(tf.transformations.quaternion_from_matrix(matrix_no_yaw))
+
+    print "matrix no yaw = ", matrix_no_yaw
+    print "quaternion no yaw = ", quaternion_no_yaw
+    #quaternion_out = (0, 0, 0, 1)
+    #quaternion_out_end = tf.transformations.quaternion_multiply(quaternion,quaternion_out)
+
+    rot_axis.x = quaternion_no_yaw[0]
+    rot_axis.y = quaternion_no_yaw[1]
+    rot_axis.z = quaternion_no_yaw[2]
+    rot_axis.w = quaternion_no_yaw[3]
+    #euler_out = tf.transformations.euler_from_quaternion(quaternion_out)
+    #print "roll = ", euler_out[0]
+    #print "pitch = ", euler_out[1]
+    #print "yaw = ", euler_out[2]    
     
                        
     rot_center = Pose(rot_center_position, rot_axis) #rot_axis)#rot_center_orientation)
@@ -377,6 +409,54 @@ class trackVisualizer:
         marker_rot.colors.append( ColorRGBA(0,0,1,0) )
 
     marker_array.markers.append(marker_rot)
+
+
+
+
+
+
+
+    #marker_rot = Marker()
+    #marker_rot.header.stamp = model.track.header.stamp
+    #marker_rot.header.frame_id = model.track.header.frame_id
+    #marker_rot.ns = "model_visualizer_rotational_debug"
+    #marker_rot.id = 0#self.num_markers[model.track.id]
+    #marker_rot.action = Marker.ADD
+
+    #marker_rot.scale = Vector3(0.05,0.05,0.05)
+    #marker_rot.color.a = 1
+    #marker_rot.color.b = 1
+
+    #marker_rot.type = Marker.LINE_STRIP
+    #marker_rot.pose = Pose(rot_center_position, identity_pose_orientation)
+
+        
+    #for axis in range(3):
+    #  marker_rot.points.append( Point(0,0,0) )
+    #  marker_rot.colors.append( ColorRGBA(0,0,0,0) )
+    #  if axis==0:
+    #    marker_rot.points.append( Point(x[0],x[1],x[2]) )
+    #    marker_rot.colors.append( ColorRGBA(1,0,0,0) )
+    #  elif axis==1:
+    #    marker_rot.points.append( Point(y[0],y[1],y[2]) )
+    #    marker_rot.colors.append( ColorRGBA(0,1,0,0) )
+    #  elif axis==2:
+    #    marker_rot.points.append( Point(z[0],z[1],z[2]) )
+    #    marker_rot.colors.append( ColorRGBA(0,0,1,0) )
+
+    #marker_array.markers.append(marker_rot)
+
+
+
+
+
+
+
+
+
+
+
+
 
     #adding radius
     marker_radius = Marker()
@@ -479,6 +559,27 @@ class trackVisualizer:
       i += 1
 
 
+
+def normalize(array):
+  """ 
+  Normalize a 4 element array/list/numpy.array for use as a quaternion
+
+  :param quat_array: 4 element list/array
+  :returns: normalized array
+  :rtype: numpy array
+
+  """
+  quat = np.array(array)
+  return quat / np.sqrt(np.dot(quat, quat))
+
+def makeQuaternionCanonical(quat):
+    if quat[0] < 0:
+        quat = [quat[i]*-1 for i in range(4)]
+    elif quat[0] == 0:
+        if quat[1] < 0:
+            quat = [quat[i]*-1 for i in range(4)]
+            
+    return quat
 
 def main():
   colorize_track = False 
