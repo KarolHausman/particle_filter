@@ -16,6 +16,7 @@ Visualizer* Visualizer::getInstance()
 void Visualizer::init()
 {
   marker_pub_ = nh_.advertise<visualization_msgs::Marker>("visualizion_marker", 10);
+  model_pub_ = nh_.advertise<articulation_model_msgs::ModelMsg>("model_track", 10);
 }
 
 void Visualizer::publishParticles(const std::vector <Particle <Eigen::VectorXd> > &particles)
@@ -29,6 +30,65 @@ void Visualizer::publishParticles(const std::vector <Particle <Eigen::VectorXd> 
     points.push_back(it->state);
   }
   publishPoints(points, 0.1);
+}
+
+//assumes that particles are sorted
+//publishes the best particle of each kind(if the kind exists)
+//TODO: add free model
+void Visualizer::publishParticles(const std::vector <Particle <ArticulationModelPtr> > &particles)
+{
+  uint rigid_counter = 0;
+  uint rotational_counter = 0;
+  uint prismatic_counter = 0;
+
+  for (std::vector <Particle <ArticulationModelPtr> >::const_reverse_iterator it = particles.rbegin(); it != particles.rend();
+      ++it)
+  {
+    switch(it->state->model)
+    {
+      case (RIGID):
+      {
+        ++rigid_counter;
+        if(rigid_counter == 1)
+        {
+          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          model_pub_.publish(it->state->getModel());
+        }
+        else
+          continue;
+        break;
+      }
+      case (ROTATIONAL):
+      {
+        ++rotational_counter;
+        if(rotational_counter == 1)
+        {
+          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          model_pub_.publish(it->state->getModel());
+        }
+        else
+          continue;
+        break;
+      }
+      case (PRISMATIC):
+      {
+        ++prismatic_counter;
+        if(prismatic_counter == 1)
+        {
+          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          model_pub_.publish(it->state->getModel());
+        }
+        else
+          continue;
+        break;
+      }
+    }
+  }
+  double sum_all = rigid_counter + prismatic_counter + rotational_counter;
+  double rigid_percentage = rigid_counter/sum_all * 100;
+  double prismatic_percentage = prismatic_counter/sum_all * 100;
+  double rotational_percentage = rotational_counter/sum_all * 100;
+  ROS_ERROR_STREAM("STATISTICS: \n" << "RIGID: " << rigid_percentage << "\n PRISMATIC: " << prismatic_percentage << "\n ROTATIONAL: " << rotational_percentage << "\n");
 }
 
 

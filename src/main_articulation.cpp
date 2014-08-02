@@ -179,6 +179,17 @@ int main(int argc, char **argv)
       ROS_INFO_STREAM ("measurement taken");
 
       pf.correct<articulation_model_msgs::TrackMsg>(z, sensorNoiseCov, *sensorModel);
+
+      if (!pf.normalize())
+      {
+        ROS_ERROR ("no particles left, quiting");
+        return -1;
+      }
+
+      pf.sortParticles();
+      Visualizer::getInstance()->publishParticles(pf.particles);
+
+
       ROS_INFO ("Correction step executed.");
       if (!pf.resample(particles_number))
       {
@@ -186,9 +197,8 @@ int main(int argc, char **argv)
         return -1;
       }
       ROS_INFO ("Resample step executed.");
-      pf.printParticles();
+//      pf.printParticles();
     }
-//    Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();
     ++loop_count;
 

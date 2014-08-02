@@ -22,6 +22,8 @@ public:
 
   virtual ~ParticleFilter();
 
+  bool normalize();
+
   bool normalizeWeights();
 
   bool normalizeLogWeights();

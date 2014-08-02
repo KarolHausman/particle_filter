@@ -307,9 +307,8 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(cons
   return Eigen::Vector3d::Zero();
 }
 
-template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const int& particles_number)
+template <class ParticleType> bool ParticleFilter<ParticleType>::normalize()
 {
-
   if (logLikelihoods_)
     {
     if (!normalizeLogWeights())
@@ -326,7 +325,11 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
     }
   ROS_INFO ("switching to normal likelihoods for resampling");
   printParticles();
+  return true;
+}
 
+template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const int& particles_number)
+{
   //at this point these are normal likelihoods, not log
   typename std::vector <Particle <ParticleType> > new_particles;
   new_particles.reserve(particles_number);
