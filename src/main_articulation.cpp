@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 
   //---------------------------------- particle filter initalization ----------
   const int particles_number = 300;
-  const int initial_datapoints_number = 100;
+  const int initial_datapoints_number = 50;
 
   articulation_model_msgs::ModelMsg model_msg;
   articulation_model_msgs::ParamMsg sigma_param;
@@ -179,6 +179,7 @@ int main(int argc, char **argv)
       ROS_INFO_STREAM ("measurement taken");
 
       pf.correct<articulation_model_msgs::TrackMsg>(z, sensorNoiseCov, *sensorModel);
+      pf.addParticles(2, 2, 2);
 
       if (!pf.normalize())
       {

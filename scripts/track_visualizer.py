@@ -134,7 +134,7 @@ class trackVisualizer:
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_rigid"
     marker.id = 0
-    marker.lifetime = rospy.Duration.from_sec(7)
+    marker.lifetime = rospy.Duration.from_sec(20)
     marker.action = Marker.ADD
 
     marker.scale = Vector3(0.05,0.05,0.05)
@@ -163,7 +163,7 @@ class trackVisualizer:
     marker_weight.header.frame_id = model.track.header.frame_id
     marker_weight.ns = "model_visualizer_rigid_weight"
     marker_weight.id = 0
-    marker_weight.lifetime = rospy.Duration.from_sec(7)
+    marker_weight.lifetime = rospy.Duration.from_sec(20)
     marker_weight.action = Marker.ADD
 
     if abs(weight) < 0.05:
@@ -229,7 +229,7 @@ class trackVisualizer:
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_prismatic"
     marker.id = 0
-    marker.lifetime = rospy.Duration.from_sec(7)
+    marker.lifetime = rospy.Duration.from_sec(20)
     marker.action = Marker.ADD
 
     marker.scale = Vector3(0.01,0.01,0.01)
@@ -258,7 +258,7 @@ class trackVisualizer:
     marker_weight.header.frame_id = model.track.header.frame_id
     marker_weight.ns = "model_visualizer_prismatic_weight"
     marker_weight.id = 0
-    marker_weight.lifetime = rospy.Duration.from_sec(7)
+    marker_weight.lifetime = rospy.Duration.from_sec(20)
     marker_weight.action = Marker.ADD
 
     if abs(weight) < 0.05:
@@ -281,7 +281,7 @@ class trackVisualizer:
     marker_dir.header.frame_id = model.track.header.frame_id
     marker_dir.ns = "model_visualizer_prismatic_dir"
     marker_dir.id = 0
-    marker_dir.lifetime = rospy.Duration.from_sec(7)
+    marker_dir.lifetime = rospy.Duration.from_sec(20)
     marker_dir.action = Marker.ADD
 
     marker_dir.scale = Vector3(0.01,0.01,0.01)
@@ -302,7 +302,7 @@ class trackVisualizer:
     marker_orient.header.frame_id = model.track.header.frame_id
     marker_orient.ns = "model_visualizer_prismatic_orientation"
     marker_orient.id = 0
-    marker_orient.lifetime = rospy.Duration.from_sec(7)
+    marker_orient.lifetime = rospy.Duration.from_sec(20)
     marker_orient.action = Marker.ADD
 
     marker_orient.scale = Vector3(0.01,0.01,0.01)
@@ -417,7 +417,7 @@ class trackVisualizer:
     marker_rot.header.frame_id = model.track.header.frame_id
     marker_rot.ns = "model_visualizer_rotational"
     marker_rot.id = 0
-    marker_rot.lifetime = rospy.Duration.from_sec(7)
+    marker_rot.lifetime = rospy.Duration.from_sec(20)
     marker_rot.action = Marker.ADD
 
     marker_rot.scale = Vector3(0.01,0.01,0.01)
@@ -450,7 +450,7 @@ class trackVisualizer:
     marker_weight.header.frame_id = model.track.header.frame_id
     marker_weight.ns = "model_visualizer_rotational_weight"
     marker_weight.id = 0
-    marker_weight.lifetime = rospy.Duration.from_sec(7)
+    marker_weight.lifetime = rospy.Duration.from_sec(20)
     marker_weight.action = Marker.ADD
     if abs(weight) < 0.05:
       weight = 0.05
@@ -474,7 +474,7 @@ class trackVisualizer:
     marker_radius.header.frame_id = model.track.header.frame_id
     marker_radius.ns = "model_visualizer_rotational_radius"
     marker_radius.id = 0
-    marker_radius.lifetime = rospy.Duration.from_sec(7)
+    marker_radius.lifetime = rospy.Duration.from_sec(20)
     marker_radius.action = Marker.ADD
 
     marker_radius.scale = Vector3(0.01,0.01,0.01)
@@ -494,7 +494,7 @@ class trackVisualizer:
     marker_rot_orient.header.frame_id = model.track.header.frame_id
     marker_rot_orient.ns = "model_visualizer__rotational_orientation"
     marker_rot_orient.id = 0
-    marker_rot_orient.lifetime = rospy.Duration.from_sec(7)
+    marker_rot_orient.lifetime = rospy.Duration.from_sec(20)
     marker_rot_orient.action = Marker.ADD
 
     marker_rot_orient.scale = Vector3(0.01,0.01,0.01)
@@ -546,7 +546,7 @@ class trackVisualizer:
       marker.ns = "track_visualizer-%d"%(track.id)
       marker.id = self.num_markers[track.id]
       marker.action = marker.ADD
-      marker.lifetime = rospy.Duration.from_sec(5)
+      marker.lifetime = rospy.Duration.from_sec(14)
 
       marker.scale = Vector3(0.003,0.003,0.003)
       marker.color.g = 1

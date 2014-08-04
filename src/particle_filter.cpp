@@ -468,6 +468,62 @@ template <class ParticleType> void ParticleFilter<ParticleType>::weightsToLogWei
   }
 }
 
+template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const int& rigid_particles_number, const int& rotational_particles_number, const int& prismatic_particles_number)
+{
+  articulation_model_msgs::ModelMsg model = particles.back().state->getModel();
+  int rigid_particles_counter = 0;
+  int rotational_particles_counter = 0;
+  int prismatic_particles_counter = 0;
+
+  while(true)
+  {
+    if (rigid_particles_counter < rigid_particles_number)
+    {
+      ArticulationModelPtr rigid_model(new RigidModel);
+      model.name = "rigid";
+      rigid_model->setModel(model);
+      rigid_model->fitModel();
+      ++rigid_particles_counter;
+      Particle<ArticulationModelPtr> p;
+      p.state = rigid_model;
+      rigid_model->evaluateModel();
+      p.weight = rigid_model->getParam("loglikelihood");
+      particles.push_back(p);
+    }
+    if (prismatic_particles_counter < prismatic_particles_number)
+    {
+      ArticulationModelPtr prismatic_model(new PrismaticModel);
+      model.name = "prismatic";
+      prismatic_model->setModel(model);
+      prismatic_model->fitModel();
+      ++prismatic_particles_counter;
+      Particle<ArticulationModelPtr> p;
+      p.state = prismatic_model;
+      prismatic_model->evaluateModel();
+      p.weight = prismatic_model->getParam("loglikelihood");
+      particles.push_back(p);
+    }
+    if (rotational_particles_counter < rotational_particles_number)
+    {
+      ArticulationModelPtr rotational_model(new RotationalModel);
+      model.name = "rotational";
+      rotational_model->setModel(model);
+      rotational_model->fitModel();
+      ++rotational_particles_counter;
+      Particle<ArticulationModelPtr> p;
+      p.state = rotational_model;
+      rotational_model->evaluateModel();
+      p.weight = rotational_model->getParam("loglikelihood");
+      particles.push_back(p);
+    }
+    if ((rigid_particles_counter == rigid_particles_number) && (prismatic_particles_counter == prismatic_particles_number) &&
+        (rotational_particles_counter == rotational_particles_number))
+    {
+      break;
+    }
+  }
+}
+
 template <class ParticleType> void ParticleFilter<ParticleType>::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
                        const MotionModel<ParticleType>& model)
 {
