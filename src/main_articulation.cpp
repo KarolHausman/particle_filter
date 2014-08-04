@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(10, 10);
   Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
-  Eigen::MatrixXd motionNoiseCov = covariance / 100;
+  Eigen::MatrixXd motionNoiseCov = covariance / 1000;
   Eigen::MatrixXd sensorNoiseCov = covariance / 2;
 
 
@@ -133,8 +133,8 @@ int main(int argc, char **argv)
 
 
   //---------------------------------- particle filter initalization ----------
-  const int particles_number = 20;
-  const int initial_datapoints_number = 150;
+  const int particles_number = 300;
+  const int initial_datapoints_number = 100;
 
   articulation_model_msgs::ModelMsg model_msg;
   articulation_model_msgs::ParamMsg sigma_param;
@@ -143,15 +143,15 @@ int main(int argc, char **argv)
   sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
   model_msg.params.push_back(sigma_param);
 
-//  model_msg.track.header.stamp = ros::Time::now();
-//  model_msg.track.header.frame_id = "/world";
-//  model_msg.track.header.seq = 0;
 
-  //use first 20 datapoints
+  //use first initial_datapoints_number datapoints
   model_msg.track = generateMeasurement(generated_poses, 0, initial_datapoints_number);
 
-  ParticleFilter<ArticulationModelPtr> pf (particles_number, model_msg);
+  //slower init
+//  ParticleFilter<ArticulationModelPtr> pf (particles_number, model_msg);
 
+  //faster init
+  ParticleFilter<ArticulationModelPtr> pf (particles_number, model_msg, *motionModel, motionNoiseCov, motionNoiseCov, motionNoiseCov);
 
 
 
@@ -172,9 +172,9 @@ int main(int argc, char **argv)
 
       // ------------------------ generate measurement -------------------------------
 
-      //start with 20,30
+      //start with 20
       articulation_model_msgs::TrackMsg z;
-      z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number);
+      z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number + 0);
 
       ROS_INFO_STREAM ("measurement taken");
 

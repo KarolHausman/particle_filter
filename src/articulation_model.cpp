@@ -682,7 +682,6 @@ bool ArticulationModel::evaluateModel()
   if(model_msg.track.pose.size() == 0)
           return false;
 
-  std::cerr << "size of points: " << model_msg.track.pose.size() << std::endl;
 
   // let getLogLikelihood() do the projection
   loglikelihood = getLogLikelihood(false);

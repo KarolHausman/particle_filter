@@ -24,7 +24,6 @@ void RotationalModel::updateStateParametersToModel()
   tf::Matrix3x3 m(rot_orientation);
   m.getEulerYPR(yaw, pitch, roll);
   radius = rot_radius;
-  //TODO::update axis_x, axis_y
   tf::Matrix3x3 ma(rot_axis);
   ma.getEulerYPR(axis_yaw, axis_pitch, axis_roll);
 }
@@ -36,7 +35,6 @@ void RotationalModel::updateModelToStateParameters()
   rot_center.setZ(rot_center_z);
   rot_orientation.setRPY(roll, pitch, yaw);
   rot_radius = radius;
-  //TODO::update rot_axis
   rot_axis.setRPY(axis_roll, axis_pitch, axis_yaw);
 }
 

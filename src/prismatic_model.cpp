@@ -15,7 +15,6 @@ PrismaticModel::~PrismaticModel()
 void PrismaticModel::updateStateParametersToModel()
 {
   RigidModel::updateStateParametersToModel();
-  //TODO: update axis_x and axis_y with prismatic_dir
   axis_x = prismatic_dir.getX();
   axis_y = prismatic_dir.getY();
   axis_z = prismatic_dir.getZ();
@@ -24,7 +23,6 @@ void PrismaticModel::updateStateParametersToModel()
 void PrismaticModel::updateModelToStateParameters()
 {
   RigidModel::updateModelToStateParameters();
-  //TODO: update prismatic_dir with axis_x and axis_y
   prismatic_dir.setX(axis_x);
   prismatic_dir.setY(axis_y);
   prismatic_dir.setZ(axis_z);

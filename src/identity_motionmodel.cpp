@@ -21,13 +21,16 @@ template <> ArticulationModelPtr IdentityMotionModel<ArticulationModelPtr>::move
                                                                                  const Eigen::VectorXd &noise) const
 
 {
-  ArticulationModelPtr state_result = state;
+  ArticulationModelPtr state_result;
 
   switch (state->model)
   {
     case (RIGID):
       {
-        boost::shared_ptr<RigidModel> rigid = boost::dynamic_pointer_cast< RigidModel > (state);
+        state_result.reset(new RigidModel);
+        state_result = state->getCopy();
+
+        boost::shared_ptr<RigidModel> rigid = boost::dynamic_pointer_cast< RigidModel > (state_result);
         rigid->pos_x += noise(0);
         rigid->pos_y += noise(1);
         rigid->pos_z += noise(2);
@@ -39,7 +42,10 @@ template <> ArticulationModelPtr IdentityMotionModel<ArticulationModelPtr>::move
       }
     case (PRISMATIC):
       {
-        boost::shared_ptr<PrismaticModel> prismatic = boost::dynamic_pointer_cast< PrismaticModel > (state);
+        state_result.reset(new PrismaticModel);
+        state_result = state->getCopy();
+
+        boost::shared_ptr<PrismaticModel> prismatic = boost::dynamic_pointer_cast< PrismaticModel > (state_result);
         prismatic->pos_x += noise(0);
         prismatic->pos_y += noise(1);
         prismatic->pos_z += noise(2);
@@ -54,7 +60,10 @@ template <> ArticulationModelPtr IdentityMotionModel<ArticulationModelPtr>::move
       }
     case (ROTATIONAL):
       {
-        boost::shared_ptr<RotationalModel> rotational = boost::dynamic_pointer_cast< RotationalModel > (state);
+        state_result.reset(new RotationalModel);
+        state_result = state->getCopy();
+
+        boost::shared_ptr<RotationalModel> rotational = boost::dynamic_pointer_cast< RotationalModel > (state_result);
         rotational->rot_center_x += noise(0);
         rotational->rot_center_y += noise(1);
         rotational->rot_center_z += noise(2);

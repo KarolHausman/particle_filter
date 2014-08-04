@@ -83,9 +83,8 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
 
 // another constructor for articulation model but faster
 template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size, articulation_model_msgs::ModelMsg& model,
-                                                                 const Eigen::VectorXd& rigid_mean, const Eigen::MatrixXd& rigid_cov,
-                                                                 const Eigen::VectorXd& rotational_mean, const Eigen::MatrixXd& rotational_cov,
-                                                                 const Eigen::VectorXd& prismatic_mean, const Eigen::MatrixXd& prismatic_cov):
+                                                                 const MotionModel<ArticulationModelPtr>& motion_model, const Eigen::MatrixXd& rigid_cov,
+                                                                 const Eigen::MatrixXd& rotational_cov, const Eigen::MatrixXd& prismatic_cov):
   logLikelihoods_(true),freemodel_samples_(0)
 {
   this->particles.resize(size);
@@ -115,7 +114,9 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       }
       else
       {
-        //TODO: generate it with adding noise to the previous or first particle
+        Eigen::VectorXd noise = Random::multivariateGaussian(rigid_cov);
+        Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
+        rigid_model = motion_model.move(particles[freemodel_samples_].state, u, noise);
       }
       it->state = rigid_model;
       ++rigid_models_counter;
@@ -131,7 +132,9 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       }
       else
       {
-        //TODO: generate it with adding noise to the previous or first particle
+        Eigen::VectorXd noise = Random::multivariateGaussian(rotational_cov);
+        Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
+        rotational_model = motion_model.move(particles[freemodel_samples_ + remaining_models].state, u, noise);
       }
       it->state = rotational_model;
       ++rotational_models_counter;
@@ -147,7 +150,9 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       }
       else
       {
-        //TODO: generate it with adding noise to the previous or first particle
+        Eigen::VectorXd noise = Random::multivariateGaussian(prismatic_cov);
+        Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
+        prismatic_model = motion_model.move(particles[freemodel_samples_ + remaining_models*2].state, u, noise);
       }
       it->state = prismatic_model;
       ++prismatic_models_counter;
