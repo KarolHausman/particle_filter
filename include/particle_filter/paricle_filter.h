@@ -17,7 +17,10 @@ public:
                  const Eigen::VectorXd &rotational_mean, const Eigen::MatrixXd &rotational_cov,
                  const Eigen::VectorXd &prismatic_mean, const Eigen::MatrixXd &prismatic_cov);
   ParticleFilter(const int &size, articulation_model_msgs::ModelMsg &model);
-
+  ParticleFilter(const int& size, articulation_model_msgs::ModelMsg& model,
+                 const Eigen::VectorXd& rigid_mean, const Eigen::MatrixXd& rigid_cov,
+                 const Eigen::VectorXd& rotational_mean, const Eigen::MatrixXd& rotational_cov,
+                 const Eigen::VectorXd& prismatic_mean, const Eigen::MatrixXd& prismatic_cov);
 
 
   virtual ~ParticleFilter();

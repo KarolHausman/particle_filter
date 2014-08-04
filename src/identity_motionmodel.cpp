@@ -69,6 +69,7 @@ template <> ArticulationModelPtr IdentityMotionModel<ArticulationModelPtr>::move
         break;
       }
   }
+  state_result->writeParamsToModel();
   return state_result;
 }
 

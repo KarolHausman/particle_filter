@@ -29,7 +29,6 @@ template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model
 {
   state->addTrack(z);
   state->evaluateModel();
-  //TODO: check if loglikelihood knows for which model it is
   return exp(state->getParam("loglikelihood"));
 }
 
@@ -39,7 +38,6 @@ template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model
 {
   state->addTrack(z);
   state->evaluateModel();
-
   return (state->getParam("loglikelihood"));
 }
 
