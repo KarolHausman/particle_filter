@@ -473,16 +473,10 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const int& r
 {
   articulation_model_msgs::ModelMsg model;
   model.track.pose = particles.back().state->getModel().track.pose;
-  model.track.header.frame_id = "world";
+  model.track.header.frame_id = particles.back().state->getModel().track.header.frame_id;
   model.track.header.seq = 0;
   model.track.header.stamp = ros::Time::now();
-
-  articulation_model_msgs::ParamMsg sigma_param;
-  sigma_param.name = "sigma_position";
-  sigma_param.value = 0.02;
-  sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
-  model.params.push_back(sigma_param);
-
+  model.params = particles.back().state->getModel().params;
 
   const double standard_weight = log(1.0/(double)particles.size());
   int rigid_particles_counter = 0;

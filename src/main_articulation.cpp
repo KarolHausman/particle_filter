@@ -69,7 +69,7 @@ void trackIncrementalCB(const pr2_lfd_utils::WMDataConstPtr msg)
     {
       incremental_track.header.seq = incremental_track_msgs_counter;
       ++incremental_track_msgs_counter;
-      std::cerr << "incremental counter: " << incremental_track_msgs_counter << std::endl;
+//      std::cerr << "incremental counter: " << incremental_track_msgs_counter << std::endl;
       incremental_track.pose.push_back(it->pose.pose);
     }
 
@@ -96,64 +96,67 @@ int main(int argc, char **argv)
 
 
   // -------------------------------- generate data -----------------------
+  bool use_generated_data = false;
   boost::normal_distribution<> nd(0.0, 0.01);
   boost::mt19937 rng;
   boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
                   var_nor(rng, nd);
-
-  bool rotational = true;
-  bool prismatic = false;
-  bool rigid = false;
-
-  const int datapoints_number = 300;
-
   std::vector <geometry_msgs::Pose> generated_poses;
 
-  for (int i = 0; i < datapoints_number; i++)
+  if (use_generated_data)
   {
-    geometry_msgs::Pose pose;
+    bool rotational = true;
+    bool prismatic = false;
+    bool rigid = false;
 
-    if (prismatic)
-    {
-      pose.position.x = 2 + (static_cast<float> (i)/100.0) + var_nor();
-      pose.position.y = (static_cast<float> (i)/100.0) + var_nor();
-      pose.position.z = (static_cast<float> (i)/100.0) + var_nor();
-    }
-    else if (rotational)
-    {
-      pose.position.x = 2 + cos(static_cast<float> (i) / 100.0) + var_nor();
-      pose.position.y = sin(static_cast<float> (i) / 100.0) + var_nor();
-      pose.position.z = var_nor();
-    }
-    else if(rigid)
-    {
-      pose.position.x = 2 + var_nor();
-      pose.position.y = 4 + var_nor();
-      pose.position.z = 1 + var_nor();
-    }
+    const int datapoints_number = 300;
 
-    if (rotational)
+    for (int i = 0; i < datapoints_number; i++)
     {
-      double yaw = static_cast<float> (i)/100;
-      double roll = M_PI/4;
-      double pitch = 0;
+      geometry_msgs::Pose pose;
 
-      tf::Quaternion tf_pose_quat;
-      tf_pose_quat.setRPY(roll, pitch, yaw);
+      if (prismatic)
+      {
+        pose.position.x = 2 + (static_cast<float> (i)/100.0) + var_nor();
+        pose.position.y = (static_cast<float> (i)/100.0) + var_nor();
+        pose.position.z = (static_cast<float> (i)/100.0) + var_nor();
+      }
+      else if (rotational)
+      {
+        pose.position.x = 2 + cos(static_cast<float> (i) / 100.0) + var_nor();
+        pose.position.y = sin(static_cast<float> (i) / 100.0) + var_nor();
+        pose.position.z = var_nor();
+      }
+      else if(rigid)
+      {
+        pose.position.x = 2 + var_nor();
+        pose.position.y = 4 + var_nor();
+        pose.position.z = 1 + var_nor();
+      }
 
-      pose.orientation.w = tf_pose_quat.getW();
-      pose.orientation.x = tf_pose_quat.getX();
-      pose.orientation.y = tf_pose_quat.getY();
-      pose.orientation.z = tf_pose_quat.getZ();
+      if (rotational)
+      {
+        double yaw = static_cast<float> (i)/100;
+        double roll = M_PI/4;
+        double pitch = 0;
+
+        tf::Quaternion tf_pose_quat;
+        tf_pose_quat.setRPY(roll, pitch, yaw);
+
+        pose.orientation.w = tf_pose_quat.getW();
+        pose.orientation.x = tf_pose_quat.getX();
+        pose.orientation.y = tf_pose_quat.getY();
+        pose.orientation.z = tf_pose_quat.getZ();
+      }
+      else
+      {
+        pose.orientation.x = 0;
+        pose.orientation.y = 0;
+        pose.orientation.z = 0;
+        pose.orientation.w = 1;
+      }
+    generated_poses.push_back(pose);
     }
-    else
-    {
-      pose.orientation.x = 0;
-      pose.orientation.y = 0;
-      pose.orientation.z = 0;
-      pose.orientation.w = 1;
-    }
-  generated_poses.push_back(pose);
   }
   // -------------------------------- end of generate data -----------------------
 
@@ -161,7 +164,10 @@ int main(int argc, char **argv)
 
   //---------------------------------- particle filter initalization ----------
   const int particles_number = 300;
-  const int initial_datapoints_number = 50;
+
+  //params for generated data
+  const int initial_datapoints_number = 10;
+
 
   articulation_model_msgs::ModelMsg model_msg;
   articulation_model_msgs::ParamMsg sigma_param;
@@ -170,48 +176,56 @@ int main(int argc, char **argv)
   sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
   model_msg.params.push_back(sigma_param);
 
-
-  //use first initial_datapoints_number datapoints
-//  model_msg.track = generateMeasurement(generated_poses, 0, initial_datapoints_number);
-
+  //params for real data
   const int initial_trackdatapoints_number = 30;
   ros::NodeHandle nh;
   ros::Subscriber data_track_sub = nh.subscribe("ar_world_model", 1000, trackIncrementalCB);
   ros::Subscriber track_sub = nh.subscribe("marker_topic",1, trackCB);
+
+
+
   bool incremental = true;
-  //------------------------------- track from recorded data --------------------
-  if (!incremental)
+  //use first initial_datapoints_number datapoints
+  if (use_generated_data)
   {
-    bool got_track = false;
-    while (ros::ok() && !got_track)
-    {
-      ros::spinOnce();
-      if (!data_track.header.stamp.isZero())
-      {
-        model_msg.track = data_track;
-        std::cout << "taking: " << model_msg.track.pose.size() << " poses" << std::endl;
-        got_track = true;
-      }
-    }
+    model_msg.track = generateMeasurement(generated_poses, 0, initial_datapoints_number);
   }
   else
   {
-  // ------------------------------- track from data as it comes ------------------
-    bool got_track_for_init = false;
-    incremental_track.header.stamp = ros::Time::now();
-    incremental_track.header.frame_id = "/world";
-
-    while (ros::ok() && !got_track_for_init)
+    //------------------------------- track from recorded data --------------------
+    if (!incremental)
     {
-      ros::spinOnce();
-      std::cerr << "incremental_track seq: " << incremental_track.header.seq << std::endl;
-      if (incremental_track.header.seq >= initial_trackdatapoints_number)
+      bool got_track = false;
+      while (ros::ok() && !got_track)
       {
-        model_msg.track = incremental_track;
-        std::cout << "taking: " << model_msg.track.pose.size() << " poses" << std::endl;
-        //remove all the poses used already
-        incremental_track.pose.clear();
-        got_track_for_init = true;
+        ros::spinOnce();
+        if (!data_track.header.stamp.isZero())
+        {
+          model_msg.track = data_track;
+          std::cout << "taking: " << model_msg.track.pose.size() << " poses" << std::endl;
+          got_track = true;
+        }
+      }
+    }
+    else
+    {
+    // ------------------------------- track from data as it comes ------------------
+      bool got_track_for_init = false;
+      incremental_track.header.stamp = ros::Time::now();
+      incremental_track.header.frame_id = "/world";
+
+      std::cerr << "Initializing particles... " << std::endl;
+      while (ros::ok() && !got_track_for_init)
+      {
+        ros::spinOnce();
+        if (incremental_track.header.seq >= initial_trackdatapoints_number)
+        {
+          model_msg.track = incremental_track;
+          std::cout << "taking: " << model_msg.track.pose.size() << " poses" << std::endl;
+          //remove all the poses used already
+          incremental_track.pose.clear();
+          got_track_for_init = true;
+        }
       }
     }
   }
@@ -253,15 +267,25 @@ int main(int argc, char **argv)
 
       //start with 20
       articulation_model_msgs::TrackMsg z;
-//      z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number + 0);
-
-      //check if there was enough time
-      if (incremental_track.header.seq >= initial_trackdatapoints_number + loop_count)
+      if (use_generated_data)
       {
-        z = incremental_track;
-        std::cout << "taking: " << z.pose.size() << " poses" << std::endl;
-        incremental_track.pose.clear();
+        z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number + 0);
       }
+      else
+      {
+        //check if there was enough time
+        if (incremental)
+        {
+          if (incremental_track.header.seq >= initial_trackdatapoints_number + loop_count)
+          {
+            z = incremental_track;
+            std::cout << "taking: " << z.pose.size() << " poses" << std::endl;
+            incremental_track.pose.clear();
+          }
+        }
+      }
+
+
       ROS_INFO_STREAM ("measurement taken");
 
       ROS_INFO_STREAM ("executing correction step");
