@@ -468,9 +468,23 @@ template <class ParticleType> void ParticleFilter<ParticleType>::weightsToLogWei
   }
 }
 
+//TODO: remove hard coded values for model
 template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const int& rigid_particles_number, const int& rotational_particles_number, const int& prismatic_particles_number)
 {
-  articulation_model_msgs::ModelMsg model = particles.back().state->getModel();
+  articulation_model_msgs::ModelMsg model;
+  model.track.pose = particles.back().state->getModel().track.pose;
+  model.track.header.frame_id = "world";
+  model.track.header.seq = 0;
+  model.track.header.stamp = ros::Time::now();
+
+  articulation_model_msgs::ParamMsg sigma_param;
+  sigma_param.name = "sigma_position";
+  sigma_param.value = 0.02;
+  sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
+  model.params.push_back(sigma_param);
+
+
+  const double standard_weight = log(1.0/(double)particles.size());
   int rigid_particles_counter = 0;
   int rotational_particles_counter = 0;
   int prismatic_particles_counter = 0;
@@ -486,8 +500,9 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const int& r
       ++rigid_particles_counter;
       Particle<ArticulationModelPtr> p;
       p.state = rigid_model;
+//      p.weight = standard_weight;
       rigid_model->evaluateModel();
-      p.weight = rigid_model->getParam("loglikelihood");
+      p.weight = standard_weight + rigid_model->getParam("loglikelihood");
       particles.push_back(p);
     }
     if (prismatic_particles_counter < prismatic_particles_number)
@@ -499,8 +514,9 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const int& r
       ++prismatic_particles_counter;
       Particle<ArticulationModelPtr> p;
       p.state = prismatic_model;
+//      p.weight = standard_weight;
       prismatic_model->evaluateModel();
-      p.weight = prismatic_model->getParam("loglikelihood");
+      p.weight = standard_weight + prismatic_model->getParam("loglikelihood");
       particles.push_back(p);
     }
     if (rotational_particles_counter < rotational_particles_number)
@@ -512,8 +528,9 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const int& r
       ++rotational_particles_counter;
       Particle<ArticulationModelPtr> p;
       p.state = rotational_model;
+//      p.weight = standard_weight;
       rotational_model->evaluateModel();
-      p.weight = rotational_model->getParam("loglikelihood");
+      p.weight = standard_weight + rotational_model->getParam("loglikelihood");
       particles.push_back(p);
     }
     if ((rigid_particles_counter == rigid_particles_number) && (prismatic_particles_counter == prismatic_particles_number) &&
@@ -522,6 +539,7 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const int& r
       break;
     }
   }
+
 }
 
 template <class ParticleType> void ParticleFilter<ParticleType>::propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,

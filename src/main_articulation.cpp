@@ -9,6 +9,8 @@
 #include "articulation_model_msgs/ModelMsg.h"
 #include "articulation_model_msgs/TrackMsg.h"
 
+#include "pr2_lfd_utils/WMData.h"
+
 
 #include "particle_filter/random.h"
 
@@ -16,6 +18,10 @@
 
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
+
+articulation_model_msgs::TrackMsg data_track;
+articulation_model_msgs::TrackMsg incremental_track;
+int incremental_track_msgs_counter = 0;
 
 
 // -------------------------------- generate measurement -----------------------
@@ -48,6 +54,27 @@ articulation_model_msgs::TrackMsg generateMeasurement(const std::vector<geometry
   return track;
 }
 
+
+void trackCB(const articulation_model_msgs::TrackMsgConstPtr msg)
+{
+  data_track = *msg;
+}
+
+//TODO:marker ID as a param
+void trackIncrementalCB(const pr2_lfd_utils::WMDataConstPtr msg)
+{
+  for (std::vector<pr2_lfd_utils::WMObject>::const_iterator it = msg->objects.begin(); it != msg->objects.end(); ++it)
+  {
+    if (it->id == 12)
+    {
+      incremental_track.header.seq = incremental_track_msgs_counter;
+      ++incremental_track_msgs_counter;
+      std::cerr << "incremental counter: " << incremental_track_msgs_counter << std::endl;
+      incremental_track.pose.push_back(it->pose.pose);
+    }
+
+  }
+}
 
 
 int main(int argc, char **argv)
@@ -145,7 +172,54 @@ int main(int argc, char **argv)
 
 
   //use first initial_datapoints_number datapoints
-  model_msg.track = generateMeasurement(generated_poses, 0, initial_datapoints_number);
+//  model_msg.track = generateMeasurement(generated_poses, 0, initial_datapoints_number);
+
+  const int initial_trackdatapoints_number = 30;
+  ros::NodeHandle nh;
+  ros::Subscriber data_track_sub = nh.subscribe("ar_world_model", 1000, trackIncrementalCB);
+  ros::Subscriber track_sub = nh.subscribe("marker_topic",1, trackCB);
+  bool incremental = true;
+  //------------------------------- track from recorded data --------------------
+  if (!incremental)
+  {
+    bool got_track = false;
+    while (ros::ok() && !got_track)
+    {
+      ros::spinOnce();
+      if (!data_track.header.stamp.isZero())
+      {
+        model_msg.track = data_track;
+        std::cout << "taking: " << model_msg.track.pose.size() << " poses" << std::endl;
+        got_track = true;
+      }
+    }
+  }
+  else
+  {
+  // ------------------------------- track from data as it comes ------------------
+    bool got_track_for_init = false;
+    incremental_track.header.stamp = ros::Time::now();
+    incremental_track.header.frame_id = "/world";
+
+    while (ros::ok() && !got_track_for_init)
+    {
+      ros::spinOnce();
+      std::cerr << "incremental_track seq: " << incremental_track.header.seq << std::endl;
+      if (incremental_track.header.seq >= initial_trackdatapoints_number)
+      {
+        model_msg.track = incremental_track;
+        std::cout << "taking: " << model_msg.track.pose.size() << " poses" << std::endl;
+        //remove all the poses used already
+        incremental_track.pose.clear();
+        got_track_for_init = true;
+      }
+    }
+  }
+
+
+
+
+  //----------------------------------init of particle filter -------------------------
 
   //slower init
 //  ParticleFilter<ArticulationModelPtr> pf (particles_number, model_msg);
@@ -162,6 +236,11 @@ int main(int argc, char **argv)
 
   while (ros::ok())
   {
+    //get the measurement every iteration
+    ros::spinOnce();
+
+
+
     ROS_INFO_STREAM ("loop_count: " << loop_count);
     pf.propagate(u, motionNoiseCov, *motionModel);
 
@@ -174,12 +253,22 @@ int main(int argc, char **argv)
 
       //start with 20
       articulation_model_msgs::TrackMsg z;
-      z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number + 0);
+//      z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number + 0);
 
+      //check if there was enough time
+      if (incremental_track.header.seq >= initial_trackdatapoints_number + loop_count)
+      {
+        z = incremental_track;
+        std::cout << "taking: " << z.pose.size() << " poses" << std::endl;
+        incremental_track.pose.clear();
+      }
       ROS_INFO_STREAM ("measurement taken");
 
+      ROS_INFO_STREAM ("executing correction step");
       pf.correct<articulation_model_msgs::TrackMsg>(z, sensorNoiseCov, *sensorModel);
-      pf.addParticles(2, 2, 2);
+
+      ROS_INFO_STREAM ("adding particles");
+      pf.addParticles(1, 1, 1);
 
       if (!pf.normalize())
       {
@@ -191,6 +280,7 @@ int main(int argc, char **argv)
       Visualizer::getInstance()->publishParticles(pf.particles);
 
 
+      std::cerr << "ALL TOGETHER TOOK: " << pf.particles[0].state->getModel().track.pose.size() << " poses" << std::endl;
       ROS_INFO ("Correction step executed.");
       if (!pf.resample(particles_number))
       {

@@ -35,7 +35,7 @@ template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model
 //TODO: add free model
 template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>::senseLogLikelihood(const articulation_model_msgs::TrackMsg &z, const ArticulationModelPtr &state,
                                        const Eigen::MatrixXd &cov) const
-{
+{  
   state->addTrack(z);
   state->evaluateModel();
   return (state->getParam("loglikelihood"));

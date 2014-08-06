@@ -684,7 +684,7 @@ bool ArticulationModel::evaluateModel()
 
 
   // let getLogLikelihood() do the projection
-  loglikelihood = getLogLikelihood(false);
+  loglikelihood = getLogLikelihood(true);
 
   // evaluate some extra statistics
 
