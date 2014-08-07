@@ -21,6 +21,8 @@
 
 articulation_model_msgs::TrackMsg data_track;
 articulation_model_msgs::TrackMsg incremental_track;
+articulation_model_msgs::TrackMsg full_track;
+
 int incremental_track_msgs_counter = 0;
 
 
@@ -71,6 +73,7 @@ void trackIncrementalCB(const pr2_lfd_utils::WMDataConstPtr msg)
       ++incremental_track_msgs_counter;
 //      std::cerr << "incremental counter: " << incremental_track_msgs_counter << std::endl;
       incremental_track.pose.push_back(it->pose.pose);
+      full_track.pose.push_back(it->pose.pose);
     }
 
   }
@@ -90,7 +93,7 @@ int main(int argc, char **argv)
 
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(10, 10);
   Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
-  Eigen::MatrixXd motionNoiseCov = covariance / 1000;
+  Eigen::MatrixXd motionNoiseCov = covariance / 100000;
   Eigen::MatrixXd sensorNoiseCov = covariance / 2;
 
 
@@ -214,6 +217,9 @@ int main(int argc, char **argv)
       incremental_track.header.stamp = ros::Time::now();
       incremental_track.header.frame_id = "/world";
 
+      full_track.header.stamp = ros::Time::now();
+      full_track.header.frame_id = "/world";
+
       std::cerr << "Initializing particles... " << std::endl;
       while (ros::ok() && !got_track_for_init)
       {
@@ -248,6 +254,9 @@ int main(int argc, char **argv)
   ros::Rate r(2);
   uint loop_count = 1;
 
+  ros::Publisher model_pub = nh.advertise<articulation_model_msgs::ModelMsg>("model_track", 10);
+  articulation_model_msgs::ModelMsg full_model;
+
   while (ros::ok())
   {
     //get the measurement every iteration
@@ -273,9 +282,9 @@ int main(int argc, char **argv)
       }
       else
       {
-        //check if there was enough time
         if (incremental)
         {
+          //check if there was enough time
           if (incremental_track.header.seq >= initial_trackdatapoints_number + loop_count)
           {
             z = incremental_track;
@@ -288,11 +297,15 @@ int main(int argc, char **argv)
 
       ROS_INFO_STREAM ("measurement taken");
 
+      ROS_INFO_STREAM ("adding particles");
+      if(loop_count >= 50 && loop_count < 60 )
+        pf.addParticles(full_track, 30, 50, 30);
+
       ROS_INFO_STREAM ("executing correction step");
       pf.correct<articulation_model_msgs::TrackMsg>(z, sensorNoiseCov, *sensorModel);
 
-      ROS_INFO_STREAM ("adding particles");
-      pf.addParticles(1, 1, 1);
+//      pf.sortParticles();
+//      pf.printParticles();
 
       if (!pf.normalize())
       {
@@ -302,10 +315,14 @@ int main(int argc, char **argv)
 
       pf.sortParticles();
       Visualizer::getInstance()->publishParticles(pf.particles);
+      full_model.header = full_track.header;
+      full_model.track = full_track;
+      model_pub.publish(full_model);
 
 
-      std::cerr << "ALL TOGETHER TOOK: " << pf.particles[0].state->getModel().track.pose.size() << " poses" << std::endl;
+      std::cerr << "ALL TOGETHER TOOK: " << full_track.pose.size() << " poses" << std::endl;
       ROS_INFO ("Correction step executed.");
+
       if (!pf.resample(particles_number))
       {
         ROS_ERROR ("no particles left, quiting");

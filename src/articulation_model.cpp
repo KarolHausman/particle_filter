@@ -17,7 +17,8 @@ ArticulationModel::ArticulationModel()
   evaluated = false;
   supress_similar = true;
   outlier_ratio = 0.5;
-  sac_iterations = 300;
+  sac_iterations = 20;
+//  sac_iterations = 300;
 //  optimizer_iterations = 10;
   optimizer_iterations = 0;
 
@@ -34,6 +35,7 @@ ArticulationModel::~ArticulationModel()
 void ArticulationModel::setTrack(const articulation_model_msgs::TrackMsg& track)
 {
   this->model_msg.track = track;
+  prepareChannels();
 }
 
 void ArticulationModel::addTrack(const articulation_model_msgs::TrackMsg& track)
