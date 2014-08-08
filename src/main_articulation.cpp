@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
 
   // -------------------------------- generate data -----------------------
-  bool use_generated_data = true;
+  bool use_generated_data = false;
   bool double_arcs = false;
   boost::normal_distribution<> nd(0.0, 0.01);
   boost::mt19937 rng;
@@ -276,7 +276,7 @@ int main(int argc, char **argv)
 
 
     ROS_INFO_STREAM ("loop_count: " << loop_count);
-    pf.propagate(u, motionNoiseCov, *motionModel);
+    pf.propagate(pf.particles, u, motionNoiseCov, *motionModel);
 
     Visualizer::getInstance()->publishParticlesOnly(pf.particles);
 
@@ -322,31 +322,31 @@ int main(int argc, char **argv)
         pf.addParticles(full_track, 30, 50, 30);
 
       ROS_INFO_STREAM ("executing correction step");
-      pf.correct<articulation_model_msgs::TrackMsg>(z, sensorNoiseCov, *sensorModel);
+      pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
 
 //      pf.sortParticles();
 //      pf.printParticles();
 
-      if (!pf.normalize())
+      if (!pf.normalize(pf.particles))
       {
         ROS_ERROR ("no particles left, quiting");
         return -1;
       }
 
-      pf.sortParticles();
+      pf.sortParticles(pf.particles);
       Visualizer::getInstance()->publishParticles(pf.particles);
 
 
       std::cerr << "ALL TOGETHER TOOK: " << full_track.pose.size() << " poses" << std::endl;
       ROS_INFO ("Correction step executed.");
 
-      if (!pf.resample(particles_number))
+      if (!pf.resample(particles_number, pf.particles))
       {
         ROS_ERROR ("no particles left, quiting");
         return -1;
       }
       ROS_INFO ("Resample step executed.");
-//      pf.printParticles();
+//      pf.printParticles(pf.particles);
     }
     r.sleep();
     ++loop_count;

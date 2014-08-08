@@ -58,7 +58,7 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     ROS_INFO_STREAM ("loop_count: " << loop_count);
-    pf.propagate(u, motionNoiseCov, *motionModel);
+    pf.propagate(pf.particles, u, motionNoiseCov, *motionModel);
 
     if (loop_count % 10 == 0)
     {
@@ -67,15 +67,15 @@ int main(int argc, char **argv)
       z = (Eigen::VectorXd(10) << 1, 1, 1, 1, 1, 1, 1, 1, 1, 1).finished();
       ROS_INFO_STREAM ("measurement equals: \n" << z);
 
-      pf.correct<Eigen::VectorXd>(z, sensorNoiseCov, *sensorModel);
+      pf.correct<Eigen::VectorXd>(pf.particles, z, sensorNoiseCov, *sensorModel);
       ROS_INFO ("Correction step executed.");
-      if (!pf.resample(particles_number))
+      if (!pf.resample(particles_number, pf.particles))
       {
         ROS_ERROR ("no particles left, quiting");
         return -1;
       }
       ROS_INFO ("Resample step executed.");
-      pf.printParticles();
+      pf.printParticles(pf.particles);
     }
 //    Visualizer::getInstance()->publishParticles(pf.particles);
     r.sleep();

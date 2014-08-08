@@ -24,39 +24,45 @@ public:
 
   virtual ~ParticleFilter();
 
-  bool normalize();
+  bool normalize(std::vector<Particle <ParticleType> >& particles);
 
-  bool normalizeWeights();
+  bool splitArticulationModels();
 
-  bool normalizeLogWeights();
+  bool normalizeWeights(std::vector<Particle <ParticleType> >& particles);
 
-  void sortParticles();
+  bool normalizeLogWeights(std::vector<Particle <ParticleType> >& particles);
 
-  void weightsToLogWeights();
+  void sortParticles(std::vector<Particle <ParticleType> >& particles);
 
-  void logWeightsToWeights();
+  void weightsToLogWeights(std::vector<Particle <ParticleType> >& particles);
 
-  void printParticles() const;
+  void logWeightsToWeights(std::vector<Particle <ParticleType> >& particles);
+
+  void printParticles( const std::vector<Particle <ParticleType> >& particles) const;
 
   bool getLogLikelihoodsFlag() const;
 
-  void setLogLikelihoodsFlag(const bool& flag);
+//  void setLogLikelihoodsFlag(const bool& flag);
 
-  double getWeightsSum()const;
+  double getWeightsSum(const std::vector<Particle <ParticleType> >& particles)const;
 
-  Eigen::VectorXd getWeightedAvg(const double& particles_fraction);
+  Eigen::VectorXd getWeightedAvg(std::vector<Particle <Eigen::VectorXd> >& particles, const double& particles_fraction);
 
-  virtual void propagate(const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
+  virtual void propagate(std::vector<Particle <ParticleType> >& particles, const Eigen::VectorXd& u, const Eigen::MatrixXd& noiseCov,
                          const MotionModel<ParticleType>& model);
 
-  template <class ZType> void correct(const ZType z, const Eigen::MatrixXd& noiseCov,
+  template <class ZType> void correct(std::vector<Particle <ParticleType> >& particles, const ZType z, const Eigen::MatrixXd& noiseCov,
                        const SensorModel<ParticleType, ZType>& model);
 
-  virtual bool resample(const int& particles_number);
+  virtual bool resample(const int& particles_number, std::vector<Particle <ParticleType> >& particles);
 
   void addParticles(const articulation_model_msgs::TrackMsg& uptodate_track, const int &rigid_particles_number, const int &rotational_particles_number, const int &prismatic_particles_number);
 
   std::vector <Particle <ParticleType> > particles;
+  std::vector <Particle <ArticulationModelPtr> > particles_rigid;
+  std::vector <Particle <ArticulationModelPtr> > particles_prismatic;
+  std::vector <Particle <ArticulationModelPtr> > particles_rotational;
+
 
 
 private:
