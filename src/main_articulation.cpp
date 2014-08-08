@@ -264,7 +264,7 @@ int main(int argc, char **argv)
 
   ros::Rate r(2);
   uint loop_count = 1;
-
+  uint measurement_cnt = 0;
   ros::Publisher model_pub = nh.advertise<articulation_model_msgs::ModelMsg>("model_track", 10);
   articulation_model_msgs::ModelMsg full_model;
 
@@ -295,7 +295,10 @@ int main(int argc, char **argv)
       articulation_model_msgs::TrackMsg z;
       if (use_generated_data)
       {
-        z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number + 0);
+//        z = generateMeasurement(generated_poses, loop_count + initial_datapoints_number - 10, loop_count + initial_datapoints_number + 0);
+        z = generateMeasurement(generated_poses, initial_datapoints_number + 30 * measurement_cnt, initial_datapoints_number + 30*(measurement_cnt+1));
+        ++measurement_cnt;
+
       }
       else
       {
