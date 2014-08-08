@@ -5,6 +5,8 @@ PrismaticModel::PrismaticModel()
   model = PRISMATIC;
   complexity = 6+2; //rigid + orientation - yaw
   prismatic_dir = tf::Vector3(0,0,0);
+  rigid_position = tf::Vector3(0,0,0);
+  rigid_orientation = tf::Quaternion(0,0,0,1);
   updateStateParametersToModel();
 }
 

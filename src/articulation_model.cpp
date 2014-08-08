@@ -591,13 +591,16 @@ bool ArticulationModel::fitModel() {
     std::cout << "sampleConsesus failed" << std::endl;
           return false;
   }
+//  ROS_ERROR("END OF SAMPLECONSENSUS");
   if(!optimizeParameters()) {
     std::cout << "optimizeParameters failed "<< std::endl;
           return false;
   }
+//  ROS_ERROR("END OF OPTIMIZE PARAMS");
   if(!normalizeParameters()) {
           return false;
   }
+//  ROS_ERROR("END OF NORMALIZE PARAMS");
     return true;
 }
 

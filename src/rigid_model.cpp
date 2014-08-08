@@ -5,6 +5,13 @@ RigidModel::RigidModel()
   model = RIGID;
   rigid_position = tf::Vector3(0,0,0);
   rigid_orientation = tf::Quaternion(0,0,0,1);
+  pos_x = 0;
+  pos_y = 0;
+  pos_z = 0;
+  roll = 0;
+  pitch = 0;
+  yaw = 0;
+
 
   updateStateParametersToModel();
 //  rigid_width = 1;

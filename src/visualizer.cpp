@@ -17,6 +17,8 @@ void Visualizer::init()
 {
   marker_pub_ = nh_.advertise<visualization_msgs::Marker>("visualizion_marker", 10);
   model_pub_ = nh_.advertise<articulation_model_msgs::ModelMsg>("model_track", 10);
+  particles_pub_ = nh_.advertise<articulation_model_msgs::ParticlesMsg>("model_particles", 10);
+
 }
 
 void Visualizer::publishParticles(const std::vector <Particle <Eigen::VectorXd> > &particles)
@@ -32,6 +34,21 @@ void Visualizer::publishParticles(const std::vector <Particle <Eigen::VectorXd> 
   publishPoints(points, 0.1);
 }
 
+
+void Visualizer::publishParticlesOnly(const std::vector <Particle <ArticulationModelPtr> > &particles)
+{
+  articulation_model_msgs::ParticlesMsg particles_msg;
+  particles_msg.header = particles.back().state->getModel().header;
+  for (std::vector <Particle <ArticulationModelPtr> >::const_reverse_iterator it = particles.rbegin(); it != particles.rend();
+      ++it)
+  {
+    it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+    particles_msg.particles.push_back(it->state->getModel());
+  }
+  particles_pub_.publish(particles_msg);
+}
+
+
 //assumes that particles are sorted
 //publishes the best particle of each kind(if the kind exists)
 //TODO: add free model
@@ -40,6 +57,9 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
   uint rigid_counter = 0;
   uint rotational_counter = 0;
   uint prismatic_counter = 0;
+
+  articulation_model_msgs::ParticlesMsg particles_msg;
+  particles_msg.header = particles.back().state->getModel().header;
 
   for (std::vector <Particle <ArticulationModelPtr> >::const_reverse_iterator it = particles.rbegin(); it != particles.rend();
       ++it)
@@ -55,7 +75,10 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
           model_pub_.publish(it->state->getModel());
         }
         else
-          continue;
+        {
+          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          particles_msg.particles.push_back(it->state->getModel());
+        }
         break;
       }
       case (ROTATIONAL):
@@ -67,7 +90,10 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
           model_pub_.publish(it->state->getModel());
         }
         else
-          continue;
+        {
+          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          particles_msg.particles.push_back(it->state->getModel());
+        }
         break;
       }
       case (PRISMATIC):
@@ -79,11 +105,17 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
           model_pub_.publish(it->state->getModel());
         }
         else
-          continue;
+        {
+          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          particles_msg.particles.push_back(it->state->getModel());
+        }
         break;
       }
     }
   }
+
+  particles_pub_.publish(particles_msg);
+
   double sum_all = rigid_counter + prismatic_counter + rotational_counter;
   double rigid_percentage = rigid_counter/sum_all * 100;
   double prismatic_percentage = prismatic_counter/sum_all * 100;

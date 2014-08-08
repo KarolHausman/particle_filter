@@ -8,7 +8,7 @@ This node visualizes track messages.
 
 import rospy
 import sys
-from articulation_model_msgs.msg import ModelMsg
+from articulation_model_msgs.msg import ModelMsg, ParticlesMsg
 from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import Vector3, Point, Quaternion, Pose
 from std_msgs.msg import ColorRGBA
@@ -22,14 +22,30 @@ import numpy as np
 class trackVisualizer:
 
   def __init__(self, colorize_track, colorize_obs):
-	  self.pub = rospy.Publisher('visualization_marker', Marker)
-	  self.pub_array = rospy.Publisher('visualization_marker_array', MarkerArray)
-	  self.colorize_track = colorize_track
-	  self.colorize_obs = colorize_obs
-	  rospy.Subscriber("model_track", ModelMsg, self.callback)
-	  self.num_poses = {}
-	  self.num_markers = {}
-	  self.old_num_markers = {}
+    self.pub = rospy.Publisher('visualization_marker', Marker)
+    self.pub_array = rospy.Publisher('visualization_marker_array', MarkerArray)
+    self.colorize_track = colorize_track
+    self.colorize_obs = colorize_obs
+    rospy.Subscriber("model_track", ModelMsg, self.callback)
+    rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
+    self.num_poses = {}
+    self.num_markers = {} 
+    self.old_num_markers = {}
+    self.particle_counter = 0
+    self.particle_prismatic_counter = 0
+  
+  def callbackParticles(self,particles):
+    #rospy.loginfo( "received particle. track %d",model.track.id)
+    marker_array = MarkerArray()
+    self.particle_counter = 0
+    self.particle_prismatic_counter = 0
+
+    for model in particles.particles:
+      self.particle_counter = self.particle_counter + 1
+      self.render_particle(model, marker_array)
+
+    #rospy.loginfo( "publishing PARTICLES,marker array contains %d markers", len(marker_array.markers) )
+    self.pub_array.publish(marker_array)
 
   def callback(self,model):
     rospy.loginfo( "received track %d, containing %d poses",model.track.id,len(model.track.pose) )
@@ -52,6 +68,99 @@ class trackVisualizer:
     rospy.loginfo( "publishing MarkerArray, containing %d markers",
     len(marker_array.markers) )
     self.pub_array.publish(marker_array)
+
+  def render_particle(self, model, marker_array):
+
+    for param in model.params:
+      if param.name == "rigid_position.x" or param.name == "rot_center.x":
+        rigid_position_x = param.value
+      if param.name == "rigid_position.y" or param.name == "rot_center.y":
+        rigid_position_y = param.value 
+      if param.name == "rigid_position.z" or param.name == "rot_center.z":
+        rigid_position_z = param.value
+
+      if param.name == "rigid_orientation.x" or param.name == "rot_axis.x":
+        rigid_orientation_x = param.value
+      if param.name == "rigid_orientation.y" or param.name == "rot_axis.y":
+        rigid_orientation_y = param.value
+      if param.name == "rigid_orientation.z" or param.name == "rot_axis.z":
+        rigid_orientation_z = param.value
+      if param.name == "rigid_orientation.w" or param.name == "rot_axis.w":
+        rigid_orientation_w = param.value
+
+      if param.name == "prismatic_dir.x":
+        prismatic_dir_x = param.value
+      if param.name == "prismatic_dir.y":
+        prismatic_dir_y = param.value
+      if param.name == "prismatic_dir.z":
+        prismatic_dir_z = param.value
+      
+      if param.name == "rot_radius":
+        rot_radius = param.value
+
+      if param.name == "weight":
+        weight = param.value
+
+
+    identity_pose_orientation = Quaternion(0, 0, 0, 1)                  
+    rigid_pose_orientation = Quaternion(rigid_orientation_x, rigid_orientation_y, rigid_orientation_z, rigid_orientation_w)  
+    rigid_pose_position = Point(rigid_position_x, rigid_position_y, rigid_position_z)
+    rigid_pose = Pose(rigid_pose_position, identity_pose_orientation  )
+    
+    marker = Marker()
+    marker.header.stamp = model.track.header.stamp
+    marker.header.frame_id = model.track.header.frame_id
+    marker.ns = "model_visualizer_particle"
+    marker.id = self.particle_counter
+    marker.lifetime = rospy.Duration.from_sec(3)
+    marker.action = Marker.ADD
+
+    marker.scale = Vector3(0.007,0.007,0.007)
+    for param in model.params:
+      if param.name == "added":
+        marker.scale = Vector3(0.05,0.05,0.05)
+
+    if model.name == "rotational":
+      marker.type = Marker.SPHERE
+      marker.color.a = 1
+      marker.color.b = 1
+    if model.name == "rigid":
+      marker.type = Marker.CUBE
+      marker.color.a = 1
+      marker.color.g = 1
+    if model.name == "prismatic":
+      marker.type = Marker.CYLINDER
+      marker.color.a = 1
+      marker.color.r = 1
+
+    marker.pose = rigid_pose
+
+    marker.points.append( Point(0,0,0) )
+    marker_array.markers.append(marker)
+
+    #marker.points.remove( Point(0,0,0) )
+    if model.name == "prismatic":
+      self.particle_prismatic_counter = self.particle_prismatic_counter + 1
+      marker_prismatic = Marker()  
+      marker_prismatic.header.stamp = model.track.header.stamp
+      marker_prismatic.header.frame_id = model.track.header.frame_id
+      marker_prismatic.ns = "model_visualizer_particle_prismatic_axis"
+      marker_prismatic.id = self.particle_prismatic_counter
+      marker_prismatic.lifetime = rospy.Duration.from_sec(3)
+      marker_prismatic.action = Marker.ADD
+
+      marker_prismatic.type = Marker.LINE_STRIP
+      marker_prismatic.color.b = 1
+      marker_prismatic.color.a = 1
+      marker_prismatic.color.r = 1
+      marker_prismatic.scale = Vector3(0.001,0.001,0.001)
+
+      marker_prismatic.pose = rigid_pose
+      length_scale = 30
+      marker_prismatic.points.append( Point(0,0,0) )
+      marker_prismatic.points.append( Point(prismatic_dir_x/length_scale, prismatic_dir_y/length_scale, prismatic_dir_z/length_scale) )
+      marker_array.markers.append(marker_prismatic)
+     
 
   def render_model(self, model, marker_array):
 
@@ -548,7 +657,7 @@ class trackVisualizer:
       marker.action = marker.ADD
       marker.lifetime = rospy.Duration.from_sec(14)
 
-      marker.scale = Vector3(0.003,0.003,0.003)
+      marker.scale = Vector3(0.006,0.006,0.006)
       marker.color.g = 1
       marker.color.a = 1
 
@@ -560,13 +669,13 @@ class trackVisualizer:
           marker.points.append( Point(0,0,0) )
           marker.colors.append( ColorRGBA(0,0,0,0) )
           if axis==0:
-            marker.points.append( Point(0.3,0,0) )
+            marker.points.append( Point(0.08,0,0) )
             marker.colors.append( ColorRGBA(1,0,0,0) )
           elif axis==1:
-            marker.points.append( Point(0,0.3,0) )
+            marker.points.append( Point(0,0.08,0) )
             marker.colors.append( ColorRGBA(0,1,0,0) )
           elif axis==2:
-            marker.points.append( Point(0,0,0.3) )
+            marker.points.append( Point(0,0,0.08) )
             marker.colors.append( ColorRGBA(0,0,1,0) )
       else:    
         marker.type = Marker.SPHERE_LIST

@@ -6,6 +6,7 @@
 #include "articulation_model_msgs/ModelMsg.h"
 #include "articulation_model_msgs/TrackMsg.h"
 #include "articulation_model_msgs/ParamMsg.h"
+#include "articulation_model_msgs/ParticlesMsg.h"
 #include "Eigen/Core"
 #include <tf/tf.h>
 

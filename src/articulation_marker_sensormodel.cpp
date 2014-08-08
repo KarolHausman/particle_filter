@@ -38,6 +38,7 @@ template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model
 {  
   state->setTrack(z);
   //  state->addTrack(z);
+
   state->evaluateModel();
   double zkgm = state->getParam("loglikelihood"); //z_k given model
 

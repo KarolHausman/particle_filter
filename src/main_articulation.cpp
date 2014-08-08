@@ -53,6 +53,8 @@ articulation_model_msgs::TrackMsg generateMeasurement(const std::vector<geometry
 
   std::vector<geometry_msgs::Pose> measurement_vector(first, last);
   track.pose = measurement_vector;
+  full_track.pose.insert(full_track.pose.end(), track.pose.begin(), track.pose.end());
+
   return track;
 }
 
@@ -71,7 +73,6 @@ void trackIncrementalCB(const pr2_lfd_utils::WMDataConstPtr msg)
     {
       incremental_track.header.seq = incremental_track_msgs_counter;
       ++incremental_track_msgs_counter;
-//      std::cerr << "incremental counter: " << incremental_track_msgs_counter << std::endl;
       incremental_track.pose.push_back(it->pose.pose);
       full_track.pose.push_back(it->pose.pose);
     }
@@ -93,13 +94,14 @@ int main(int argc, char **argv)
 
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(10, 10);
   Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
-  Eigen::MatrixXd motionNoiseCov = covariance / 100000;
+  Eigen::MatrixXd motionNoiseCov = covariance / 10000;
   Eigen::MatrixXd sensorNoiseCov = covariance / 2;
 
 
 
   // -------------------------------- generate data -----------------------
-  bool use_generated_data = false;
+  bool use_generated_data = true;
+  bool double_arcs = false;
   boost::normal_distribution<> nd(0.0, 0.01);
   boost::mt19937 rng;
   boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
@@ -116,7 +118,7 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < datapoints_number; i++)
     {
-      geometry_msgs::Pose pose;
+      geometry_msgs::Pose pose,pose2;
 
       if (prismatic)
       {
@@ -129,6 +131,11 @@ int main(int argc, char **argv)
         pose.position.x = 2 + cos(static_cast<float> (i) / 100.0) + var_nor();
         pose.position.y = sin(static_cast<float> (i) / 100.0) + var_nor();
         pose.position.z = var_nor();
+
+        pose2.position.x = cos(static_cast<float> (i) / 100.0) + var_nor();
+        pose2.position.y = 2 + sin(static_cast<float> (i) / 100.0) + var_nor();
+        pose2.position.z = var_nor();
+
       }
       else if(rigid)
       {
@@ -150,6 +157,7 @@ int main(int argc, char **argv)
         pose.orientation.x = tf_pose_quat.getX();
         pose.orientation.y = tf_pose_quat.getY();
         pose.orientation.z = tf_pose_quat.getZ();
+        pose2.orientation = pose.orientation;
       }
       else
       {
@@ -159,6 +167,8 @@ int main(int argc, char **argv)
         pose.orientation.w = 1;
       }
     generated_poses.push_back(pose);
+    if (rotational && double_arcs)
+      generated_poses.push_back(pose2);
     }
   }
   // -------------------------------- end of generate data -----------------------
@@ -186,12 +196,15 @@ int main(int argc, char **argv)
   ros::Subscriber track_sub = nh.subscribe("marker_topic",1, trackCB);
 
 
+  full_track.header.stamp = ros::Time::now();
+  full_track.header.frame_id = "/world";
 
   bool incremental = true;
   //use first initial_datapoints_number datapoints
   if (use_generated_data)
   {
     model_msg.track = generateMeasurement(generated_poses, 0, initial_datapoints_number);
+    full_track = model_msg.track;
   }
   else
   {
@@ -217,8 +230,6 @@ int main(int argc, char **argv)
       incremental_track.header.stamp = ros::Time::now();
       incremental_track.header.frame_id = "/world";
 
-      full_track.header.stamp = ros::Time::now();
-      full_track.header.frame_id = "/world";
 
       std::cerr << "Initializing particles... " << std::endl;
       while (ros::ok() && !got_track_for_init)
@@ -266,6 +277,12 @@ int main(int argc, char **argv)
 
     ROS_INFO_STREAM ("loop_count: " << loop_count);
     pf.propagate(u, motionNoiseCov, *motionModel);
+
+    Visualizer::getInstance()->publishParticlesOnly(pf.particles);
+
+    full_model.header = full_track.header;
+    full_model.track = full_track;
+    model_pub.publish(full_model);
 
     if (loop_count % 10 == 0)
     {
@@ -315,9 +332,6 @@ int main(int argc, char **argv)
 
       pf.sortParticles();
       Visualizer::getInstance()->publishParticles(pf.particles);
-      full_model.header = full_track.header;
-      full_model.track = full_track;
-      model_pub.publish(full_model);
 
 
       std::cerr << "ALL TOGETHER TOOK: " << full_track.pose.size() << " poses" << std::endl;

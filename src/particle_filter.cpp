@@ -144,6 +144,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       ArticulationModelPtr prismatic_model(new PrismaticModel);
       model.name = "prismatic";
       prismatic_model->setModel(model);
+
       if (prismatic_models_counter < fitmodels_number)
       {
         prismatic_model->fitModel();
@@ -152,6 +153,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       {
         Eigen::VectorXd noise = Random::multivariateGaussian(prismatic_cov);
         Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
+
         prismatic_model = motion_model.move(particles[freemodel_samples_ + remaining_models*2].state, u, noise);
       }
       it->state = prismatic_model;
@@ -476,6 +478,13 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
   model.track.header.frame_id = uptodate_track.header.frame_id;//particles.back().state->getModel().track.header.frame_id;
   model.track.header.seq = 0;
   model.track.header.stamp = ros::Time::now();
+
+  articulation_model_msgs::ParamMsg sigma_param;
+  sigma_param.name = "sigma_position";
+  sigma_param.value = 0.02;
+  sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
+  model.params.push_back(sigma_param);
+
 //  model.params = particles.back().state->getModel().params;
 
   const double standard_weight = log(1.0/(double)particles.size());
@@ -496,6 +505,7 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
       p.state = rigid_model;
       p.weight = standard_weight;
 //      rigid_model->evaluateModel();
+//      ROS_ERROR_STREAM("LIKELIHOOD OF RIGID while adding: " << rigid_model->getParam("loglikelihood"));
 //      p.weight = standard_weight + rigid_model->getParam("loglikelihood");
       p.state->setParam("added",1,articulation_model_msgs::ParamMsg::PRIOR);
       particles.push_back(p);

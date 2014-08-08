@@ -31,8 +31,9 @@ public:
   void updateStateParametersToModel();
   void updateModelToStateParameters();
 
+
   tf::Vector3 prismatic_dir;
-  double pos_x, pos_y, pos_z, roll, pitch, yaw, axis_x, axis_y, axis_z;
+  double axis_x, axis_y, axis_z;
 protected:
 
 
