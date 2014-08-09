@@ -26,6 +26,8 @@ public:
 
   bool normalize(std::vector<Particle <ParticleType> >& particles, const bool& visualization_only=false);
 
+  void removeAddedParticleFlags(std::vector<Particle <ArticulationModelPtr> >& particles);
+
   void splitArticulationModels();
 
   void mergeArticulationModels();

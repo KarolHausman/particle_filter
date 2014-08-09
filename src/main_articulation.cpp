@@ -100,8 +100,8 @@ int main(int argc, char **argv)
 
 
   // -------------------------------- generate data -----------------------
-  bool use_generated_data = false;
-  bool double_arcs = false;
+  bool use_generated_data = true;
+  bool double_arcs = true;
   boost::normal_distribution<> nd(0.0, 0.01);
   boost::mt19937 rng;
   boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
       }
       else if (rotational)
       {
-        pose.position.x = 2 + cos(static_cast<float> (i) / 100.0) + var_nor();
+        pose.position.x = 0 + cos(static_cast<float> (i) / 100.0) + var_nor();
         pose.position.y = sin(static_cast<float> (i) / 100.0) + var_nor();
         pose.position.z = var_nor();
 
@@ -183,11 +183,11 @@ int main(int argc, char **argv)
 
 
   articulation_model_msgs::ModelMsg model_msg;
-  articulation_model_msgs::ParamMsg sigma_param;
-  sigma_param.name = "sigma_position";
-  sigma_param.value = 0.02;
-  sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
-  model_msg.params.push_back(sigma_param);
+//  articulation_model_msgs::ParamMsg sigma_param;
+//  sigma_param.name = "sigma_position";
+//  sigma_param.value = 0.02;
+//  sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
+//  model_msg.params.push_back(sigma_param);
 
   //params for real data
   const int initial_trackdatapoints_number = 30;
@@ -382,10 +382,12 @@ int main(int argc, char **argv)
       }
       ROS_INFO ("Resample step executed.");
 //      pf.printParticles(pf.particles);
+
       if (hierarchical_pf)
       {
         pf.mergeArticulationModels();
       }
+      pf.removeAddedParticleFlags(pf.particles);
     }
     r.sleep();
     ++loop_count;

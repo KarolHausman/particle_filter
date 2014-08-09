@@ -472,7 +472,6 @@ template <> void ParticleFilter<ArticulationModelPtr>::mergeArticulationModels()
        it++)
   {
     Particle<ArticulationModelPtr> p = *it;
-    p.state->setParam("added", 0, articulation_model_msgs::ParamMsg::PRIOR);
     p.weight = 1.0/(double)all_particles_number;
     particles.push_back(p);
   }
@@ -480,7 +479,6 @@ template <> void ParticleFilter<ArticulationModelPtr>::mergeArticulationModels()
        it++)
   {
     Particle<ArticulationModelPtr> p = *it;
-    p.state->setParam("added", 0, articulation_model_msgs::ParamMsg::PRIOR);
     p.weight = 1.0/(double)all_particles_number;
     particles.push_back(p);
   }
@@ -488,7 +486,6 @@ template <> void ParticleFilter<ArticulationModelPtr>::mergeArticulationModels()
        it++)
   {
     Particle<ArticulationModelPtr> p = *it;
-    p.state->setParam("added", 0, articulation_model_msgs::ParamMsg::PRIOR);
     p.weight = 1.0/(double)all_particles_number;
     particles.push_back(p);
   }
@@ -574,6 +571,17 @@ template <class ParticleType> void ParticleFilter<ParticleType>::weightsToLogWei
   }
 }
 
+
+template <> void ParticleFilter<ArticulationModelPtr>::removeAddedParticleFlags(std::vector<Particle <ArticulationModelPtr> >& particles)
+{
+  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
+        it++)
+  {
+    it->state->setParam("added", 0, articulation_model_msgs::ParamMsg::PRIOR);
+  }
+}
+
+
 //TODO: remove hard coded values for model
 template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articulation_model_msgs::TrackMsg& uptodate_track, const int& rigid_particles_number, const int& rotational_particles_number, const int& prismatic_particles_number)
 {
@@ -583,11 +591,11 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
   model.track.header.seq = 0;
   model.track.header.stamp = ros::Time::now();
 
-  articulation_model_msgs::ParamMsg sigma_param;
-  sigma_param.name = "sigma_position";
-  sigma_param.value = 0.02;
-  sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
-  model.params.push_back(sigma_param);
+//  articulation_model_msgs::ParamMsg sigma_param;
+//  sigma_param.name = "sigma_position";
+//  sigma_param.value = 0.02;
+//  sigma_param.type = articulation_model_msgs::ParamMsg::PRIOR;
+//  model.params.push_back(sigma_param);
 
 //  model.params = particles.back().state->getModel().params;
 
