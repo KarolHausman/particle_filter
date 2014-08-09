@@ -7,7 +7,8 @@ ArticulationModel::ArticulationModel()
 {
 //  TODO: not needed yet, setId(-1);
   sigma_position = 0.005;
-  sigma_orientation = 360 * M_PI/180.0;
+//  sigma_orientation = 360 * M_PI/180.0;
+  sigma_orientation = 30 * M_PI/180.0;
 
   avg_error_position = 0;
   avg_error_orientation = 0;
@@ -17,7 +18,7 @@ ArticulationModel::ArticulationModel()
   evaluated = false;
   supress_similar = true;
   outlier_ratio = 0.5;
-  sac_iterations = 20;
+  sac_iterations = 5;
 //  sac_iterations = 300;
 //  optimizer_iterations = 10;
   optimizer_iterations = 0;
@@ -315,10 +316,14 @@ double ArticulationModel::getOutlierLogLikelihood()
   return( loglikelihood );
 }
 
-double ArticulationModel::getLogLikelihoodForPoseIndex(size_t index) {
+double ArticulationModel::getLogLikelihoodForPoseIndex(size_t index, const bool& fitting_model) {
 //  double gamma_mixing = 0.1;
 //  return (1-gamma_mixing)*getInlierLogLikelihood(pose_obs) + gamma_mixing * getOutlierLogLikelihood();
     double inlierLikelihood = getInlierLogLikelihood(index);
+    //KAROL: changed it such that all the points are treated as inliers
+    if (!fitting_model)
+      return inlierLikelihood;
+
     double outlierLikelihood = getOutlierLogLikelihood();
 
 //  mle-sac
@@ -370,7 +375,7 @@ double ArticulationModel::getLogLikelihood(bool estimate_outlier_ratio)
 
       for(size_t i=0; i<n; i++)
       {
-        sum_likelihood += getLogLikelihoodForPoseIndex(i);
+        sum_likelihood += getLogLikelihoodForPoseIndex(i,true);
       }
 
       double outlier_ratio_new = 0;
@@ -386,10 +391,11 @@ double ArticulationModel::getLogLikelihood(bool estimate_outlier_ratio)
   {
     for(size_t i = 0; i < n; i++)
     {
-      sum_likelihood += getLogLikelihoodForPoseIndex(i);
+      sum_likelihood += getLogLikelihoodForPoseIndex(i, false);
     }
   }
-  sum_likelihood += - prior_outlier_ratio * outlier_ratio * n;
+  if (estimate_outlier_ratio)
+    sum_likelihood += - prior_outlier_ratio * outlier_ratio * n;
   return sum_likelihood;
 }
 
@@ -689,7 +695,7 @@ bool ArticulationModel::evaluateModel()
 
 
   // let getLogLikelihood() do the projection
-  loglikelihood = getLogLikelihood(true);
+  loglikelihood = getLogLikelihood(false);
 
   // evaluate some extra statistics
 
@@ -724,7 +730,8 @@ bool ArticulationModel::evaluateModel()
   // store into cache
   avg_error_position = sum_position/n;
   avg_error_orientation = sum_orientation/n;
-  loglikelihood += - ((double)n)*getDOFs()*log(n);
+  //KAROL: removed it because we calculate a simple pose projection based likelihood
+//  loglikelihood += - ((double)n)*getDOFs()*log(n);
 
   bic =
         -2*(loglikelihood )

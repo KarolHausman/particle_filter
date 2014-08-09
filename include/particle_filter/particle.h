@@ -25,6 +25,7 @@ public:
     }
 
     double weight;
+    double weight_to_print_only;
     StateType state;
 protected:
 };

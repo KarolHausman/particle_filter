@@ -267,6 +267,8 @@ int main(int argc, char **argv)
   uint measurement_cnt = 0;
   ros::Publisher model_pub = nh.advertise<articulation_model_msgs::ModelMsg>("model_track", 10);
   articulation_model_msgs::ModelMsg full_model;
+  bool hierarchical_pf = true;
+
 
   while (ros::ok())
   {
@@ -324,29 +326,66 @@ int main(int argc, char **argv)
       ROS_INFO_STREAM ("executing correction step");
       pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
 
-//      pf.sortParticles();
-//      pf.printParticles();
-
-      if (!pf.normalize(pf.particles))
-      {
-        ROS_ERROR ("no particles left, quiting");
-        return -1;
-      }
-
       pf.sortParticles(pf.particles);
-      Visualizer::getInstance()->publishParticles(pf.particles);
-
+      pf.printParticles(pf.particles);
 
       std::cerr << "ALL TOGETHER TOOK: " << full_track.pose.size() << " poses" << std::endl;
       ROS_INFO ("Correction step executed.");
-
-      if (!pf.resample(particles_number, pf.particles))
+      if (hierarchical_pf)
       {
-        ROS_ERROR ("no particles left, quiting");
-        return -1;
+        // visualization only !!! doesnt normalize the weights
+        pf.normalize(pf.particles, true);
+        pf.sortParticles(pf.particles);
+        Visualizer::getInstance()->publishParticles(pf.particles);
+
+        pf.splitArticulationModels();
+        if ((!pf.normalize(pf.particles_rigid)) || (!pf.normalize(pf.particles_prismatic)) || (!pf.normalize(pf.particles_rotational)))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
+      }
+      else
+      {
+        if (!pf.normalize(pf.particles))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
+      }
+
+      if(!hierarchical_pf)
+      {
+        pf.sortParticles(pf.particles);
+        Visualizer::getInstance()->publishParticles(pf.particles);
+      }
+
+
+
+
+
+      if(hierarchical_pf)
+      {
+        if ((!pf.resample(particles_number/3, pf.particles_rigid)) || (!pf.resample(particles_number/3, pf.particles_prismatic)) || (!pf.resample(particles_number/3, pf.particles_rotational)))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
+      }
+      else
+      {
+        if (!pf.resample(particles_number, pf.particles))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
       }
       ROS_INFO ("Resample step executed.");
 //      pf.printParticles(pf.particles);
+      if (hierarchical_pf)
+      {
+        pf.mergeArticulationModels();
+      }
     }
     r.sleep();
     ++loop_count;

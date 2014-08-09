@@ -38,7 +38,7 @@ public:
 
 
   virtual double getInlierLogLikelihood( size_t index );
-  virtual double getLogLikelihoodForPoseIndex( size_t index );
+  virtual double getLogLikelihoodForPoseIndex( size_t index, const bool &fitting_model );
   virtual double getLogLikelihood( bool estimate_outlier_ratio );
   virtual V_Configuration predictConfiguration(geometry_msgs::Pose pose);
   virtual geometry_msgs::Pose predictPose(V_Configuration q);

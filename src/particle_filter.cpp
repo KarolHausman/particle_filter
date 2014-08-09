@@ -253,7 +253,7 @@ template <class ParticleType> void ParticleFilter<ParticleType>::printParticles(
 }
 
 
-template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWeights(std::vector<Particle <ParticleType> >& particles)
+template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWeights(std::vector<Particle <ParticleType> >& particles, const bool& visualization_only )
 {
   sortParticles(particles);
   Particle <ParticleType> maxParticle = particles.back();
@@ -262,14 +262,29 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWei
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
       it != particles.end(); it++)
   {
-    it->weight = it->weight - maxParticle.weight;
+    if (visualization_only)
+    {
+      it->weight_to_print_only = it->weight - maxParticle.weight;
+    }
+    else
+    {
+      it->weight = it->weight - maxParticle.weight;
+    }
 // TODO: TRY to do with precision -> disgard very low weights; not sure if needed
 //    if (it->weight < -40)
 //    {
 //      continue;
 //    }
-    it->weight = exp(it->weight);
-    sumLikelihoods += it->weight;
+    if (visualization_only)
+    {
+      it->weight_to_print_only = exp(it->weight_to_print_only);
+      sumLikelihoods += it->weight_to_print_only;
+    }
+    else
+    {
+      it->weight = exp(it->weight);
+      sumLikelihoods += it->weight;
+    }
   }
   if (sumLikelihoods  <= 0.0)
   {    
@@ -280,12 +295,20 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWei
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
       it != particles.end(); it++)
   {
-    it->weight = it->weight / sumLikelihoods;
+    if (visualization_only)
+    {
+      it->weight_to_print_only = it->weight_to_print_only / sumLikelihoods;
+    }
+    else
+    {
+      it->weight = it->weight / sumLikelihoods;
+      it->weight_to_print_only = it->weight;
+    }
   }
   return true;
 }
 
-template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeWeights(std::vector<Particle <ParticleType> >& particles)
+template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeWeights(std::vector<Particle <ParticleType> >& particles, const bool& visualization_only)
 {
   double weights_sum = 0.0;
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
@@ -304,7 +327,15 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeWeight
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin();
       it != particles.end(); it++)
   {
-    it->weight = it->weight / weights_sum;
+    if(visualization_only)
+    {
+      it->weight_to_print_only = it->weight / weights_sum;
+    }
+    else
+    {
+      it->weight = it->weight / weights_sum;
+      it->weight_to_print_only = it->weight;
+    }
   }
 
   return true;
@@ -393,8 +424,11 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(std:
   return Eigen::Vector3d::Zero();
 }
 
-template <> bool ParticleFilter<ArticulationModelPtr>::splitArticulationModels()
+template <> void ParticleFilter<ArticulationModelPtr>::splitArticulationModels()
 {
+  particles_rigid.clear();
+  particles_prismatic.clear();
+  particles_rotational.clear();
   for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
        it++)
   {
@@ -425,20 +459,48 @@ template <> bool ParticleFilter<ArticulationModelPtr>::splitArticulationModels()
         break;
       }
     }
-
-
   }
 
 }
 
+template <> void ParticleFilter<ArticulationModelPtr>::mergeArticulationModels()
+{
+  particles.clear();
+  const int all_particles_number = particles_rigid.size() + particles_prismatic.size() + particles_rotational.size();
+
+  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles_rigid.begin(); it != particles_rigid.end();
+       it++)
+  {
+    Particle<ArticulationModelPtr> p = *it;
+    p.state->setParam("added", 0, articulation_model_msgs::ParamMsg::PRIOR);
+    p.weight = 1.0/(double)all_particles_number;
+    particles.push_back(p);
+  }
+  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles_prismatic.begin(); it != particles_prismatic.end();
+       it++)
+  {
+    Particle<ArticulationModelPtr> p = *it;
+    p.state->setParam("added", 0, articulation_model_msgs::ParamMsg::PRIOR);
+    p.weight = 1.0/(double)all_particles_number;
+    particles.push_back(p);
+  }
+  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles_rotational.begin(); it != particles_rotational.end();
+       it++)
+  {
+    Particle<ArticulationModelPtr> p = *it;
+    p.state->setParam("added", 0, articulation_model_msgs::ParamMsg::PRIOR);
+    p.weight = 1.0/(double)all_particles_number;
+    particles.push_back(p);
+  }
+}
 
 
 
-template <class ParticleType> bool ParticleFilter<ParticleType>::normalize(std::vector<Particle <ParticleType> >& particles)
+template <class ParticleType> bool ParticleFilter<ParticleType>::normalize(std::vector<Particle <ParticleType> >& particles, const bool& visualization_only)
 {
   if (logLikelihoods_)
     {
-    if (!normalizeLogWeights(particles))
+    if (!normalizeLogWeights(particles, visualization_only))
       {
         return false;
       }
@@ -451,7 +513,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalize(std::
       }
     }
   ROS_INFO ("switching to normal likelihoods for resampling");
-  printParticles(particles);
+//  printParticles(particles);
   return true;
 }
 
@@ -479,7 +541,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const 
       if (random_double < *it)
       {
         new_particles.push_back(particles[idx]);
-        new_particles.back().weight = 1.0 / particles_number;
+        new_particles.back().weight = 1.0 / particles_number;        
         break;
       }
     }

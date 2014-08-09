@@ -118,7 +118,8 @@ class trackVisualizer:
     marker.scale = Vector3(0.007,0.007,0.007)
     for param in model.params:
       if param.name == "added":
-        marker.scale = Vector3(0.05,0.05,0.05)
+        if param.value != 0 :
+          marker.scale = Vector3(0.05,0.05,0.05)
 
     if model.name == "rotational":
       marker.type = Marker.SPHERE

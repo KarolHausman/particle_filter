@@ -71,12 +71,12 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
         ++rigid_counter;
         if(rigid_counter == 1)
         {
-          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          it->state->setParam("weight",it->weight_to_print_only,articulation_model_msgs::ParamMsg::EVAL);
           model_pub_.publish(it->state->getModel());
         }
         else
         {
-          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          it->state->setParam("weight",it->weight_to_print_only,articulation_model_msgs::ParamMsg::EVAL);
           particles_msg.particles.push_back(it->state->getModel());
         }
         break;
@@ -86,12 +86,12 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
         ++rotational_counter;
         if(rotational_counter == 1)
         {
-          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          it->state->setParam("weight",it->weight_to_print_only,articulation_model_msgs::ParamMsg::EVAL);
           model_pub_.publish(it->state->getModel());
         }
         else
         {
-          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          it->state->setParam("weight",it->weight_to_print_only,articulation_model_msgs::ParamMsg::EVAL);
           particles_msg.particles.push_back(it->state->getModel());
         }
         break;
@@ -101,12 +101,12 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
         ++prismatic_counter;
         if(prismatic_counter == 1)
         {
-          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          it->state->setParam("weight",it->weight_to_print_only,articulation_model_msgs::ParamMsg::EVAL);
           model_pub_.publish(it->state->getModel());
         }
         else
         {
-          it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
+          it->state->setParam("weight",it->weight_to_print_only,articulation_model_msgs::ParamMsg::EVAL);
           particles_msg.particles.push_back(it->state->getModel());
         }
         break;

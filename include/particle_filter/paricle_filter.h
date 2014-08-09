@@ -24,13 +24,15 @@ public:
 
   virtual ~ParticleFilter();
 
-  bool normalize(std::vector<Particle <ParticleType> >& particles);
+  bool normalize(std::vector<Particle <ParticleType> >& particles, const bool& visualization_only=false);
 
-  bool splitArticulationModels();
+  void splitArticulationModels();
 
-  bool normalizeWeights(std::vector<Particle <ParticleType> >& particles);
+  void mergeArticulationModels();
 
-  bool normalizeLogWeights(std::vector<Particle <ParticleType> >& particles);
+  bool normalizeWeights(std::vector<Particle <ParticleType> >& particles, const bool& visualization_only=false);
+
+  bool normalizeLogWeights(std::vector<Particle <ParticleType> >& particles, const bool& visualization_only=false);
 
   void sortParticles(std::vector<Particle <ParticleType> >& particles);
 
