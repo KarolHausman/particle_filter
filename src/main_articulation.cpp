@@ -325,10 +325,21 @@ int main(int argc, char **argv)
 
       ROS_INFO_STREAM ("measurement taken");
 
-      if(loop_count >= 50 && loop_count < 60 )
+      if (incremental)
       {
-        ROS_INFO_STREAM ("adding particles");
-        pf.addParticles(full_track, 30, 50, 30);
+        if(loop_count >= 50 && loop_count < 60 )
+        {
+          ROS_INFO_STREAM ("adding particles");
+          pf.addParticles(full_track, 30, 50, 30);
+        }
+      }
+      else
+      {
+        if(loop_count >= 20 && loop_count < 30 )
+        {
+          ROS_INFO_STREAM ("adding particles");
+          pf.addParticles(model_msg.track, 30, 50, 30);
+        }
       }
 
       ROS_INFO_STREAM ("executing correction step");
