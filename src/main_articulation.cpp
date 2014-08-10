@@ -95,13 +95,19 @@ int main(int argc, char **argv)
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(10, 10);
   Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
   Eigen::MatrixXd motionNoiseCov = covariance / 10000;
+
+  //orientation
+  motionNoiseCov(3,3) = motionNoiseCov(4,4) = motionNoiseCov(5,5) = 0.001;
+  //rest
+//  motionNoiseCov(6,6) = motionNoiseCov(7,7) = motionNoiseCov(8,8) = motionNoiseCov(9,9)  = 0.001;
+
   Eigen::MatrixXd sensorNoiseCov = covariance / 2;
 
 
 
   // -------------------------------- generate data -----------------------
   bool use_generated_data = true;
-  bool double_arcs = true;
+  bool double_arcs = false;
   boost::normal_distribution<> nd(0.0, 0.01);
   boost::mt19937 rng;
   boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
@@ -319,9 +325,11 @@ int main(int argc, char **argv)
 
       ROS_INFO_STREAM ("measurement taken");
 
-      ROS_INFO_STREAM ("adding particles");
       if(loop_count >= 50 && loop_count < 60 )
+      {
+        ROS_INFO_STREAM ("adding particles");
         pf.addParticles(full_track, 30, 50, 30);
+      }
 
       ROS_INFO_STREAM ("executing correction step");
       pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);

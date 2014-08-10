@@ -33,12 +33,14 @@ class trackVisualizer:
     self.old_num_markers = {}
     self.particle_counter = 0
     self.particle_prismatic_counter = 0
+    self.particle_rotational_counter = 0
   
   def callbackParticles(self,particles):
     #rospy.loginfo( "received particle. track %d",model.track.id)
     marker_array = MarkerArray()
     self.particle_counter = 0
     self.particle_prismatic_counter = 0
+    self.particle_rotational_counter = 0
 
     for model in particles.particles:
       self.particle_counter = self.particle_counter + 1
@@ -94,6 +96,15 @@ class trackVisualizer:
         prismatic_dir_y = param.value
       if param.name == "prismatic_dir.z":
         prismatic_dir_z = param.value
+
+      if param.name == "rot_axis.x":
+        rot_axis_x = param.value
+      if param.name == "rot_axis.y":
+        rot_axis_y = param.value
+      if param.name == "rot_axis.z":
+        rot_axis_z = param.value
+      if param.name == "rot_axis.w":
+        rot_axis_w = param.value
       
       if param.name == "rot_radius":
         rot_radius = param.value
@@ -105,7 +116,7 @@ class trackVisualizer:
     identity_pose_orientation = Quaternion(0, 0, 0, 1)                  
     rigid_pose_orientation = Quaternion(rigid_orientation_x, rigid_orientation_y, rigid_orientation_z, rigid_orientation_w)  
     rigid_pose_position = Point(rigid_position_x, rigid_position_y, rigid_position_z)
-    rigid_pose = Pose(rigid_pose_position, identity_pose_orientation  )
+    rigid_pose = Pose(rigid_pose_position, identity_pose_orientation)
     
     marker = Marker()
     marker.header.stamp = model.track.header.stamp
@@ -140,6 +151,7 @@ class trackVisualizer:
     marker_array.markers.append(marker)
 
     #marker.points.remove( Point(0,0,0) )
+    #small prismatic axis
     if model.name == "prismatic":
       self.particle_prismatic_counter = self.particle_prismatic_counter + 1
       marker_prismatic = Marker()  
@@ -161,6 +173,29 @@ class trackVisualizer:
       marker_prismatic.points.append( Point(0,0,0) )
       marker_prismatic.points.append( Point(prismatic_dir_x/length_scale, prismatic_dir_y/length_scale, prismatic_dir_z/length_scale) )
       marker_array.markers.append(marker_prismatic)
+
+    #small rotational axis
+    if model.name == "rotational":
+      self.particle_rotational_counter = self.particle_rotational_counter + 1
+      marker_rotational = Marker()  
+      marker_rotational.header.stamp = model.track.header.stamp
+      marker_rotational.header.frame_id = model.track.header.frame_id
+      marker_rotational.ns = "model_visualizer_particle_rotational_axis"
+      marker_rotational.id = self.particle_rotational_counter
+      marker_rotational.lifetime = rospy.Duration.from_sec(3)
+      marker_rotational.action = Marker.ADD
+
+      marker_rotational.type = Marker.LINE_STRIP
+      marker_rotational.color.b = 1
+      marker_rotational.color.a = 1
+      marker_rotational.color.g = 1
+      marker_rotational.scale = Vector3(0.001,0.001,0.001)
+
+      marker_rotational.pose = Pose(rigid_pose_position, Quaternion(rot_axis_x, rot_axis_y, rot_axis_z, rot_axis_w))
+      marker_rotational.points.append( Point(0,0,0) )
+      marker_rotational.points.append( Point(0,0,0.15) )
+      marker_array.markers.append(marker_rotational)
+
      
 
   def render_model(self, model, marker_array):

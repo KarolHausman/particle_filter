@@ -9,7 +9,7 @@ ArticulationModel::ArticulationModel()
 //  sigma_position = 0.005;
   sigma_position = 0.04;
 //  sigma_orientation = 360 * M_PI/180.0;
-  sigma_orientation = 40 * M_PI/180.0;
+  sigma_orientation = 20 * M_PI/180.0;
 
   avg_error_position = 0;
   avg_error_orientation = 0;
@@ -19,7 +19,7 @@ ArticulationModel::ArticulationModel()
   evaluated = false;
   supress_similar = true;
   outlier_ratio = 0.5;
-  sac_iterations = 2;
+  sac_iterations = 3;
 //  sac_iterations = 300;
 //  optimizer_iterations = 10;
   optimizer_iterations = 0;

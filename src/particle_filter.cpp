@@ -90,7 +90,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
   this->particles.resize(size);
   const double remaining_models_temp = static_cast<double> ((size - freemodel_samples_) / (MODELS_NUMBER - 1));
   const int remaining_models = static_cast<uint> (remaining_models_temp);
-  const int fitmodels_number = 2;
+  const int fitmodels_number = 9;
   uint i = 0;
   uint rigid_models_counter = 0;
   uint rotational_models_counter = 0;
