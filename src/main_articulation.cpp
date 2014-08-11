@@ -4,6 +4,7 @@
 #include "particle_filter/paricle_filter.h"
 #include "particle_filter/identity_motionmodel.h"
 #include "particle_filter/articulation_marker_sensormodel.h"
+#include "particle_filter/articulation_data_sensormodel.h"
 #include "particle_filter/visualizer.h"
 
 #include "articulation_model_msgs/ModelMsg.h"
@@ -76,7 +77,6 @@ void trackIncrementalCB(const pr2_lfd_utils::WMDataConstPtr msg)
       incremental_track.pose.push_back(it->pose.pose);
       full_track.pose.push_back(it->pose.pose);
     }
-
   }
 }
 
@@ -87,10 +87,26 @@ int main(int argc, char **argv)
 
   Visualizer::getInstance()->init();
 
+// ---------------------------------- options to run it -------------------------------------
+  bool incremental = false;
+
+  bool use_generated_data = true;
+  bool double_arcs = false;
+
+  bool hierarchical_pf = true;
+
   // -------------------------------- motion and sensor models ----------------
 
   MotionModel<ArticulationModelPtr>* motionModel = new IdentityMotionModel<ArticulationModelPtr>;
-  SensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>* sensorModel = new ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>;
+  SensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>* sensorModel;
+  if(incremental)
+  {
+    sensorModel = new ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>;
+  }
+  else
+  {
+    sensorModel = new ArtDataSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>;
+  }
 
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(10, 10);
   Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
@@ -106,8 +122,6 @@ int main(int argc, char **argv)
 
 
   // -------------------------------- generate data -----------------------
-  bool use_generated_data = true;
-  bool double_arcs = false;
   boost::normal_distribution<> nd(0.0, 0.01);
   boost::mt19937 rng;
   boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >
@@ -185,8 +199,9 @@ int main(int argc, char **argv)
   const int particles_number = 300;
 
   //params for generated data
-  const int initial_datapoints_number = 10;
-
+  int initial_datapoints_number = 299;
+  if (incremental)
+    initial_datapoints_number = 10;
 
   articulation_model_msgs::ModelMsg model_msg;
 //  articulation_model_msgs::ParamMsg sigma_param;
@@ -205,7 +220,6 @@ int main(int argc, char **argv)
   full_track.header.stamp = ros::Time::now();
   full_track.header.frame_id = "/world";
 
-  bool incremental = true;
   //use first initial_datapoints_number datapoints
   if (use_generated_data)
   {
@@ -273,8 +287,6 @@ int main(int argc, char **argv)
   uint measurement_cnt = 0;
   ros::Publisher model_pub = nh.advertise<articulation_model_msgs::ModelMsg>("model_track", 10);
   articulation_model_msgs::ModelMsg full_model;
-  bool hierarchical_pf = true;
-
 
   while (ros::ok())
   {
@@ -288,9 +300,12 @@ int main(int argc, char **argv)
 
     Visualizer::getInstance()->publishParticlesOnly(pf.particles);
 
-    full_model.header = full_track.header;
-    full_model.track = full_track;
-    model_pub.publish(full_model);
+    if(incremental)
+    {
+      full_model.header = full_track.header;
+      full_model.track = full_track;
+      model_pub.publish(full_model);
+    }
 
     if (loop_count % 10 == 0)
     {
