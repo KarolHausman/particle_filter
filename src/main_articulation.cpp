@@ -87,6 +87,7 @@ int main(int argc, char **argv)
 
   Visualizer::getInstance()->init();
 
+
 // ---------------------------------- options to run it -------------------------------------
   bool incremental = false;
 
@@ -279,7 +280,6 @@ int main(int argc, char **argv)
   ParticleFilter<ArticulationModelPtr> pf (particles_number, model_msg, *motionModel, motionNoiseCov, motionNoiseCov, motionNoiseCov);
 
 
-
   //  ------------------------------ particle filter loop ------------------------------
 
   ros::Rate r(2);
@@ -400,7 +400,7 @@ int main(int argc, char **argv)
 
       if(hierarchical_pf)
       {
-        if ((!pf.resample(particles_number/3, pf.particles_rigid)) || (!pf.resample(particles_number/3, pf.particles_prismatic)) || (!pf.resample(particles_number/3, pf.particles_rotational)))
+        if ((!pf.stratifiedResample(particles_number/3, pf.particles_rigid)) || (!pf.stratifiedResample(particles_number/3, pf.particles_prismatic)) || (!pf.stratifiedResample(particles_number/3, pf.particles_rotational)))
         {
           ROS_ERROR ("no particles left, quiting");
           return -1;
@@ -408,7 +408,7 @@ int main(int argc, char **argv)
       }
       else
       {
-        if (!pf.resample(particles_number, pf.particles))
+        if (!pf.stratifiedResample(particles_number, pf.particles))
         {
           ROS_ERROR ("no particles left, quiting");
           return -1;

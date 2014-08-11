@@ -60,6 +60,8 @@ public:
 
   virtual bool resample(const int& particles_number, std::vector<Particle <ParticleType> >& particles);
 
+  virtual bool stratifiedResample(const int& particles_number, std::vector<Particle <ParticleType> >& particles);
+
   void addParticles(const articulation_model_msgs::TrackMsg& uptodate_track, const int &rigid_particles_number, const int &rotational_particles_number, const int &prismatic_particles_number);
 
   std::vector <Particle <ParticleType> > particles;

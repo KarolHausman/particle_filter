@@ -514,6 +514,39 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalize(std::
   return true;
 }
 
+template <class ParticleType> bool ParticleFilter<ParticleType>::stratifiedResample(const int& particles_number, std::vector<Particle <ParticleType> >& particles)
+{
+  //at this point these are normal likelihoods, not log
+  typename std::vector <Particle <ParticleType> > new_particles;
+  new_particles.reserve(particles_number);
+  sortParticles(particles);
+  std::vector <double> cumultative_weights;
+  double cumultative_weight = 0;
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
+       it++)
+  {
+    cumultative_weight += it->weight;
+    cumultative_weights.push_back(cumultative_weight);
+  }
+  double random_double = Random::uniform(0.0, 1.0/(double)particles_number);
+  int idx = 0;
+  for (int i = 0; i < particles_number; i++)
+  {
+    while (random_double > cumultative_weights[idx])
+    {
+      ++idx;
+    }
+    new_particles.push_back(particles[idx]);
+    new_particles.back().weight = 1.0 / particles_number;
+    random_double += 1.0/(double)particles_number;
+  }
+  particles = new_particles;
+
+  if (logLikelihoods_)
+    weightsToLogWeights(particles);
+  return true;
+}
+
 template <class ParticleType> bool ParticleFilter<ParticleType>::resample(const int& particles_number, std::vector<Particle <ParticleType> >& particles)
 {
   //at this point these are normal likelihoods, not log
