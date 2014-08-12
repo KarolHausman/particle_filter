@@ -27,7 +27,7 @@ template <class StateType, class ZType> double ArtMarkerSensorModel<StateType, Z
 // do not use this one as the likelihoods get too big
 template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>::senseLikelihood(const articulation_model_msgs::TrackMsg &z, const ArticulationModelPtr &state, const Eigen::MatrixXd &cov) const
 {
-  state->addTrack(z);
+  state->setTrack(z);
   state->evaluateModel();
   return exp(state->getParam("loglikelihood"));
 }
