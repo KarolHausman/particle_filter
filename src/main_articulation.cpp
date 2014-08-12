@@ -12,6 +12,8 @@
 
 #include "pr2_lfd_utils/WMData.h"
 
+#include "particle_filter/action_prismatic.h"
+#include "particle_filter/action_rotational.h"
 
 #include "particle_filter/random.h"
 
@@ -19,6 +21,9 @@
 
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
+
+#include "particle_filter/articulation_manip_sensor_action_model.h"
+
 
 articulation_model_msgs::TrackMsg data_track;
 articulation_model_msgs::TrackMsg incremental_track;
@@ -359,6 +364,28 @@ int main(int argc, char **argv)
 
       ROS_INFO_STREAM ("executing correction step");
       pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
+
+      //add action here I think....
+      //get the best prismatic particle
+      pf.sortParticles(pf.particles);
+      boost::shared_ptr<PrismaticModel> p;
+      for (typename std::vector <Particle <ArticulationModelPtr> >::const_reverse_iterator it = pf.particles.rbegin(); it != pf.particles.rend();
+           it++)
+      {
+        if (it->state->model == PRISMATIC)
+        {
+          p = boost::dynamic_pointer_cast< PrismaticModel > (it->state);
+          break;
+        }
+      }
+
+      ActionPtr a(new ActionPrismatic(*p));
+      int z_action = 1;
+      boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
+      pf.correctAction<int, ActionPtr>(pf.particles, z_action, a, sensorNoiseCov, *sensorActionModel);
+
+      // ---- end of action sensor model ---
+
 
       pf.sortParticles(pf.particles);
       pf.printParticles(pf.particles);

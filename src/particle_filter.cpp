@@ -719,6 +719,20 @@ void ParticleFilter<ParticleType>::correct(std::vector<Particle <ParticleType> >
   }
 }
 
+template <class ParticleType>  template <class ZType, class AType>
+void ParticleFilter<ParticleType>::correctAction(std::vector<Particle <ParticleType> >& particles, const ZType z, const AType a, const Eigen::MatrixXd& noiseCov,
+                     const SensorActionModel<ParticleType, ZType, AType> &model)
+{
+  for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
+                       it++)
+  {
+    if (!logLikelihoods_)
+      it->weight *= model.senseLikelihood(z, a, it->state, noiseCov);
+    else
+      it->weight += model.senseLogLikelihood(z, a, it->state, noiseCov);
+  }
+}
+
 template class ParticleFilter <Eigen::VectorXd>;
 template class ParticleFilter <ArticulationModelPtr>;
 template void ParticleFilter<Eigen::VectorXd>::correct(std::vector<Particle <Eigen::VectorXd> >& particles, const Eigen::VectorXd z, const Eigen::MatrixXd& noiseCov,
@@ -727,5 +741,7 @@ template void ParticleFilter<ArticulationModelPtr>::correct(std::vector<Particle
                                                        const SensorModel<ArticulationModelPtr, Eigen::VectorXd> &model);
 template void ParticleFilter<ArticulationModelPtr>::correct(std::vector<Particle <ArticulationModelPtr> >& particles, const articulation_model_msgs::TrackMsg z, const Eigen::MatrixXd& noiseCov,
                                                        const SensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg> &model);
+template void ParticleFilter<ArticulationModelPtr>::correctAction(std::vector<Particle <ArticulationModelPtr> >& particles, const int z, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
 
 

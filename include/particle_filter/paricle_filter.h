@@ -5,6 +5,7 @@
 #include <Eigen/Core>
 #include "particle_filter/motion_model.h"
 #include "particle_filter/sensor_model.h"
+#include "particle_filter/sensor_action_model.h"
 #include "articulation_model.h"
 
 template <class ParticleType>
@@ -57,6 +58,9 @@ public:
 
   template <class ZType> void correct(std::vector<Particle <ParticleType> >& particles, const ZType z, const Eigen::MatrixXd& noiseCov,
                        const SensorModel<ParticleType, ZType>& model);
+
+  template <class ZType, class AType> void correctAction(std::vector<Particle <ParticleType> >& particles, const ZType z, const AType a, const Eigen::MatrixXd& noiseCov,
+                       const SensorActionModel<ParticleType, ZType, AType>& model);
 
   virtual bool resample(const int& particles_number, std::vector<Particle <ParticleType> >& particles);
 
