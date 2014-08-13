@@ -22,9 +22,9 @@ namespace Random {
 
   Eigen::VectorXd multivariateGaussian(const Eigen::MatrixXd &covariance);
 
-  double gaussianProbility(double mean, double stddev, double z);
+  double gaussianDensity(double mean, double stddev, double z);
 
-  double multivariateGaussianProbability(const Eigen::VectorXd& mean,
+  double multivariateGaussianDensity(const Eigen::VectorXd& mean,
                                          const Eigen::MatrixXd& cov,
                                          const Eigen::VectorXd& z);
 

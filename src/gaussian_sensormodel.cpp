@@ -22,7 +22,7 @@ template <class StateType, class ZType> double GaussianSensorModel<StateType, ZT
   // construct a gaussian with state as mean and noiseCov
   // check where z lies in the gaussian
   // return this value
-  return Random::multivariateGaussianProbability(state, cov, z);
+  return Random::multivariateGaussianDensity(state, cov, z);
 }
 
 //TODO: add free model
@@ -86,7 +86,7 @@ template <> double GaussianSensorModel<ArticulationModelPtr, Eigen::VectorXd>::s
   }
 //  ROS_ERROR_STREAM ("\n \n \n state_adjusted: \n" << state_adjusted << "\n, cov_adjusted: \n" << cov_adjusted << "\n, z_adjusted: \n" << z_adjusted);
 //  ROS_ERROR_STREAM ("\n score: \n" << Random::multivariateGaussianProbability(state_adjusted, cov_adjusted, z_adjusted));
-  return Random::multivariateGaussianProbability(state_adjusted, cov_adjusted, z_adjusted);
+  return Random::multivariateGaussianDensity(state_adjusted, cov_adjusted, z_adjusted);
 }
 
 template class GaussianSensorModel<Eigen::VectorXd, Eigen::VectorXd>;

@@ -48,14 +48,14 @@ namespace Random
     return mL*sample;
   }
 
-  double gaussianProbility(double mean, double stddev, double z)
+  double gaussianDensity(double mean, double stddev, double z)
   {
     const double var = stddev* stddev;
     return exp(-1.0 * ((z - mean) * (z - mean) / (2 * var)))/ sqrt(2 * M_PI * var);
   }
 
 
-  double multivariateGaussianProbability(const Eigen::VectorXd& mean,
+  double multivariateGaussianDensity(const Eigen::VectorXd& mean,
                                          const Eigen::MatrixXd& cov,
                                          const Eigen::VectorXd& z)
   {

@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 // ---------------------------------- options to run it -------------------------------------
   bool incremental = false;
 
-  bool use_generated_data = false;
+  bool use_generated_data = true;
   bool double_arcs = false;
 
   bool hierarchical_pf = true;
@@ -134,13 +134,14 @@ int main(int argc, char **argv)
                   var_nor(rng, nd);
   std::vector <geometry_msgs::Pose> generated_poses;
 
+
+  const int datapoints_number = 100;
   if (use_generated_data)
   {
     bool rotational = true;
     bool prismatic = false;
     bool rigid = false;
 
-    const int datapoints_number = 300;
 
     for (int i = 0; i < datapoints_number; i++)
     {
@@ -205,7 +206,7 @@ int main(int argc, char **argv)
   const int particles_number = 300;
 
   //params for generated data
-  int initial_datapoints_number = 299;
+  int initial_datapoints_number = datapoints_number - 1;
   if (incremental)
     initial_datapoints_number = 10;
 
@@ -367,22 +368,22 @@ int main(int argc, char **argv)
 
       //add action here I think....
       //get the best prismatic particle
-      pf.sortParticles(pf.particles);
-      boost::shared_ptr<PrismaticModel> p;
-      for (typename std::vector <Particle <ArticulationModelPtr> >::const_reverse_iterator it = pf.particles.rbegin(); it != pf.particles.rend();
-           it++)
-      {
-        if (it->state->model == PRISMATIC)
-        {
-          p = boost::dynamic_pointer_cast< PrismaticModel > (it->state);
-          break;
-        }
-      }
+//      pf.sortParticles(pf.particles);
+//      boost::shared_ptr<PrismaticModel> p;
+//      for (typename std::vector <Particle <ArticulationModelPtr> >::const_reverse_iterator it = pf.particles.rbegin(); it != pf.particles.rend();
+//           it++)
+//      {
+//        if (it->state->model == PRISMATIC)
+//        {
+//          p = boost::dynamic_pointer_cast< PrismaticModel > (it->state);
+//          break;
+//        }
+//      }
 
-      ActionPtr a(new ActionPrismatic(*p));
-      int z_action = 1;
-      boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
-      pf.correctAction<int, ActionPtr>(pf.particles, z_action, a, sensorNoiseCov, *sensorActionModel);
+//      ActionPtr a(new ActionPrismatic(*p));
+//      int z_action = 1;
+//      boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
+//      pf.correctAction<int, ActionPtr>(pf.particles, z_action, a, sensorNoiseCov, *sensorActionModel);
 
       // ---- end of action sensor model ---
 

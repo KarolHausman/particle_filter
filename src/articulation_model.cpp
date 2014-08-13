@@ -271,17 +271,33 @@ geometry_msgs::Pose ArticulationModel::predictPose(V_Configuration q)
   return p;
 }
 
-double ArticulationModel::getInlierLogLikelihood( size_t index )
+double ArticulationModel::getInlierLogLikelihood( size_t index, geometry_msgs::Pose *pose )
 {
-  geometry_msgs::Pose &pose_obs = model_msg.track.pose[index];
-  V_Configuration q_estimated = predictConfiguration(pose_obs);
-  for(size_t i = 0; i < (size_t)q_estimated.rows(); i++)
+  geometry_msgs::Pose pose_obs ;
+  if (pose == NULL)
   {
-    model_msg.track.channels[channelConfiguration[i]].values[index] =  q_estimated[i];
+    pose_obs = model_msg.track.pose[index];
+  }
+  else
+  {
+    pose_obs = *pose;
+  }
+
+  V_Configuration q_estimated = predictConfiguration(pose_obs);
+
+  if (pose == NULL)
+  {
+    for(size_t i = 0; i < (size_t)q_estimated.rows(); i++)
+    {
+      model_msg.track.channels[channelConfiguration[i]].values[index] =  q_estimated[i];
+    }
   }
 
   geometry_msgs::Pose pose_estimated = predictPose(q_estimated);
-  model_msg.track.pose_projected[index] = pose_estimated;
+  if (pose == NULL)
+  {
+    model_msg.track.pose_projected[index] = pose_estimated;
+  }
 
   tf::Transform pose_obs_tf, pose_estimated_tf;
   tf::poseMsgToTF(pose_obs, pose_obs_tf);

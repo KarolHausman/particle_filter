@@ -75,14 +75,15 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
           a.normalize();
           prism_dir.normalize();
           double angle = acos(a.dot(prism_dir));
-          double prob = Random::gaussianProbility(0, sqrt(cov(0,0)), angle);
+          double density = Random::gaussianDensity(0, sqrt(cov(0,0)), angle);
+          //TODO: change density into prob or find a better way than 1 - prob
           if (z == 1)
           {
-            loglikelihood = log(prob);
+            loglikelihood = log(density);
           }
           else
           {
-            loglikelihood = log(1-prob);
+            loglikelihood = log(1-density);
           }
         }
         else if(a->action_type == ROTATIONAL_ACTION)
@@ -110,14 +111,14 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
           //construct a gaussian
           Eigen::Vector2d diff(angle, radius_diff);
           Eigen::Vector2d mean(0.0, 0.0);
-          double prob = Random::multivariateGaussianProbability(mean, cov.block<2,2>(0,0), diff);
+          double density = Random::multivariateGaussianDensity(mean, cov.block<2,2>(0,0), diff);
           if (z == 1)
           {
-            loglikelihood = log(prob);
+            loglikelihood = log(density);
           }
           else
           {
-            loglikelihood = log(1-prob);
+            loglikelihood = log(1-density);
           }
 
         }

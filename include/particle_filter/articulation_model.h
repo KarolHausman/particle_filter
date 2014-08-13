@@ -37,7 +37,7 @@ public:
   virtual bool guessParameters();
 
 
-  virtual double getInlierLogLikelihood( size_t index );
+  virtual double getInlierLogLikelihood( size_t index, geometry_msgs::Pose *pose = NULL );
   virtual double getLogLikelihoodForPoseIndex( size_t index, const bool &fitting_model );
   virtual double getLogLikelihood( bool estimate_outlier_ratio );
   virtual V_Configuration predictConfiguration(geometry_msgs::Pose pose);

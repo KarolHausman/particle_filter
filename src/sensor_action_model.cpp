@@ -16,4 +16,4 @@ template <class StateType, class ZType, class AType> double SensorActionModel<St
 
 template class SensorActionModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg, ActionPtr>;
 template class SensorActionModel<ArticulationModelPtr, int, ActionPtr>;
-
+template class SensorActionModel<ArticulationModelPtr, tf::Transform, ActionPtr>;
