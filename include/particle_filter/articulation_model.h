@@ -33,6 +33,8 @@ public:
   virtual void setModel(const articulation_model_msgs::ModelMsg& model_m);
   virtual articulation_model_msgs::ModelMsg getModel();
 
+  virtual void getCurrentPoseProjected(const geometry_msgs::Pose& pose_obs, geometry_msgs::Pose& pose_proj, V_Configuration& q );
+
   virtual bool sampleConsensus();
   virtual bool guessParameters();
 

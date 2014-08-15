@@ -121,11 +121,15 @@ add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_f
 
 add_executable(articulation_particles src/main_articulation.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp src/articulation_marker_sensormodel.cpp src/articulation_data_sensormodel.cpp src/sensor_action_model.cpp src/articulation_manip_sensor_action_model.cpp src/articulation_manip_pose_sensoractionmodel.cpp src/handle_finder.cpp)
 
+add_executable(main_static src/main_static.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp src/articulation_marker_sensormodel.cpp src/articulation_data_sensormodel.cpp src/sensor_action_model.cpp src/articulation_manip_sensor_action_model.cpp src/articulation_manip_pose_sensoractionmodel.cpp src/handle_finder.cpp)
+
 add_executable(articulation_testing_node src/model_test.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp)
 
 add_dependencies(particle_filter_node articulation_model_msgs_generate_messages_cpp)
 add_dependencies(articulation_particles articulation_model_msgs_generate_messages_cpp)
 add_dependencies(articulation_testing_node articulation_model_msgs_generate_messages_cpp)
+add_dependencies(main_static articulation_model_msgs_generate_messages_cpp)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(particle_filter_node particle_filter_generate_messages_cpp)
@@ -145,6 +149,12 @@ target_link_libraries(articulation_particles
 )
 
 target_link_libraries(articulation_testing_node
+   ${catkin_LIBRARIES}
+   ${GSL_LIBRARY}
+   ${GSLCBLAS_LIBRARY}
+)
+
+target_link_libraries(main_static
    ${catkin_LIBRARIES}
    ${GSL_LIBRARY}
    ${GSLCBLAS_LIBRARY}

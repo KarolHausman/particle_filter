@@ -1,0 +1,7 @@
+<launch> 
+
+<!-- node pkg="tf" type="static_transform_publisher" name="world" args="0 0 0 0 0 0 /world /something 100"/ -->
+<node pkg="tf" type="static_transform_publisher" name="world" args="0 0 0 0 0 0 /ar_marker_4 /world 100"/>
+<node pkg="particle_filter" type="main_static" name="main_static" output="screen" />
+
+</launch>

@@ -218,6 +218,13 @@ articulation_model_msgs::ModelMsg ArticulationModel::getModel()
   return this->model_msg;
 }
 
+void ArticulationModel::getCurrentPoseProjected(const geometry_msgs::Pose& pose_obs, geometry_msgs::Pose& pose_proj, V_Configuration& q )
+{
+  q = predictConfiguration(pose_obs);
+  pose_proj = predictPose(q);
+}
+
+
 
 bool ArticulationModel::sampleConsensus()
 {

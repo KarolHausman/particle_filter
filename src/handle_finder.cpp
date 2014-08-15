@@ -46,16 +46,12 @@ bool HandleFinder::executeHandleGrasp(const Eigen::VectorXd& offset_pregrasp, co
   tf::poseTFToMsg(odom2marker, handle_pose);
 
   ROS_INFO_STREAM ("handle pose: \n" << "x = " << handle_pose.position.x << ", y = " << handle_pose.position.y << " ,z = " << handle_pose.position.z);
-//  handle_pose.position.x -=0.4;
-//  handle_pose.position.y -=0.25;
-//  handle_pose.position.z += 0.05;
   handle_pose.position.x += offset_pregrasp(0);
   handle_pose.position.y += offset_pregrasp(1);
   handle_pose.position.z += offset_pregrasp(2);
 
 
   tf::Quaternion quat(0,0,0,1);
-//  quat.setRPY(M_PI/2, 0, 0);
   quat.setRPY(offset_pregrasp(3), offset_pregrasp(4), offset_pregrasp(5));
   handle_pose.orientation.x = quat.getX();
   handle_pose.orientation.y = quat.getY();
@@ -69,7 +65,6 @@ bool HandleFinder::executeHandleGrasp(const Eigen::VectorXd& offset_pregrasp, co
   bool open_success = gripper.open();
   bool pre_grasp_success = group.asyncMove();
 
-//  handle_pose.position.x += 0.115;
   handle_pose.position.x += offset_grasp(0);
   handle_pose.position.y += offset_grasp(1);
   handle_pose.position.z += offset_grasp(2);

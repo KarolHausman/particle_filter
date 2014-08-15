@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
 
 // ---------------------------------- options to run it -------------------------------------
-  bool incremental = false;
+  bool incremental = true;
 
   bool use_generated_data = false;
   bool double_arcs = false;
