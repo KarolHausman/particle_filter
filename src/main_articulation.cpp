@@ -24,6 +24,8 @@
 
 #include "particle_filter/articulation_manip_sensor_action_model.h"
 
+#include "particle_filter/handle_finder.h"
+
 
 articulation_model_msgs::TrackMsg data_track;
 articulation_model_msgs::TrackMsg incremental_track;
@@ -91,6 +93,16 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "particle_filter");
 
   Visualizer::getInstance()->init();
+
+
+  // ------------------------ find handle -----------------------------------------
+
+  HandleFinder hf;
+  hf.findHandle("ar_marker_15");
+  Eigen::VectorXd pregrasp_offset(6);
+  pregrasp_offset << -0.4, -0.25, 0.05, M_PI/2, 0.0, 0.0;
+  Eigen::Vector3d grasp_offset(0.115, 0, 0);
+  hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
 
 
 // ---------------------------------- options to run it -------------------------------------

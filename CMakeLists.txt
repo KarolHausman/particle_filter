@@ -6,7 +6,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs visualization_msgs articulation_model_msgs pr2_lfd_utils)
+find_package(catkin REQUIRED COMPONENTS roscpp std_msgs visualization_msgs articulation_model_msgs pr2_lfd_utils moveit_core moveit_ros_planning_interface simple_robot_control tf)
 find_package(eigen REQUIRED)
 #find_package(PkgConfig REQUIRED)
 
@@ -117,9 +117,9 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp src/articulation_marker_sensormodel.cpp src/articulation_data_sensormodel.cpp src/sensor_action_model.cpp src/articulation_manip_sensor_action_model.cpp src/articulation_manip_pose_sensoractionmodel.cpp)
+add_executable(particle_filter_node src/main.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp src/articulation_marker_sensormodel.cpp src/articulation_data_sensormodel.cpp src/sensor_action_model.cpp src/articulation_manip_sensor_action_model.cpp src/articulation_manip_pose_sensoractionmodel.cpp src/handle_finder.cpp)
 
-add_executable(articulation_particles src/main_articulation.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp src/articulation_marker_sensormodel.cpp src/articulation_data_sensormodel.cpp src/sensor_action_model.cpp src/articulation_manip_sensor_action_model.cpp src/articulation_manip_pose_sensoractionmodel.cpp)
+add_executable(articulation_particles src/main_articulation.cpp src/particle.cpp src/particle_filter.cpp src/motion_model.cpp src/sensor_model.cpp src/random.cpp src/identity_motionmodel.cpp src/visualizer.cpp src/gaussian_sensormodel.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp src/articulation_marker_sensormodel.cpp src/articulation_data_sensormodel.cpp src/sensor_action_model.cpp src/articulation_manip_sensor_action_model.cpp src/articulation_manip_pose_sensoractionmodel.cpp src/handle_finder.cpp)
 
 add_executable(articulation_testing_node src/model_test.cpp src/free_model.cpp src/articulation_model.cpp src/rigid_model.cpp src/rotational_model.cpp src/prismatic_model.cpp)
 
