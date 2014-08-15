@@ -200,6 +200,7 @@ class trackVisualizer:
 
   def render_model(self, model, marker_array):
 
+    #origin
     zero_orientation = Quaternion(0, 0, 0, 1)  
     zero_position = Point(0, 0, 0)
     zero_pose = Pose(zero_position, zero_orientation)
@@ -231,6 +232,79 @@ class trackVisualizer:
         marker.colors.append( ColorRGBA(0,0,1,1) )
 
     marker_array.markers.append(marker)
+
+    
+
+
+    for param in model.params:
+      if param.name == "current_pose_trans.x":
+        current_pos_x = param.value
+      if param.name == "current_pose_trans.y":
+        current_pos_y = param.value
+      if param.name == "current_pose_trans.z":
+        current_pos_z = param.value
+
+      if param.name == "current_pose_quat.x":
+        current_orient_x = param.value
+      if param.name == "current_pose_quat.y":
+        current_orient_y = param.value
+      if param.name == "current_pose_quat.z":
+        current_orient_z = param.value
+      if param.name == "current_pose_quat.w":
+        current_orient_w = param.value
+
+
+      if param.name == "current_proj_pose_trans.x":
+        current_proj_pos_x = param.value
+      if param.name == "current_proj_pose_trans.y":
+        current_proj_pos_y = param.value
+      if param.name == "current_proj_pose_trans.z":
+        current_proj_pos_z = param.value
+
+      if param.name == "current_proj_pose_quat.x":
+        current_proj_orient_x = param.value
+      if param.name == "current_proj_pose_quat.y":
+        current_proj_orient_y = param.value
+      if param.name == "current_proj_pose_quat.z":
+        current_proj_orient_z = param.value
+      if param.name == "current_proj_pose_quat.w":
+        current_proj_orient_w = param.value
+
+    current_pose = Pose(Point(current_pos_x, current_pos_y, current_pos_z), Quaternion(current_orient_x, current_orient_y, current_orient_z, current_orient_w))
+    #self.current_proj_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(current_proj_orient_x, current_proj_orient_y, current_proj_orient_z, current_proj_orient_w))
+    self.current_proj_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(0, 0, 0, 1))
+
+    #current pose
+    marker = Marker()
+    marker.header.stamp = model.track.header.stamp
+    marker.header.frame_id = model.track.header.frame_id
+    marker.ns = "model_visualizer_pose"
+    marker.id = 0
+    marker.action = Marker.ADD
+
+    marker.scale = Vector3(0.01,0.01,0.01)
+    marker.color.a = 1
+    marker.color.b = 1
+    marker.type = Marker.LINE_STRIP
+    marker.pose = current_pose
+    for axis in range(3):
+      marker.points.append( Point(0,0,0) )
+      marker.colors.append( ColorRGBA(0,0,0,0) )
+      if axis==0:
+        marker.points.append( Point(0.6,0,0) )
+        marker.colors.append( ColorRGBA(1,0,0,1) )
+      elif axis==1:
+        marker.points.append( Point(0,0.6,0) )
+        marker.colors.append( ColorRGBA(0,1,0,1) )
+      elif axis==2:
+        marker.points.append( Point(0,0,0.6) )
+        marker.colors.append( ColorRGBA(0,0,1,1) )
+
+    marker_array.markers.append(marker)
+   
+
+
+
 
     
     if model.name == "rotational":
@@ -322,7 +396,23 @@ class trackVisualizer:
     marker_weight.pose = rigid_pose
    
 
-    marker_array.markers.append(marker_weight)    
+    marker_array.markers.append(marker_weight) 
+
+    marker = Marker()
+    marker.header.stamp = model.track.header.stamp
+    marker.header.frame_id = model.track.header.frame_id
+    marker.ns = "model_visualizer_rigid_proj_pose"
+    marker.id = 0
+    marker.action = Marker.ADD
+
+    marker.scale = Vector3(0.04,0.04,0.04)
+    marker.color.a = 1
+    marker.color.g = 1
+    marker.type = Marker.SPHERE
+    marker.pose = self.current_proj_pose
+    marker.points.append( Point(0,0,0) )
+
+    marker_array.markers.append(marker)   
 
 
   def render_prismatic_model(self, model, marker_array):
@@ -473,6 +563,24 @@ class trackVisualizer:
     
     marker_array.markers.append(marker_orient)
 
+    marker = Marker()
+    marker.header.stamp = model.track.header.stamp
+    marker.header.frame_id = model.track.header.frame_id
+    marker.ns = "model_visualizer_prismatic_proj_pose"
+    marker.id = 0
+    marker.action = Marker.ADD
+
+    marker.scale = Vector3(0.04,0.04,0.04)
+    marker.color.a = 1
+    marker.color.b = 1
+    marker.color.r = 1
+    marker.type = Marker.ARROW
+    marker.pose = self.current_proj_pose
+    marker.points.append( Point(0,0,0) )
+    marker.points.append( Point(prismatic_dir.x,prismatic_dir.y,prismatic_dir.z) )
+
+    marker_array.markers.append(marker)   
+
 
   def render_rotational_model(self, model, marker_array):
     rot_radius = 0
@@ -487,6 +595,9 @@ class trackVisualizer:
     rot_axis_y = 0
     rot_axis_z = 0
     rot_axis_w = 0
+    current_proj_pose_rot_dir_x = 0
+    current_proj_pose_rot_dir_y = 0
+    current_proj_pose_rot_dir_z = 0
 
     for param in model.params:
       if param.name == "rot_radius":
@@ -518,6 +629,14 @@ class trackVisualizer:
 
       if param.name == "weight":
         weight = param.value
+      if param.name == "current_proj_pose_rot_dir.x":
+        current_proj_pose_rot_dir_x = param.value
+      if param.name == "current_proj_pose_rot_dir.y":
+        current_proj_pose_rot_dir_y = param.value
+      if param.name == "current_proj_pose_rot_dir.z":
+        current_proj_pose_rot_dir_z = param.value
+
+    current_proj_pose_rot_dir = Point(current_proj_pose_rot_dir_x, current_proj_pose_rot_dir_y, current_proj_pose_rot_dir_z)
 
     #rotational axis
     rot_axis = Quaternion(rot_axis_x, rot_axis_y, rot_axis_z, rot_axis_w) 
@@ -550,10 +669,11 @@ class trackVisualizer:
     matrix_no_yaw = [[x[0],y[0],z[0],0], [x[1],y[1],z[1],0], [x[2],y[2],z[2],0], [0,0,0,1]]
     quaternion_no_yaw = normalize(tf.transformations.quaternion_from_matrix(matrix_no_yaw))
 
-    rot_axis.x = quaternion_no_yaw[0]
-    rot_axis.y = quaternion_no_yaw[1]
-    rot_axis.z = quaternion_no_yaw[2]
-    rot_axis.w = quaternion_no_yaw[3]
+#uncomment if it's rotating all the time
+    #rot_axis.x = quaternion_no_yaw[0]
+    #rot_axis.y = quaternion_no_yaw[1]
+    #rot_axis.z = quaternion_no_yaw[2]
+    #rot_axis.w = quaternion_no_yaw[3]
                        
     rot_center = Pose(rot_center_position, rot_axis) 
         
@@ -648,7 +768,11 @@ class trackVisualizer:
     marker_rot_orient.type = Marker.LINE_STRIP
     
     #orientation is with respect to rot_axis
-    transform_no_yaw = [[matrix_no_yaw[0][0],matrix_no_yaw[0][1],matrix_no_yaw[0][2],rot_center.position.x],[matrix_no_yaw[1][0], matrix_no_yaw[1][1], matrix_no_yaw[1][2],rot_center.position.y], [matrix_no_yaw[2][0], matrix_no_yaw[2][1], matrix_no_yaw[2][2],rot_center.position.z],[0,0,0,1] ]
+#uncomment if its jumping
+    #transform_no_yaw = [[matrix_no_yaw[0][0],matrix_no_yaw[0][1],matrix_no_yaw[0][2],rot_center.position.x],[matrix_no_yaw[1][0], matrix_no_yaw[1][1], matrix_no_yaw[1][2],rot_center.position.y], [matrix_no_yaw[2][0], matrix_no_yaw[2][1], matrix_no_yaw[2][2],rot_center.position.z],[0,0,0,1] ]
+
+    transform_no_yaw = [[matrix[0][0],matrix[0][1],matrix[0][2],rot_center.position.x],[matrix[1][0], matrix[1][1], matrix[1][2],rot_center.position.y], [matrix[2][0], matrix[2][1], matrix[2][2],rot_center.position.z],[0,0,0,1] ]
+
     transform_radius = [[1,0,0,rot_radius],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 
     pose = np.dot(transform_no_yaw,transform_radius)
@@ -656,7 +780,10 @@ class trackVisualizer:
     quaternion_orient = (rot_orientation_x, rot_orientation_y, rot_orientation_z, rot_orientation_w)
     rot_orientation_matrix = tf.transformations.quaternion_matrix(quaternion_orient)
     
-    rot_matrix = np.dot(matrix_no_yaw,rot_orientation_matrix)
+#uncomment if its jumping
+    #rot_matrix = np.dot(matrix_no_yaw,rot_orientation_matrix)
+
+    rot_matrix = np.dot(matrix,rot_orientation_matrix)
 
     rot_center_quat = tf.transformations.quaternion_from_matrix(rot_matrix)
     rot_center_orientation.x = rot_center_quat[0]
@@ -681,6 +808,23 @@ class trackVisualizer:
         marker_rot_orient.colors.append( ColorRGBA(0,0,1,0) )
 
     marker_array.markers.append(marker_rot_orient)
+
+    marker = Marker()
+    marker.header.stamp = model.track.header.stamp
+    marker.header.frame_id = model.track.header.frame_id
+    marker.ns = "model_visualizer_rotational_proj_pose"
+    marker.id = 0
+    marker.action = Marker.ADD
+
+    marker.scale = Vector3(0.04,0.04,0.04)
+    marker.color.a = 1
+    marker.color.b = 1
+    marker.type = Marker.ARROW
+    marker.pose = self.current_proj_pose
+    marker.points.append( Point(0,0,0) )
+    marker.points.append( current_proj_pose_rot_dir )
+
+    marker_array.markers.append(marker)   
       
 
   def render_points(self, track, marker_array, orientation = True):

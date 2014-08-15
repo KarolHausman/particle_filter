@@ -114,9 +114,53 @@ int main(int argc, char **argv)
 
   ros::Rate r(2);
   uint loop_count = 1;
+  tf::TransformListener tf_listener;
+  tf::StampedTransform marker_static_to_marker;
+
 
   while (ros::ok())
   {
+
+    //current marker measurement
+    try
+    {
+      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+    }
+
+    for (std::vector <Particle <ArticulationModelPtr> >::iterator it = pf.particles.begin(); it!= pf.particles.end(); ++it)
+    {
+      it->state->setParam("current_pose_trans", marker_static_to_marker.getOrigin(), articulation_model_msgs::ParamMsg::PRIOR);
+      it->state->setParam("current_pose_quat", marker_static_to_marker.getRotation(), articulation_model_msgs::ParamMsg::PRIOR);
+
+      geometry_msgs::Pose pose_obs, pose_proj;
+      V_Configuration q;
+      tf::poseTFToMsg(marker_static_to_marker, pose_obs);
+      it->state->getCurrentPoseProjected(pose_obs, pose_proj, q);
+      tf::Transform tf_pose_proj;
+      tf::poseMsgToTF(pose_proj,tf_pose_proj);
+
+      it->state->setParam("current_proj_pose_trans", tf_pose_proj.getOrigin(), articulation_model_msgs::ParamMsg::PRIOR);
+      it->state->setParam("current_proj_pose_quat", tf_pose_proj.getRotation(), articulation_model_msgs::ParamMsg::PRIOR);
+
+      if (it->state->model_msg.name == "rotational")
+      {
+        tf::Vector3 rot_proj_dir;
+        boost::shared_ptr<RotationalModel> rotational_model = boost::dynamic_pointer_cast< RotationalModel > (it->state);
+        tf::Matrix3x3 rot_axis_m(rotational_model->rot_axis);
+        tf::Vector3 rot_axis_z = rot_axis_m.getColumn(2);
+        tf::Vector3 radius = tf_pose_proj.getOrigin() - rotational_model->rot_center;
+        rot_proj_dir = radius.cross(rot_axis_z);
+        it->state->setParam("current_proj_pose_rot_dir", rot_proj_dir, articulation_model_msgs::ParamMsg::PRIOR);
+//        std::cerr << "current proj_pose_rot_dir.x : " << rot_proj_dir.getX() << std::endl;
+      }
+    }
+
+
     ros::spinOnce();
     ROS_INFO_STREAM ("loop_count: " << loop_count);
     pf.propagate(pf.particles, u, motionNoiseCov, *motionModel);
