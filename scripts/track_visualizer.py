@@ -28,12 +28,38 @@ class trackVisualizer:
     self.colorize_obs = colorize_obs
     rospy.Subscriber("model_track", ModelMsg, self.callback)
     rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
+    rospy.Subscriber("action", Pose, self.callbackAction)
     self.num_poses = {}
     self.num_markers = {} 
     self.old_num_markers = {}
     self.particle_counter = 0
     self.particle_prismatic_counter = 0
     self.particle_rotational_counter = 0
+    self.current_pose = Pose(Point(0, 0, 0), Quaternion(0, 0, 0, 1))
+
+  def callbackAction(self, pose):    
+    if self.current_pose.position.x != 0:
+      marker = Marker()
+      marker.header.stamp = rospy.get_rostime()
+      marker.header.frame_id = "world"
+      marker.ns = "model_visualizer_action"
+      marker.id = 0
+      marker.action = Marker.ADD
+
+      marker.scale = Vector3(0.04,0.04,0.04)
+      marker.color.a = 1
+      marker.color.g = 1
+      marker.color.r = 1
+
+      marker.type = Marker.ARROW
+      marker.pose = self.current_pose
+      marker.points.append( Point(0,0,0) )
+      marker.points.append( Point(pose.position.x, pose.position.y, pose.position.z) )
+
+      self.pub.publish(marker)
+
+    
+    
   
   def callbackParticles(self,particles):
     #rospy.loginfo( "received particle. track %d",model.track.id)
@@ -270,7 +296,7 @@ class trackVisualizer:
       if param.name == "current_proj_pose_quat.w":
         current_proj_orient_w = param.value
 
-    current_pose = Pose(Point(current_pos_x, current_pos_y, current_pos_z), Quaternion(current_orient_x, current_orient_y, current_orient_z, current_orient_w))
+    self.current_pose = Pose(Point(current_pos_x, current_pos_y, current_pos_z), Quaternion(current_orient_x, current_orient_y, current_orient_z, current_orient_w))
     #self.current_proj_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(current_proj_orient_x, current_proj_orient_y, current_proj_orient_z, current_proj_orient_w))
     self.current_proj_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(0, 0, 0, 1))
 
@@ -286,7 +312,7 @@ class trackVisualizer:
     marker.color.a = 1
     marker.color.b = 1
     marker.type = Marker.LINE_STRIP
-    marker.pose = current_pose
+    marker.pose = self.current_pose
     for axis in range(3):
       marker.points.append( Point(0,0,0) )
       marker.colors.append( ColorRGBA(0,0,0,0) )

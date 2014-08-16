@@ -12,9 +12,6 @@
 
 #include "pr2_lfd_utils/WMData.h"
 
-#include "particle_filter/action_prismatic.h"
-#include "particle_filter/action_rotational.h"
-
 #include "particle_filter/random.h"
 
 #include "particle_filter/articulation_io_utils.h"
@@ -25,6 +22,8 @@
 #include "particle_filter/articulation_manip_sensor_action_model.h"
 
 #include "particle_filter/handle_finder.h"
+
+#include "particle_filter/action.h"
 
 
 articulation_model_msgs::TrackMsg data_track;
@@ -109,6 +108,7 @@ int main(int argc, char **argv)
 
 
 
+  Action action;
 
   //  ------------------------------ particle filter loop ------------------------------
 
@@ -116,6 +116,9 @@ int main(int argc, char **argv)
   uint loop_count = 1;
   tf::TransformListener tf_listener;
   tf::StampedTransform marker_static_to_marker;
+
+
+
 
 
   while (ros::ok())
@@ -169,6 +172,11 @@ int main(int argc, char **argv)
 
     if (loop_count % 10 == 0)
     {
+
+      action.plan(tf::Vector3(0, 0, 1));
+      action.execute(tf::Vector3(0, 0, 1));
+
+
       if(loop_count >= 20 && loop_count < 30 )
       {
         ROS_INFO_STREAM ("adding particles");

@@ -1,6 +1,4 @@
 #include "particle_filter/articulation_manip_pose_sensoractionmodel.h"
-#include "particle_filter/action_prismatic.h"
-#include "particle_filter/action_rotational.h"
 #include "particle_filter/prismatic_model.h"
 #include "particle_filter/rotational_model.h"
 #include "particle_filter/random.h"
@@ -44,7 +42,7 @@ template <> double ArtManipPoseSensorActionModel<ArticulationModelPtr, tf::Trans
   // find distance between predicted configuration space point(previously computed intersection) and the z projected on the configuration space(wide gaussian)
   // find distance between the z projected and the z (narrow gaussian)
 
-  double loglikelihood = 0;
+/*  double loglikelihood = 0;
   uint points_to_generate = 2000;
 
   switch (state->model)
@@ -126,7 +124,7 @@ template <> double ArtManipPoseSensorActionModel<ArticulationModelPtr, tf::Trans
   }
 
 
-  return loglikelihood;
+  return loglikelihood;*/
 }
 
 template class ArtManipPoseSensorActionModel<ArticulationModelPtr, tf::Transform, ActionPtr>;

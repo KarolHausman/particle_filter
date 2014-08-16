@@ -12,9 +12,6 @@
 
 #include "pr2_lfd_utils/WMData.h"
 
-#include "particle_filter/action_prismatic.h"
-#include "particle_filter/action_rotational.h"
-
 #include "particle_filter/random.h"
 
 #include "particle_filter/articulation_io_utils.h"

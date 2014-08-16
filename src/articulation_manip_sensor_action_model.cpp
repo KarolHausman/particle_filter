@@ -1,6 +1,4 @@
 #include "particle_filter/articulation_manip_sensor_action_model.h"
-#include "particle_filter/action_prismatic.h"
-#include "particle_filter/action_rotational.h"
 #include "particle_filter/prismatic_model.h"
 #include "particle_filter/rotational_model.h"
 #include "particle_filter/random.h"
@@ -62,7 +60,7 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         }
       }
 
-    case (PRISMATIC):
+  /*  case (PRISMATIC):
       {
         // calculate the relative angle between prismatic axis
         if (a->action_type == PRISMATIC_ACTION)
@@ -126,8 +124,8 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         {
           //TODO: what then?
         }
-
       }
+*/
   }
 
 

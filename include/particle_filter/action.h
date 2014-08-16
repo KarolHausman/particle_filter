@@ -3,8 +3,6 @@
 #include <tf/tf.h>
 
 
-enum ActionType {RIGID_ACTION, PRISMATIC_ACTION, ROTATIONAL_ACTION};
-
 class Action;
 typedef boost::shared_ptr<Action> ActionPtr;
 
@@ -12,11 +10,18 @@ typedef boost::shared_ptr<Action> ActionPtr;
 class Action
 {
 public:
-  Action(){};
-  virtual ~Action(){};
+  Action();
+  virtual ~Action();
+
+
+  bool execute(const tf::Vector3 &direction, const bool &both_ways = true);
+  void plan(const tf::Vector3 &direction, const bool &both_ways = true);
 
   tf::Transform grasp_point;
-  ActionType action_type;
+  double distance;
+  ros::Publisher vector_pub;
+  ros::NodeHandle nh;
+
 
 };
 
