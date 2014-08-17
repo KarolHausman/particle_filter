@@ -13,6 +13,9 @@ public:
   ZType sense(const StateType &state, const Eigen::VectorXd &noise) const;
   double senseLikelihood(const ZType &z, const AType& a, const StateType &state, const Eigen::MatrixXd &cov) const;
   double senseLogLikelihood (const ZType& z, const AType& a, const StateType& state, const Eigen::MatrixXd& cov) const;
+
+  ///the bigger the scale the more stiff the controller
+  double scale;
 };
 
 

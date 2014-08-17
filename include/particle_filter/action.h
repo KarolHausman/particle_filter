@@ -22,6 +22,7 @@ public:
   tf::StampedTransform marker2r__wrist_roll;
   tf::TransformListener tf_listener;
   double distance;
+  tf::Vector3 action_direction;
   ros::Publisher vector_pub;
   ros::NodeHandle nh;
   moveit::planning_interface::MoveGroup group;

@@ -4,7 +4,8 @@
 #include "particle_filter/random.h"
 
 
-template <class StateType, class ZType, class AType> ArtManipSensorActionModel<StateType, ZType, AType>::ArtManipSensorActionModel()
+template <class StateType, class ZType, class AType> ArtManipSensorActionModel<StateType, ZType, AType>::ArtManipSensorActionModel():
+  scale(1.0)
 {
 }
 
@@ -60,72 +61,71 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         }
       }
 
-  /*  case (PRISMATIC):
+    case (PRISMATIC):
       {
         // calculate the relative angle between prismatic axis
-        if (a->action_type == PRISMATIC_ACTION)
-        {
-          boost::shared_ptr<ActionPrismatic> action_prismatic = boost::dynamic_pointer_cast< ActionPrismatic > (a);
-          boost::shared_ptr<PrismaticModel> prismatic_model = boost::dynamic_pointer_cast< PrismaticModel > (state);
+        boost::shared_ptr<PrismaticModel> prismatic_model = boost::dynamic_pointer_cast< PrismaticModel > (state);
 
-          Eigen::Vector3d a(action_prismatic->axis_x, action_prismatic->axis_y, action_prismatic->axis_z);
-          Eigen::Vector3d prism_dir(prismatic_model->axis_x, prismatic_model->axis_y, prismatic_model->axis_z);
-          a.normalize();
-          prism_dir.normalize();
-          double angle = acos(a.dot(prism_dir));
-          double density = Random::gaussianDensity(0, sqrt(cov(0,0)), angle);
-          //TODO: change density into prob or find a better way than 1 - prob
-          if (z == 1)
-          {
-            loglikelihood = log(density);
-          }
-          else
-          {
-            loglikelihood = log(1-density);
-          }
-        }
-        else if(a->action_type == ROTATIONAL_ACTION)
+        tf::Vector3 model_dir = prismatic_model->prismatic_dir;
+        tf::Vector3 action_dir = a->action_direction;
+        model_dir.normalize();
+        action_dir.normalize();
+        double angle_rad = model_dir.angle(action_dir);
+        //TODO: normalize the angle?
+        angle_rad = fabs(angle_rad);
+        double prob = exp(-scale*angle_rad);
+        if (z == 1)
         {
-          //TODO: what then?
+          loglikelihood = log(prob);
         }
-
+        else
+        {
+          loglikelihood = log(1-prob);
+        }
       }
     case (ROTATIONAL):
       {
-        //compare rot axises and radiuses in 2-dimensional gaussian
-        if (a->action_type == ROTATIONAL_ACTION)
+        // calculate the relative angle between tangents
+        boost::shared_ptr<RotationalModel> rotational_model = boost::dynamic_pointer_cast< RotationalModel > (state);
+
+        //get current pose_obs
+        geometry_msgs::Pose pose_obs, pose_proj;
+        tf::Quaternion quad_obs;
+        tf::Vector3 pos_obs;
+        state->getParam("current_pose_trans", pos_obs);
+        state->getParam("current_pose_quat", quad_obs);
+        tf::Transform tf_pose_obs(quad_obs, pos_obs);
+        tf::poseTFToMsg(tf_pose_obs, pose_obs);
+
+        //project current pose_obs
+        V_Configuration q;
+        state->getCurrentPoseProjected(pose_obs, pose_proj, q);
+        tf::Transform tf_pose_proj;
+        tf::poseMsgToTF(pose_proj,tf_pose_proj);
+
+        //get the tangent vector
+        tf::Matrix3x3 rot_axis_m(rotational_model->rot_axis);
+        tf::Vector3 rot_axis_z = rot_axis_m.getColumn(2);
+        tf::Vector3 radius = tf_pose_proj.getOrigin() - rotational_model->rot_center;
+        tf::Vector3 rot_proj_dir = radius.cross(rot_axis_z);
+        tf::Vector3 action_dir = a->action_direction;
+
+        rot_proj_dir.normalize();
+        action_dir.normalize();
+        double angle_rad = rot_proj_dir.angle(action_dir);
+        //TODO: normalize the angle?
+        angle_rad = fabs(angle_rad);
+        double prob = exp(-scale*angle_rad);
+        if (z == 1)
         {
-          boost::shared_ptr<ActionRotational> action_rotational = boost::dynamic_pointer_cast< ActionRotational > (a);
-          boost::shared_ptr<RotationalModel> rotational_model = boost::dynamic_pointer_cast< RotationalModel > (state);
-
-          //get z axis from both quaternions and compare
-          tf::Matrix3x3 rotation_matrix_model(rotational_model->rot_axis);
-          tf::Vector3 z_model = rotation_matrix_model.getColumn(2);
-          tf::Matrix3x3 rotation_matrix_action(action_rotational->rot_axis);
-          tf::Vector3 z_action = rotation_matrix_action.getColumn(2);
-          double angle = z_action.dot(z_model);
-          //compare radiuses
-          double radius_diff = fabs(rotational_model->radius - action_rotational->radius);
-          //construct a gaussian
-          Eigen::Vector2d diff(angle, radius_diff);
-          Eigen::Vector2d mean(0.0, 0.0);
-          double density = Random::multivariateGaussianDensity(mean, cov.block<2,2>(0,0), diff);
-          if (z == 1)
-          {
-            loglikelihood = log(density);
-          }
-          else
-          {
-            loglikelihood = log(1-density);
-          }
-
+          loglikelihood = log(prob);
         }
-        else if(a->action_type == PRISMATIC_ACTION)
+        else
         {
-          //TODO: what then?
+          loglikelihood = log(1-prob);
         }
       }
-*/
+
   }
 
 
