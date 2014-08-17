@@ -24,6 +24,8 @@ public:
   tf::TransformListener tf_listener;
   tf::StampedTransform odom2marker;
   simple_robot_control::Gripper gripper;
+  ros::AsyncSpinner spinner;
+
 
 
 };

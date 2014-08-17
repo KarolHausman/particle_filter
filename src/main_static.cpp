@@ -47,14 +47,14 @@ int main(int argc, char **argv)
 
 
   // ------------------------ find handle -----------------------------------------
-
-//  HandleFinder hf;
-//  hf.findHandle("ar_marker_15");
-//  Eigen::VectorXd pregrasp_offset(6);
-//  pregrasp_offset << -0.4, -0.25, 0.05, M_PI/2, 0.0, 0.0;
-//  Eigen::Vector3d grasp_offset(0.115, 0, 0);
-//  hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
-
+  ROS_INFO("Grasping handle");
+  HandleFinder hf;
+  hf.findHandle("ar_marker_15");
+  Eigen::VectorXd pregrasp_offset(6);
+  pregrasp_offset << -0.4, -0.25, 0.05, M_PI/2, 0.0, 0.0;
+  Eigen::Vector3d grasp_offset(0.175, 0, 0);
+  hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
+  ROS_INFO("Handle grasp executed");
 
   // -------------------------------- motion and sensor models ----------------
 
@@ -100,8 +100,6 @@ int main(int argc, char **argv)
   }
 
   ParticleFilter<ArticulationModelPtr> pf (particles_number, model_msg, *motionModel, motionNoiseCov, motionNoiseCov, motionNoiseCov);
-
-
 
 
 
@@ -172,9 +170,10 @@ int main(int argc, char **argv)
 
     if (loop_count % 10 == 0)
     {
-
-      action.plan(tf::Vector3(0, 0, 1));
-      action.execute(tf::Vector3(0, 0, 1));
+      std::cerr << "Performing action" << std::endl;
+      tf::Vector3 x_action(0, 0, 1);
+      bool success = action.execute(x_action, "ar_marker_15");
+      std::cerr << "Action successful? " << success << std::endl;
 
 
       if(loop_count >= 20 && loop_count < 30 )

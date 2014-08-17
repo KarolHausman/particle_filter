@@ -3,7 +3,7 @@
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 
 HandleFinder::HandleFinder():
-  nh(),gripper('r')
+  nh(),gripper('r'),spinner(1)
 {
   marker_sub = nh.subscribe("ar_world_model", 100, &HandleFinder::markerCB, this);
   sleep(5.0);
@@ -39,6 +39,7 @@ void HandleFinder::markerCB(const pr2_lfd_utils::WMDataConstPtr msg)
 
 bool HandleFinder::executeHandleGrasp(const Eigen::VectorXd& offset_pregrasp, const Eigen::VectorXd& offset_grasp)
 {
+  spinner.start();
   moveit::planning_interface::MoveGroup group("right_arm");
   ROS_INFO("Reference frame: %s", group.getPlanningFrame().c_str());
   ROS_INFO("Reference frame: %s", group.getEndEffectorLink().c_str());
@@ -63,16 +64,16 @@ bool HandleFinder::executeHandleGrasp(const Eigen::VectorXd& offset_pregrasp, co
 //  moveit::planning_interface::MoveGroup::Plan my_plan;
 //  bool success = group.plan(my_plan);
   bool open_success = gripper.open();
-  bool pre_grasp_success = group.asyncMove();
+  bool pre_grasp_success = group.move();
 
   handle_pose.position.x += offset_grasp(0);
   handle_pose.position.y += offset_grasp(1);
   handle_pose.position.z += offset_grasp(2);
   group.setPoseTarget(handle_pose);
-  bool grasp_success = group.asyncMove();
+  bool grasp_success = group.move();
 
-  sleep(5.0);
   bool close_success = gripper.close();
+  spinner.stop();
 
 
   return close_success && open_success && pre_grasp_success && grasp_success;
