@@ -5,7 +5,7 @@
 
 
 template <class StateType, class ZType, class AType> ArtManipSensorActionModel<StateType, ZType, AType>::ArtManipSensorActionModel():
-  scale(1.0)
+  scale(1.0), log_multiplier(1)
 {
 }
 
@@ -46,6 +46,7 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
                                                                                                       const Eigen::MatrixXd &cov) const
 {
   double loglikelihood = 0;
+  double prob_end = 0;
 
   switch (state->model)
   {
@@ -53,12 +54,13 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
       {
         if (z == 1)
         {
-          loglikelihood = -std::numeric_limits<double>::lowest();
+          loglikelihood = std::numeric_limits<double>::lowest()/log_multiplier;
         }
         else
         {
           //TODO: how to increase likelihood here?
         }
+        break;
       }
 
     case (PRISMATIC):
@@ -70,10 +72,22 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         tf::Vector3 action_dir = a->action_direction;
         model_dir.normalize();
         action_dir.normalize();
+
         double angle_rad = model_dir.angle(action_dir);
-        //TODO: normalize the angle?
+
+        // normalize the angle 0 < angle < 90
+        double angle = angle_rad * 180/M_PI;
+        int angle_int =  (int)angle % 180;
+        angle_int = (angle_int + 180) % 180;
+        if (angle_int > 90)
+        {
+          angle_int -= 180;
+        }
+        angle_rad = angle_int*M_PI/180;
         angle_rad = fabs(angle_rad);
+
         double prob = exp(-scale*angle_rad);
+
         if (z == 1)
         {
           loglikelihood = log(prob);
@@ -82,6 +96,8 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         {
           loglikelihood = log(1-prob);
         }
+        prob_end = prob;
+        break;
       }
     case (ROTATIONAL):
       {
@@ -113,8 +129,18 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         rot_proj_dir.normalize();
         action_dir.normalize();
         double angle_rad = rot_proj_dir.angle(action_dir);
-        //TODO: normalize the angle?
+
+        // normalize the angle 0 < angle < 90
+        double angle = angle_rad * 180/M_PI;
+        int angle_int =  (int)angle % 180;
+        angle_int = (angle_int + 180) % 180;
+        if (angle_int > 90)
+        {
+          angle_int -= 180;
+        }
+        angle_rad = angle_int*M_PI/180;
         angle_rad = fabs(angle_rad);
+
         double prob = exp(-scale*angle_rad);
         if (z == 1)
         {
@@ -124,13 +150,13 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         {
           loglikelihood = log(1-prob);
         }
+        prob_end = prob;
+        break;
       }
-
   }
-
-
-
-  return loglikelihood;
+  ROS_ERROR("prob = %f",prob_end);
+  ROS_ERROR("loglikelihood = %f",log_multiplier*loglikelihood);
+  return log_multiplier*loglikelihood;
 }
 
 

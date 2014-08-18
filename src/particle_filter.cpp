@@ -489,6 +489,11 @@ template <> void ParticleFilter<ArticulationModelPtr>::mergeArticulationModels()
     p.weight = 1.0/(double)all_particles_number;
     particles.push_back(p);
   }
+  if (logLikelihoods_)
+  {
+    weightsToLogWeights(particles);
+  }
+
 }
 
 

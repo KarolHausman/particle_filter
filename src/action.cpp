@@ -75,6 +75,7 @@ bool Action::execute(tf::Vector3& direction, const std::string& marker_tf, const
 
 void Action::plan(tf::Vector3& direction, const bool& both_ways)
 {
+  action_direction = direction;
   geometry_msgs::Pose pose_direction;
   tf::Transform transform(tf::Quaternion(0, 0, 0, 1), direction);
   tf::poseTFToMsg(transform, pose_direction);

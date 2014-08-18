@@ -47,14 +47,14 @@ int main(int argc, char **argv)
 
 
   // ------------------------ find handle -----------------------------------------
-  ROS_INFO("Grasping handle");
+  /*ROS_INFO("Grasping handle");
   HandleFinder hf;
   hf.findHandle("ar_marker_15");
   Eigen::VectorXd pregrasp_offset(6);
   pregrasp_offset << -0.4, -0.25, 0.05, M_PI/2, 0.0, 0.0;
   Eigen::Vector3d grasp_offset(0.175, 0, 0);
   hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
-  ROS_INFO("Handle grasp executed");
+  ROS_INFO("Handle grasp executed");*/
 
   // -------------------------------- motion and sensor models ----------------
 
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
 
 
-  Action action;
+//  Action action;
 
   //  ------------------------------ particle filter loop ------------------------------
 
@@ -114,9 +114,6 @@ int main(int argc, char **argv)
   uint loop_count = 1;
   tf::TransformListener tf_listener;
   tf::StampedTransform marker_static_to_marker;
-
-
-
 
 
   while (ros::ok())
@@ -157,7 +154,6 @@ int main(int argc, char **argv)
         tf::Vector3 radius = tf_pose_proj.getOrigin() - rotational_model->rot_center;
         rot_proj_dir = radius.cross(rot_axis_z);
         it->state->setParam("current_proj_pose_rot_dir", rot_proj_dir, articulation_model_msgs::ParamMsg::PRIOR);
-//        std::cerr << "current proj_pose_rot_dir.x : " << rot_proj_dir.getX() << std::endl;
       }
     }
 
@@ -170,10 +166,11 @@ int main(int argc, char **argv)
 
     if (loop_count % 10 == 0)
     {
-      std::cerr << "Performing action" << std::endl;
+      /*std::cerr << "Performing action" << std::endl;
       tf::Vector3 x_action(0, 0, 1);
       bool success = action.execute(x_action, "ar_marker_15");
-      std::cerr << "Action successful? " << success << std::endl;
+      std::cerr << "Action successful? " << success << std::endl;*/
+
 
 
       if(loop_count >= 20 && loop_count < 30 )
@@ -184,11 +181,34 @@ int main(int argc, char **argv)
 
       ROS_INFO ("executing correction step");
       articulation_model_msgs::TrackMsg z;
-      pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
+      if(loop_count != 30)
+      {
+        pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
+        pf.sortParticles(pf.particles);
+        pf.printParticles(pf.particles);
+        ROS_INFO ("Correction step executed.");
+      }
 
-      pf.sortParticles(pf.particles);
-      pf.printParticles(pf.particles);
-      ROS_INFO ("Correction step executed.");
+
+
+
+      if(loop_count >= 30 && loop_count < 40 )
+      {
+        ROS_INFO("Executing action correction step");
+        ActionPtr a(new Action);
+        tf::Vector3 x_action(0, 0, 1);
+        a->plan(x_action);
+        // 1 - doesnt stop
+        int z_action = 1;
+        boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
+
+        pf.correctAction<int> (pf.particles, z_action, a, sensorNoiseCov, *sensorActionModel);
+
+        pf.sortParticles(pf.particles);
+        pf.printParticles(pf.particles);
+        ROS_INFO("Action correction step executed");
+      }
+
 
 
       // visualization only !!! doesnt normalize the weights
