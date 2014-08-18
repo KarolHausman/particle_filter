@@ -2,26 +2,39 @@
 
 
 Action::Action():
-  distance(0.02),nh(),group("right_arm"),spinner(1)
+  distance(0.02),nh(),group("right_arm"),spinner(1),stopped(false)
 {
   vector_pub = nh.advertise <geometry_msgs::Pose>("action", 5);
+  effort_exceeded_sub = nh.subscribe ("/r_arm_controller/effort_exceeded", 1, &Action::effortCB, this);
 }
 
 Action::~Action()
 {
 }
 
+void Action::effortCB(const std_msgs::BoolConstPtr& msg)
+{
+  stopped = msg->data;
+  ROS_ERROR("effortCB called with %d", stopped);
+}
+
+int Action::getActionResult()
+{
+  return static_cast<int>(!stopped);
+}
+
 bool Action::execute(tf::Vector3& direction, const std::string& marker_tf, const bool& both_ways)
 {
+  stopped = false;
   action_direction = direction;
   spinner.start();
   plan(direction, both_ways);
 
-  while (nh.ok() && marker2r__wrist_roll.stamp_.isZero())
+  while (nh.ok() && marker2odom.stamp_.isZero())
   {
     try
     {
-      tf_listener.lookupTransform(marker_tf, "/r_wrist_roll_link", ros::Time(0), marker2r__wrist_roll);
+      tf_listener.lookupTransform(marker_tf, "/odom_combined", ros::Time(0), marker2odom);
     }
     catch (tf::TransformException ex)
     {
@@ -29,11 +42,8 @@ bool Action::execute(tf::Vector3& direction, const std::string& marker_tf, const
       ros::Duration(1.0).sleep();
     }
   }
-  direction = (direction * marker2r__wrist_roll.getBasis());
-//  double yaw,pitch,roll;
-//  marker2r__wrist_roll.getBasis().getEulerYPR(yaw,pitch,roll);
-//  std::cerr << "ANGLES: roll = " << roll << ", pitch = " << pitch << ", yaw = " << yaw << std::endl;
-//  std::cerr << "AFTER: direction x = " << direction.getX() << ", y = " << direction.getY() << ", z = " << direction.getZ() << std::endl;
+  direction = (direction * marker2odom.getBasis());
+
   direction.normalize();
 //  std::cerr << "AFTER NORMALIZING: direction x = " << direction.getX() << ", y = " << direction.getY() << ", z = " << direction.getZ() << std::endl;
 

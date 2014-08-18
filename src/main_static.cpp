@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
 
 
-//  Action action;
+  ActionPtr action(new Action);
 
   //  ------------------------------ particle filter loop ------------------------------
 
@@ -166,12 +166,6 @@ int main(int argc, char **argv)
 
     if (loop_count % 10 == 0)
     {
-      /*std::cerr << "Performing action" << std::endl;
-      tf::Vector3 x_action(0, 0, 1);
-      bool success = action.execute(x_action, "ar_marker_15");
-      std::cerr << "Action successful? " << success << std::endl;*/
-
-
 
       if(loop_count >= 20 && loop_count < 30 )
       {
@@ -181,7 +175,7 @@ int main(int argc, char **argv)
 
       ROS_INFO ("executing correction step");
       articulation_model_msgs::TrackMsg z;
-      if(loop_count != 30)
+      if(loop_count != 30 && loop_count != 40)
       {
         pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
         pf.sortParticles(pf.particles);
@@ -192,22 +186,29 @@ int main(int argc, char **argv)
 
 
 
-      if(loop_count >= 30 && loop_count < 40 )
+      if(loop_count >= 30 && loop_count <= 40 )
       {
         ROS_INFO("Executing action correction step");
-        ActionPtr a(new Action);
-        tf::Vector3 x_action(0, 0, 1);
-        a->plan(x_action);
+
+        std::cerr << "Performing action" << std::endl;
+        tf::Vector3 x_action;
+        if (loop_count == 30)
+          x_action = tf::Vector3(0, 1, 0);
+        if (loop_count == 40)
+          x_action = tf::Vector3(0, 0, 1);
+
+        bool success = action->execute(x_action, "ar_marker_15");
+        std::cerr << "Action successful? " << success << std::endl;
         // 1 - doesnt stop
-        int z_action = 1;
+        int z_action = action->getActionResult();
+
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
-
-        pf.correctAction<int> (pf.particles, z_action, a, sensorNoiseCov, *sensorActionModel);
-
+        pf.correctAction<int> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModel);
         pf.sortParticles(pf.particles);
         pf.printParticles(pf.particles);
         ROS_INFO("Action correction step executed");
       }
+
 
 
 
