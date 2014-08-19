@@ -47,6 +47,11 @@ public:
 
   bool getLogLikelihoodsFlag() const;
 
+  double calculateEntropy (const std::vector<Particle <ParticleType> >& particles) const;
+
+  template <class ZType, class AType> double calculateExpectedZaArticulation (std::vector<Particle <ArticulationModelPtr> >& particles, const ZType z, const AType a, const Eigen::MatrixXd& noiseCov,
+                                                                              const SensorActionModel<ArticulationModelPtr, ZType, AType>& model);
+
 //  void setLogLikelihoodsFlag(const bool& flag);
 
   double getWeightsSum(const std::vector<Particle <ParticleType> >& particles)const;
