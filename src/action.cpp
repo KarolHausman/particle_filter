@@ -31,6 +31,11 @@ int Action::getActionResult()
   return static_cast<int>(!stopped);
 }
 
+void Action::setActionDirection (const tf::Vector3& direction)
+{
+  action_direction = direction;
+}
+
 bool Action::execute(tf::Vector3& direction, const std::string& marker_tf, const bool& both_ways)
 {
   stopped_counter = 0;

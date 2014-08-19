@@ -712,9 +712,42 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
 
 }
 
+template <>  template <class ZType, class AType>
+double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
+                     const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
+{
+  double prob_exp = 0;
+  double sum = 0;
+  for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
+        it++)
+  {
+    if (it->state->model == RIGID)
+    {
+      prob_exp = 1-z_exp;
+    }
+    else
+    {
+      if (logLikelihoods_)
+      {
+        int z_prob = 1;
+        double prob_likelihood = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
+        prob_exp = (z_exp * prob_likelihood) + ((1 - z_exp) * (1 - prob_likelihood));
+      }
+      else
+      {
+        ROS_ERROR ("This function works only for loglikelihoods!");
+      }
+    }
+    it->expected_weight = it->weight + log(prob_exp);
+    sum += exp(it->expected_weight)*log2(exp(it->expected_weight));
+  }
+  return -sum;
+}
+
+
 //particles have to normalized(loglikelihoods only)
 template <>  template <class ZType, class AType>
-double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticulation(std::vector<Particle <ArticulationModelPtr> >& particles, const ZType z, const AType a, const Eigen::MatrixXd& noiseCov,
+double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticulation(std::vector<Particle <ArticulationModelPtr> >& particles, const AType a, const Eigen::MatrixXd& noiseCov,
                      const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
 {
   double z_exp = 0;
@@ -729,7 +762,14 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticulation(std
     {
       if (logLikelihoods_)
       {
-        z_exp += exp( model.senseLogLikelihood(z, a, it->state, noiseCov) + it->weight);
+        int z_prob = 1;
+        double z = exp( model.senseLogLikelihood(z_prob, a, it->state, noiseCov) + it->weight);
+        double z_other = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
+        ROS_ERROR("prob = %f", z_other);
+        ROS_ERROR("weight = %f", exp(it->weight));
+        ROS_ERROR("z_other = %f", z_other*exp(it->weight));
+        ROS_ERROR("z = %f", z);
+        z_exp += z;
       }
       else
       {
@@ -790,6 +830,8 @@ template void ParticleFilter<ArticulationModelPtr>::correct(std::vector<Particle
                                                        const SensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg> &model);
 template void ParticleFilter<ArticulationModelPtr>::correctAction(std::vector<Particle <ArticulationModelPtr> >& particles, const int z, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
-template double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticulation(std::vector<Particle <ArticulationModelPtr> >& particles, const int z, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
+template double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticulation(std::vector<Particle <ArticulationModelPtr> >& particles, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
+template double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
 

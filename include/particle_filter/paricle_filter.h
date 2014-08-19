@@ -49,7 +49,10 @@ public:
 
   double calculateEntropy (const std::vector<Particle <ParticleType> >& particles) const;
 
-  template <class ZType, class AType> double calculateExpectedZaArticulation (std::vector<Particle <ArticulationModelPtr> >& particles, const ZType z, const AType a, const Eigen::MatrixXd& noiseCov,
+  template <class ZType, class AType> double calculateExpectedEntropy (std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
+                                                                              const SensorActionModel<ArticulationModelPtr, ZType, AType>& model);
+
+  template <class ZType, class AType> double calculateExpectedZaArticulation (std::vector<Particle <ArticulationModelPtr> >& particles, const AType a, const Eigen::MatrixXd& noiseCov,
                                                                               const SensorActionModel<ArticulationModelPtr, ZType, AType>& model);
 
 //  void setLogLikelihoodsFlag(const bool& flag);

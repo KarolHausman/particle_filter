@@ -5,7 +5,7 @@
 
 
 template <class StateType, class ZType, class AType> ArtManipSensorActionModel<StateType, ZType, AType>::ArtManipSensorActionModel():
-  scale(1.0), log_multiplier(10)
+  scale(1.0), log_multiplier(1)
 {
 }
 

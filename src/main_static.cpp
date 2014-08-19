@@ -47,14 +47,14 @@ int main(int argc, char **argv)
 
 
   // ------------------------ find handle -----------------------------------------
-  ROS_INFO("Grasping handle");
+  /*ROS_INFO("Grasping handle");
   HandleFinder hf;
   hf.findHandle("ar_marker_15");
   Eigen::VectorXd pregrasp_offset(6);
   pregrasp_offset << -0.4, -0.25, 0.05, M_PI/2, 0.0, 0.0;
   Eigen::Vector3d grasp_offset(0.175, 0, 0);
   hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
-  ROS_INFO("Handle grasp executed");
+  ROS_INFO("Handle grasp executed");*/
 
   // -------------------------------- motion and sensor models ----------------
 
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
   //---------------------------------- particle filter initalization ----------
 
-  const int particles_number = 300;
+  const int particles_number = 500;
   //params for real data
   ros::NodeHandle nh;
   ros::Subscriber track_sub = nh.subscribe("marker_topic",1, trackCB);
@@ -115,6 +115,7 @@ int main(int argc, char **argv)
   tf::TransformListener tf_listener;
   tf::StampedTransform marker_static_to_marker;
 
+  bool hierarchy = false;
 
   while (ros::ok())
   {
@@ -167,6 +168,18 @@ int main(int argc, char **argv)
     if (loop_count % 10 == 0)
     {
 
+      ROS_INFO("Entropy: %f", pf.calculateEntropy(pf.particles));
+
+      boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
+      tf::Vector3 action_dir = tf::Vector3(0, 0, 1);
+      action->setActionDirection(action_dir);
+      double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
+      ROS_INFO("Expected Za: %f", za_expected);
+      double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+      ROS_INFO("Expected Entropy: %f", expected_entropy);
+
+
+
       if(loop_count >= 20 && loop_count < 30 )
       {
         ROS_INFO_STREAM ("adding particles");
@@ -205,7 +218,7 @@ int main(int argc, char **argv)
         int z_action = action->getActionResult();
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
-        pf.correctAction<int> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModel);
+        pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModel);
         pf.sortParticles(pf.particles);
         pf.printParticles(pf.particles);
         ROS_INFO("Action correction step executed");
@@ -219,23 +232,38 @@ int main(int argc, char **argv)
       pf.sortParticles(pf.particles);
       Visualizer::getInstance()->publishParticles(pf.particles);
 
-
-      pf.splitArticulationModels();
-      if ((!pf.normalize(pf.particles_rigid)) || (!pf.normalize(pf.particles_prismatic)) || (!pf.normalize(pf.particles_rotational)))
+      if (hierarchy)
       {
-        ROS_ERROR ("no particles left, quiting");
-        return -1;
+        pf.splitArticulationModels();
+        if ((!pf.normalize(pf.particles_rigid)) || (!pf.normalize(pf.particles_prismatic)) || (!pf.normalize(pf.particles_rotational)))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
+        if ((!pf.stratifiedResample(particles_number/3, pf.particles_rigid)) || (!pf.stratifiedResample(particles_number/3, pf.particles_prismatic)) || (!pf.stratifiedResample(particles_number/3, pf.particles_rotational)))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
+  //      pf.printParticles(pf.particles);
+        pf.mergeArticulationModels();
       }
-      if ((!pf.stratifiedResample(particles_number/3, pf.particles_rigid)) || (!pf.stratifiedResample(particles_number/3, pf.particles_prismatic)) || (!pf.stratifiedResample(particles_number/3, pf.particles_rotational)))
+      else
       {
-        ROS_ERROR ("no particles left, quiting");
-        return -1;
+        if (!pf.normalize(pf.particles))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
+        if (!pf.stratifiedResample(particles_number, pf.particles))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
       }
       ROS_INFO ("Resample step executed.");
-//      pf.printParticles(pf.particles);
 
 
-      pf.mergeArticulationModels();
       pf.removeAddedParticleFlags(pf.particles);
     }
     r.sleep();

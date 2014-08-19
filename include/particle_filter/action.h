@@ -21,6 +21,7 @@ public:
   bool execute(tf::Vector3 &direction, const std::string &marker_tf, const bool &both_ways = true);
   void plan(tf::Vector3 &direction, const bool &both_ways = true);
   int getActionResult();
+  void setActionDirection (const tf::Vector3& direction);
 
   tf::StampedTransform marker2odom;
   tf::TransformListener tf_listener;
