@@ -47,14 +47,14 @@ int main(int argc, char **argv)
 
 
   // ------------------------ find handle -----------------------------------------
-  /*ROS_INFO("Grasping handle");
+  ROS_INFO("Grasping handle");
   HandleFinder hf;
   hf.findHandle("ar_marker_15");
   Eigen::VectorXd pregrasp_offset(6);
   pregrasp_offset << -0.4, -0.25, 0.05, M_PI/2, 0.0, 0.0;
   Eigen::Vector3d grasp_offset(0.175, 0, 0);
   hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
-  ROS_INFO("Handle grasp executed");*/
+  ROS_INFO("Handle grasp executed");
 
   // -------------------------------- motion and sensor models ----------------
 
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
 
       ROS_INFO ("executing correction step");
       articulation_model_msgs::TrackMsg z;
-      if(loop_count != 30 && loop_count != 40)
+      if(loop_count != 30 && loop_count != 40 && loop_count != 50)
       {
         pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
         pf.sortParticles(pf.particles);
@@ -186,16 +186,18 @@ int main(int argc, char **argv)
 
 
 
-      if(loop_count >= 30 && loop_count <= 40 )
+      if(loop_count >= 30 && loop_count <= 50 )
       {
         ROS_INFO("Executing action correction step");
 
         std::cerr << "Performing action" << std::endl;
         tf::Vector3 x_action;
         if (loop_count == 30)
-          x_action = tf::Vector3(0, 1, 0);
+          x_action = tf::Vector3(0, 2, 1);
         if (loop_count == 40)
-          x_action = tf::Vector3(0, 0, 1);
+          x_action = tf::Vector3(0, 3, 1);
+        if (loop_count == 50)
+          x_action = tf::Vector3(0, 1, 0);
 
         bool success = action->execute(x_action, "ar_marker_15");
         std::cerr << "Action successful? " << success << std::endl;

@@ -145,7 +145,7 @@ class trackVisualizer:
     rigid_pose = Pose(rigid_pose_position, identity_pose_orientation)
     
     marker = Marker()
-    marker.header.stamp = model.track.header.stamp
+    marker.header.stamp = rospy.get_rostime()
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_particle"
     marker.id = self.particle_counter
@@ -181,7 +181,7 @@ class trackVisualizer:
     if model.name == "prismatic":
       self.particle_prismatic_counter = self.particle_prismatic_counter + 1
       marker_prismatic = Marker()  
-      marker_prismatic.header.stamp = model.track.header.stamp
+      marker_prismatic.header.stamp = rospy.get_rostime()
       marker_prismatic.header.frame_id = model.track.header.frame_id
       marker_prismatic.ns = "model_visualizer_particle_prismatic_axis"
       marker_prismatic.id = self.particle_prismatic_counter
@@ -204,7 +204,7 @@ class trackVisualizer:
     if model.name == "rotational":
       self.particle_rotational_counter = self.particle_rotational_counter + 1
       marker_rotational = Marker()  
-      marker_rotational.header.stamp = model.track.header.stamp
+      marker_rotational.header.stamp = rospy.get_rostime()
       marker_rotational.header.frame_id = model.track.header.frame_id
       marker_rotational.ns = "model_visualizer_particle_rotational_axis"
       marker_rotational.id = self.particle_rotational_counter
@@ -232,7 +232,7 @@ class trackVisualizer:
     zero_pose = Pose(zero_position, zero_orientation)
 
     marker = Marker()
-    marker.header.stamp = model.track.header.stamp
+    marker.header.stamp = rospy.get_rostime()
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_origin"
     marker.id = 0
@@ -302,7 +302,7 @@ class trackVisualizer:
 
     #current pose
     marker = Marker()
-    marker.header.stamp = model.track.header.stamp
+    marker.header.stamp = rospy.get_rostime()
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_pose"
     marker.id = 0
@@ -375,7 +375,7 @@ class trackVisualizer:
     rigid_pose = Pose(rigid_pose_position, rigid_pose_orientation)
 
     marker = Marker()
-    marker.header.stamp = model.track.header.stamp
+    marker.header.stamp = rospy.get_rostime()
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_rigid"
     marker.id = 0
@@ -404,7 +404,7 @@ class trackVisualizer:
     marker_array.markers.append(marker)    
 
     marker_weight = Marker()
-    marker_weight.header.stamp = model.track.header.stamp
+    marker_weight.header.stamp = rospy.get_rostime()
     marker_weight.header.frame_id = model.track.header.frame_id
     marker_weight.ns = "model_visualizer_rigid_weight"
     marker_weight.id = 0
@@ -425,7 +425,7 @@ class trackVisualizer:
     marker_array.markers.append(marker_weight) 
 
     marker = Marker()
-    marker.header.stamp = model.track.header.stamp
+    marker.header.stamp = rospy.get_rostime()
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_rigid_proj_pose"
     marker.id = 0
@@ -486,7 +486,7 @@ class trackVisualizer:
     prismatic_dir = Point(prismatic_dir_x, prismatic_dir_y, prismatic_dir_z)
 
     marker = Marker()
-    marker.header.stamp = model.track.header.stamp
+    marker.header.stamp = rospy.get_rostime()
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_prismatic"
     marker.id = 0
@@ -515,7 +515,7 @@ class trackVisualizer:
     marker_array.markers.append(marker)
 
     marker_weight = Marker()
-    marker_weight.header.stamp = model.track.header.stamp
+    marker_weight.header.stamp = rospy.get_rostime()
     marker_weight.header.frame_id = model.track.header.frame_id
     marker_weight.ns = "model_visualizer_prismatic_weight"
     marker_weight.id = 0
@@ -538,7 +538,7 @@ class trackVisualizer:
 
     #direction
     marker_dir = Marker()
-    marker_dir.header.stamp = model.track.header.stamp
+    marker_dir.header.stamp = rospy.get_rostime()
     marker_dir.header.frame_id = model.track.header.frame_id
     marker_dir.ns = "model_visualizer_prismatic_dir"
     marker_dir.id = 0
@@ -559,7 +559,7 @@ class trackVisualizer:
 
     #marker orientation
     marker_orient = Marker()
-    marker_orient.header.stamp = model.track.header.stamp
+    marker_orient.header.stamp = rospy.get_rostime()
     marker_orient.header.frame_id = model.track.header.frame_id
     marker_orient.ns = "model_visualizer_prismatic_orientation"
     marker_orient.id = 0
@@ -590,7 +590,7 @@ class trackVisualizer:
     marker_array.markers.append(marker_orient)
 
     marker = Marker()
-    marker.header.stamp = model.track.header.stamp
+    marker.header.stamp = rospy.get_rostime()
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_prismatic_proj_pose"
     marker.id = 0
@@ -704,7 +704,7 @@ class trackVisualizer:
     rot_center = Pose(rot_center_position, rot_axis) 
         
     marker_rot = Marker()
-    marker_rot.header.stamp = model.track.header.stamp
+    marker_rot.header.stamp = rospy.get_rostime()
     marker_rot.header.frame_id = model.track.header.frame_id
     marker_rot.ns = "model_visualizer_rotational"
     marker_rot.id = 0
@@ -737,7 +737,7 @@ class trackVisualizer:
 
     #weight
     marker_weight = Marker()
-    marker_weight.header.stamp = model.track.header.stamp
+    marker_weight.header.stamp = rospy.get_rostime()
     marker_weight.header.frame_id = model.track.header.frame_id
     marker_weight.ns = "model_visualizer_rotational_weight"
     marker_weight.id = 0
@@ -761,7 +761,7 @@ class trackVisualizer:
 
     #adding radius
     marker_radius = Marker()
-    marker_radius.header.stamp = model.track.header.stamp
+    marker_radius.header.stamp = rospy.get_rostime()
     marker_radius.header.frame_id = model.track.header.frame_id
     marker_radius.ns = "model_visualizer_rotational_radius"
     marker_radius.id = 0
@@ -781,7 +781,7 @@ class trackVisualizer:
 
     #marker orientation
     marker_rot_orient = Marker()
-    marker_rot_orient.header.stamp = model.track.header.stamp
+    marker_rot_orient.header.stamp = rospy.get_rostime()
     marker_rot_orient.header.frame_id = model.track.header.frame_id
     marker_rot_orient.ns = "model_visualizer__rotational_orientation"
     marker_rot_orient.id = 0
@@ -836,7 +836,7 @@ class trackVisualizer:
     marker_array.markers.append(marker_rot_orient)
 
     marker = Marker()
-    marker.header.stamp = model.track.header.stamp
+    marker.header.stamp = rospy.get_rostime()
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_rotational_proj_pose"
     marker.id = 0
@@ -856,7 +856,7 @@ class trackVisualizer:
   def render_points(self, track, marker_array, orientation = True):
     for i in range( len( track.pose ) ):
       marker = Marker()
-      marker.header.stamp = track.header.stamp
+      marker.header.stamp = rospy.get_rostime()
       marker.header.frame_id = track.header.frame_id
       marker.ns = "track_visualizer-%d"%(track.id)
       marker.id = self.num_markers[track.id]
@@ -895,7 +895,7 @@ class trackVisualizer:
     i = self.num_markers[track.id]
     while i < self.old_num_markers[track.id]:
       marker = Marker()
-      marker.header.stamp = track.header.stamp
+      marker.header.stamp = rospy.get_rostime()
       marker.header.frame_id = track.header.frame_id
       marker.ns = "track_visualizer-%d"%(track.id)
       marker.id = i

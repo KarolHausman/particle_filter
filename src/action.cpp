@@ -2,7 +2,7 @@
 
 
 Action::Action():
-  distance(0.02),nh(),group("right_arm"),spinner(1),stopped(false)
+  distance(0.03),nh(),group("right_arm"),spinner(1),stopped(false),stopped_counter(0)
 {
   vector_pub = nh.advertise <geometry_msgs::Pose>("action", 5);
   effort_exceeded_sub = nh.subscribe ("/r_arm_controller/effort_exceeded", 1, &Action::effortCB, this);
@@ -14,7 +14,15 @@ Action::~Action()
 
 void Action::effortCB(const std_msgs::BoolConstPtr& msg)
 {
-  stopped = msg->data;
+  if (msg->data)
+  {
+    ++stopped_counter;
+  }
+  if (stopped_counter > 2)
+  {
+    stopped = true;
+  }
+
   ROS_ERROR("effortCB called with %d", stopped);
 }
 
@@ -25,6 +33,7 @@ int Action::getActionResult()
 
 bool Action::execute(tf::Vector3& direction, const std::string& marker_tf, const bool& both_ways)
 {
+  stopped_counter = 0;
   stopped = false;
   action_direction = direction;
   spinner.start();

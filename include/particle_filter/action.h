@@ -26,6 +26,7 @@ public:
   tf::TransformListener tf_listener;
   double distance;
   bool stopped;
+  uint stopped_counter;
   tf::Vector3 action_direction;
   ros::Publisher vector_pub;
   ros::Subscriber effort_exceeded_sub;
