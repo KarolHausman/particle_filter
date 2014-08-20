@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
 
   ActionGenerator action_gen;
-  action_gen.generateActionDirections(3, 8);
+  std::vector <tf::Vector3> generated_actions = action_gen.generateActionDirections(5, 3);
 
 
   ActionPtr action(new Action);
@@ -165,7 +165,6 @@ int main(int argc, char **argv)
       }
     }
 
-    action_gen.publishGenActions();
 
     ros::spinOnce();
     ROS_INFO_STREAM ("loop_count: " << loop_count);
@@ -178,7 +177,7 @@ int main(int argc, char **argv)
 
       ROS_INFO("Entropy: %f", pf.calculateEntropy(pf.particles));
 
-      if(loop_count >= 20 && loop_count <= 40 )
+      /*if(loop_count >= 20 && loop_count <= 40 )
       {
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         tf::Vector3 action_dir, action_dir2, action_dir3;
@@ -203,8 +202,27 @@ int main(int argc, char **argv)
         ROS_INFO("Expected Za 3: %f", za_expected3);
         double expected_entropy3 = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected3, action, sensorNoiseCov, *sensorActionModel);
         ROS_INFO("Expected Entropy 3: %f", expected_entropy3);
+      }*/
 
+      action_gen.publishGenActions();
+
+      boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
+      double min_expected_entropy = std::numeric_limits<double>::max();
+      tf::Vector3 best_action;
+      for (std::vector<tf::Vector3>::iterator it = generated_actions.begin(); it!= generated_actions.end(); ++it)
+      {
+        action->setActionDirection(*it);
+        double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
+        ROS_INFO("Expected Za: %f", za_expected);
+        double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+        ROS_INFO("Expected Entropy: %f", expected_entropy);
+        if (expected_entropy < min_expected_entropy)
+        {
+          min_expected_entropy = expected_entropy;
+          best_action = *it;
+        }
       }
+      action->plan(best_action);
 
 
 
