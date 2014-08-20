@@ -765,10 +765,10 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticulation(std
         int z_prob = 1;
         double z = exp( model.senseLogLikelihood(z_prob, a, it->state, noiseCov) + it->weight);
         double z_other = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
-        ROS_ERROR("prob = %f", z_other);
-        ROS_ERROR("weight = %f", exp(it->weight));
-        ROS_ERROR("z_other = %f", z_other*exp(it->weight));
-        ROS_ERROR("z = %f", z);
+//        ROS_ERROR("prob = %f", z_other);
+//        ROS_ERROR("weight = %f", exp(it->weight));
+//        ROS_ERROR("z_other = %f", z_other*exp(it->weight));
+//        ROS_ERROR("z = %f", z);
         z_exp += z;
       }
       else

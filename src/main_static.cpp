@@ -25,6 +25,8 @@
 
 #include "particle_filter/action.h"
 
+#include "particle_filter/action_generator.h"
+
 
 articulation_model_msgs::TrackMsg data_track;
 
@@ -44,6 +46,8 @@ int main(int argc, char **argv)
 
   ros::init(argc, argv, "particle_filter");
   Visualizer::getInstance()->init();
+
+
 
 
   // ------------------------ find handle -----------------------------------------
@@ -105,6 +109,9 @@ int main(int argc, char **argv)
 
 
 
+  ActionGenerator action_gen;
+  action_gen.generateActionDirections(3, 8);
+
 
   ActionPtr action(new Action);
 
@@ -158,6 +165,7 @@ int main(int argc, char **argv)
       }
     }
 
+    action_gen.publishGenActions();
 
     ros::spinOnce();
     ROS_INFO_STREAM ("loop_count: " << loop_count);
@@ -170,13 +178,33 @@ int main(int argc, char **argv)
 
       ROS_INFO("Entropy: %f", pf.calculateEntropy(pf.particles));
 
-      boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
-      tf::Vector3 action_dir = tf::Vector3(0, 0, 1);
-      action->setActionDirection(action_dir);
-      double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
-      ROS_INFO("Expected Za: %f", za_expected);
-      double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-      ROS_INFO("Expected Entropy: %f", expected_entropy);
+      if(loop_count >= 20 && loop_count <= 40 )
+      {
+        boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
+        tf::Vector3 action_dir, action_dir2, action_dir3;
+        action_dir = tf::Vector3(0, 0, 1);
+        action_dir2 = tf::Vector3(0, 1, 1);
+        action_dir3 = tf::Vector3(0, 1, 0);
+
+        action->setActionDirection(action_dir);
+        double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
+        ROS_INFO("Expected Za: %f", za_expected);
+        double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+        ROS_INFO("Expected Entropy: %f", expected_entropy);
+
+        action->setActionDirection(action_dir2);
+        double za_expected2 = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
+        ROS_INFO("Expected Za 2: %f", za_expected2);
+        double expected_entropy2 = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected2, action, sensorNoiseCov, *sensorActionModel);
+        ROS_INFO("Expected Entropy 2: %f", expected_entropy2);
+
+        action->setActionDirection(action_dir3);
+        double za_expected3 = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
+        ROS_INFO("Expected Za 3: %f", za_expected3);
+        double expected_entropy3 = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected3, action, sensorNoiseCov, *sensorActionModel);
+        ROS_INFO("Expected Entropy 3: %f", expected_entropy3);
+
+      }
 
 
 

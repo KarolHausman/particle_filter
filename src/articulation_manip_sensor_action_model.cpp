@@ -52,7 +52,7 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
   {
     case (RIGID):
       {
-        ROS_ERROR("RIGID");
+//        ROS_ERROR("RIGID");
         if (z == 1)
         {
           loglikelihood = std::numeric_limits<double>::lowest()/log_multiplier;
@@ -66,7 +66,7 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
 
     case (PRISMATIC):
       {
-        ROS_ERROR("PRISMATIC");
+//        ROS_ERROR("PRISMATIC");
         // calculate the relative angle between prismatic axis
         boost::shared_ptr<PrismaticModel> prismatic_model = boost::dynamic_pointer_cast< PrismaticModel > (state);
 
@@ -106,7 +106,7 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
       {
         // calculate the relative angle between tangents
         boost::shared_ptr<RotationalModel> rotational_model = boost::dynamic_pointer_cast< RotationalModel > (state);
-        ROS_ERROR("ROTATIONAL");
+//        ROS_ERROR("ROTATIONAL");
 
         //get current pose_obs
         geometry_msgs::Pose pose_obs, pose_proj;
@@ -159,8 +159,8 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         break;
       }
   }
-  ROS_ERROR("prob = %f",prob_end);
-  ROS_ERROR("loglikelihood = %f",log_multiplier*loglikelihood);
+//  ROS_ERROR("prob = %f",prob_end);
+//  ROS_ERROR("loglikelihood = %f",log_multiplier*loglikelihood);
   return log_multiplier*loglikelihood;
 }
 

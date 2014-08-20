@@ -8,7 +8,7 @@ This node visualizes track messages.
 
 import rospy
 import sys
-from articulation_model_msgs.msg import ModelMsg, ParticlesMsg
+from articulation_model_msgs.msg import ModelMsg, ParticlesMsg, ActionsMsg
 from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import Vector3, Point, Quaternion, Pose
 from std_msgs.msg import ColorRGBA
@@ -18,6 +18,7 @@ import getopt
 import colorsys
 import tf
 import numpy as np
+import random
 
 class trackVisualizer:
 
@@ -29,6 +30,7 @@ class trackVisualizer:
     rospy.Subscriber("model_track", ModelMsg, self.callback)
     rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
     rospy.Subscriber("action", Pose, self.callbackAction)
+    rospy.Subscriber("generated_actions", ActionsMsg, self.callbackGeneratedActions)
     self.num_poses = {}
     self.num_markers = {} 
     self.old_num_markers = {}
@@ -60,7 +62,37 @@ class trackVisualizer:
 
     
     
+  def callbackGeneratedActions(self,actions):
+    zero_orientation = Quaternion(0, 0, 0, 1)  
+    zero_position = Point(0, 0, 0)
+    zero_pose = Pose(zero_position, zero_orientation)
+    counter = 0
+    marker_array = MarkerArray()
+    for pose in actions.actions:
+      marker = Marker()
+      marker.header.stamp = rospy.get_rostime()
+      marker.header.frame_id = "world"
+      marker.ns = "model_visualizer_generated_actions"
+      marker.id = counter
+      counter = counter + 1
+      marker.action = Marker.ADD
+
+      marker.scale = Vector3(0.02,0.02,0.02)
+      marker.color.a = 1
+      marker.color.b = random.random()
+      marker.color.r = random.random()
+      marker.color.g = random.random()
+
+      marker.type = Marker.ARROW
+      marker.pose = zero_pose
+      marker.points.append( Point(0,0,0) )
+      marker.points.append( Point(pose.position.x, pose.position.y, pose.position.z) )
+      
+      marker_array.markers.append(marker)
   
+      self.pub_array.publish(marker_array)     
+
+
   def callbackParticles(self,particles):
     #rospy.loginfo( "received particle. track %d",model.track.id)
     marker_array = MarkerArray()
