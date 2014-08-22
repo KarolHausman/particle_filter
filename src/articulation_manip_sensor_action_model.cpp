@@ -39,7 +39,6 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
   return 0.0;
 }
 // z = 1 means it doesnt stop
-//TODO: check angle comparisons
 template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>::senseLogLikelihood(const int &z,
                                                                                                       const ActionPtr& a,
                                                                                                       const ArticulationModelPtr &state,
@@ -60,6 +59,7 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         else
         {
           //TODO: how to increase likelihood here?
+          loglikelihood = 0;
         }
         break;
       }
@@ -157,6 +157,17 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
           prob_end = 1-prob;
         }
         break;
+      }
+    case (FREE):
+      {
+        if (z == 1)
+        {
+          loglikelihood = 0;
+        }
+        else
+        {
+          loglikelihood = std::numeric_limits<double>::lowest()/log_multiplier;
+        }
       }
   }
 //  ROS_ERROR("prob = %f",prob_end);

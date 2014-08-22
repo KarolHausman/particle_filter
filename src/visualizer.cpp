@@ -51,12 +51,13 @@ void Visualizer::publishParticlesOnly(const std::vector <Particle <ArticulationM
 
 //assumes that particles are sorted
 //publishes the best particle of each kind(if the kind exists)
-//TODO: add free model
 void Visualizer::publishParticles(const std::vector <Particle <ArticulationModelPtr> > &particles)
 {
   uint rigid_counter = 0;
   uint rotational_counter = 0;
   uint prismatic_counter = 0;
+  uint free_counter = 0;
+
 
   articulation_model_msgs::ParticlesMsg particles_msg;
   particles_msg.header = particles.back().state->getModel().header;
@@ -111,16 +112,23 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
         }
         break;
       }
+      case (FREE):
+      {
+        ++free_counter;
+        break;
+      }
     }
   }
 
   particles_pub_.publish(particles_msg);
 
-  double sum_all = rigid_counter + prismatic_counter + rotational_counter;
+  double sum_all = rigid_counter + prismatic_counter + rotational_counter + free_counter;
   double rigid_percentage = rigid_counter/sum_all * 100;
   double prismatic_percentage = prismatic_counter/sum_all * 100;
   double rotational_percentage = rotational_counter/sum_all * 100;
-  ROS_ERROR_STREAM("STATISTICS: \n" << "RIGID: " << rigid_percentage << "\n PRISMATIC: " << prismatic_percentage << "\n ROTATIONAL: " << rotational_percentage << "\n");
+  double free_percentage = free_counter/sum_all * 100;
+
+  ROS_ERROR_STREAM("STATISTICS: \n" << "RIGID: " << rigid_percentage << "\n PRISMATIC: " << prismatic_percentage << "\n ROTATIONAL: " << rotational_percentage <<  "\n FREE: " << free_percentage << "\n");
 }
 
 

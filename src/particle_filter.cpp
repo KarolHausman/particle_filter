@@ -35,7 +35,6 @@ template <> ParticleFilter<Eigen::VectorXd>::ParticleFilter(const int& size, con
     weightsToLogWeights(particles);
 }
 
-//TODO: take care of free model
 template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size, articulation_model_msgs::ModelMsg& model):
   logLikelihoods_(true),freemodel_samples_(0)
 {
@@ -48,7 +47,10 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
   {
     if (i < freemodel_samples_)
     {
-      it->state.reset(new FreeModel);
+      ArticulationModelPtr free_model(new FreeModel);
+      model.name = "free";
+      free_model->setModel(model);
+      it->state = free_model;
     }
     else if (i >= freemodel_samples_ && i < freemodel_samples_ + remaining_models)
     {
@@ -86,7 +88,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
 template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size, articulation_model_msgs::ModelMsg& model,
                                                                  const MotionModel<ArticulationModelPtr>& motion_model, const Eigen::MatrixXd& rigid_cov,
                                                                  const Eigen::MatrixXd& rotational_cov, const Eigen::MatrixXd& prismatic_cov):
-  logLikelihoods_(true),freemodel_samples_(0)
+  logLikelihoods_(true),freemodel_samples_(2)
 {
   this->particles.resize(size);
   const double remaining_models_temp = static_cast<double> ((size - freemodel_samples_) / (MODELS_NUMBER - 1));
@@ -102,8 +104,10 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
   {
     if (i < freemodel_samples_)
     {
-      it->state.reset(new FreeModel);
-    }
+      ArticulationModelPtr free_model(new FreeModel);
+      model.name = "free";
+      free_model->setModel(model);
+      it->state = free_model;    }
     else if (i >= freemodel_samples_ && i < freemodel_samples_ + remaining_models)
     {
       ArticulationModelPtr rigid_model(new RigidModel);
@@ -425,24 +429,22 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(std:
   return Eigen::Vector3d::Zero();
 }
 
+// TODO: think of free model
 template <> void ParticleFilter<ArticulationModelPtr>::splitArticulationModels()
 {
   particles_rigid.clear();
   particles_prismatic.clear();
   particles_rotational.clear();
+  particles_free.clear();
+
   for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
        it++)
   {
-    ArticulationModelPtr new_state;
 
     switch (it->state->model)
     {
       case (RIGID):
       {
-//        new_state.reset(new RigidModel);
-//        new_state = it->state->getCopy();
-//        p.state = new_state;
-//        p.weight = it->weight;
         Particle<ArticulationModelPtr> p = *it;
         particles_rigid.push_back(p);
         break;
@@ -459,15 +461,22 @@ template <> void ParticleFilter<ArticulationModelPtr>::splitArticulationModels()
         particles_rotational.push_back(p);
         break;
       }
+      case (FREE):
+      {
+        Particle<ArticulationModelPtr> p = *it;
+        particles_free.push_back(p);
+        break;
+      }
     }
   }
 
 }
 
+// TODO: think of free model
 template <> void ParticleFilter<ArticulationModelPtr>::mergeArticulationModels()
 {
   particles.clear();
-  const int all_particles_number = particles_rigid.size() + particles_prismatic.size() + particles_rotational.size();
+  const int all_particles_number = particles_rigid.size() + particles_prismatic.size() + particles_rotational.size() + particles_free.size();
 
   for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles_rigid.begin(); it != particles_rigid.end();
        it++)
@@ -484,6 +493,13 @@ template <> void ParticleFilter<ArticulationModelPtr>::mergeArticulationModels()
     particles.push_back(p);
   }
   for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles_rotational.begin(); it != particles_rotational.end();
+       it++)
+  {
+    Particle<ArticulationModelPtr> p = *it;
+    p.weight = 1.0/(double)all_particles_number;
+    particles.push_back(p);
+  }
+  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles_free.begin(); it != particles_free.end();
        it++)
   {
     Particle<ArticulationModelPtr> p = *it;
@@ -629,7 +645,14 @@ template <class ParticleType> double ParticleFilter<ParticleType>::calculateEntr
   {
     if (logLikelihoods_)
     {
-      sum += exp(it->weight)*log2(exp(it->weight));
+      if (!isinf(it->weight))
+      {
+        sum += exp(it->weight)*log2(exp(it->weight));
+      }
+      else
+      {
+        sum += 0;
+      }
     }
     else
     {
@@ -642,8 +665,7 @@ template <class ParticleType> double ParticleFilter<ParticleType>::calculateEntr
 
 
 
-//TODO: add free model
-template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articulation_model_msgs::TrackMsg& uptodate_track, const int& rigid_particles_number, const int& rotational_particles_number, const int& prismatic_particles_number)
+template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articulation_model_msgs::TrackMsg& uptodate_track, const int& rigid_particles_number, const int& rotational_particles_number, const int& prismatic_particles_number, const int& free_particles_number)
 {
   articulation_model_msgs::ModelMsg model;
   model.track.pose = uptodate_track.pose;//particles.back().state->getModel().track.pose;
@@ -655,6 +677,8 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
   int rigid_particles_counter = 0;
   int rotational_particles_counter = 0;
   int prismatic_particles_counter = 0;
+  int free_particles_counter = 0;
+
 
   while(true)
   {
@@ -703,8 +727,23 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
       p.state->setParam("added",1,articulation_model_msgs::ParamMsg::PRIOR);
       particles.push_back(p);
     }
+    if (free_particles_counter < free_particles_number)
+    {
+      ArticulationModelPtr free_model(new FreeModel);
+      model.name = "free";
+      Particle<ArticulationModelPtr> p;
+      p.state = free_model;
+      p.weight = standard_weight;
+      ++free_particles_counter;
+//      rotational_model->evaluateModel();
+//      p.weight = standard_weight + rotational_model->getParam("loglikelihood");
+      p.state->setParam("added",1,articulation_model_msgs::ParamMsg::PRIOR);
+      particles.push_back(p);
+    }
+
+
     if ((rigid_particles_counter == rigid_particles_number) && (prismatic_particles_counter == prismatic_particles_number) &&
-        (rotational_particles_counter == rotational_particles_number))
+        (rotational_particles_counter == rotational_particles_number) && (free_particles_counter == free_particles_number))
     {
       break;
     }
@@ -738,8 +777,15 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vecto
         ROS_ERROR ("This function works only for loglikelihoods!");
       }
     }
-    it->expected_weight = it->weight + log(prob_exp);
-    sum += exp(it->expected_weight)*log2(exp(it->expected_weight));
+    if ( !isinf(it->weight) && !isinf(log(prob_exp)) && prob_exp != 0)
+    {
+      it->expected_weight = it->weight + log(prob_exp);
+      sum += exp(it->expected_weight)*log2(exp(it->expected_weight));
+    }
+    else
+    {
+      sum += 0;
+    }
   }
   return -sum;
 }
@@ -764,7 +810,6 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticulation(std
       {
         int z_prob = 1;
         double z = exp( model.senseLogLikelihood(z_prob, a, it->state, noiseCov) + it->weight);
-        double z_other = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
 //        ROS_ERROR("prob = %f", z_other);
 //        ROS_ERROR("weight = %f", exp(it->weight));
 //        ROS_ERROR("z_other = %f", z_other*exp(it->weight));
@@ -798,7 +843,7 @@ void ParticleFilter<ParticleType>::correct(std::vector<Particle <ParticleType> >
 {
   for (typename std::vector <Particle <ParticleType> >::iterator it = particles.begin(); it != particles.end();
                        it++)
-  {
+  {    
     if (!logLikelihoods_)
       it->weight *= model.senseLikelihood(z, it->state, noiseCov);
     else

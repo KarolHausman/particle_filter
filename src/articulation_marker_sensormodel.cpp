@@ -8,6 +8,7 @@
 
 template <class StateType, class ZType> ArtMarkerSensorModel<StateType, ZType>::ArtMarkerSensorModel()
 {
+  loglikelihood_free_model = 50;
 }
 
 template <class StateType, class ZType> ArtMarkerSensorModel<StateType, ZType>::~ArtMarkerSensorModel()
@@ -32,10 +33,16 @@ template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model
   return exp(state->getParam("loglikelihood"));
 }
 
-//TODO: add free model
 template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>::senseLogLikelihood(const articulation_model_msgs::TrackMsg &z, const ArticulationModelPtr &state,
                                        const Eigen::MatrixXd &cov) const
-{  
+{
+
+  if(state->model == FREE)
+  {
+    return loglikelihood_free_model;
+  }
+
+
   state->setTrack(z);
   //  state->addTrack(z);
 

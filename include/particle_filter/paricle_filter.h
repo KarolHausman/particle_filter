@@ -74,12 +74,14 @@ public:
 
   virtual bool stratifiedResample(const int& particles_number, std::vector<Particle <ParticleType> >& particles);
 
-  void addParticles(const articulation_model_msgs::TrackMsg& uptodate_track, const int &rigid_particles_number, const int &rotational_particles_number, const int &prismatic_particles_number);
+  void addParticles(const articulation_model_msgs::TrackMsg& uptodate_track, const int &rigid_particles_number, const int &rotational_particles_number, const int &prismatic_particles_number, const int& free_particles_number);
 
   std::vector <Particle <ParticleType> > particles;
   std::vector <Particle <ArticulationModelPtr> > particles_rigid;
   std::vector <Particle <ArticulationModelPtr> > particles_prismatic;
   std::vector <Particle <ArticulationModelPtr> > particles_rotational;
+  std::vector <Particle <ArticulationModelPtr> > particles_free;
+
 
 
 

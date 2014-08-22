@@ -2,6 +2,7 @@
 #include "particle_filter/rigid_model.h"
 #include "particle_filter/prismatic_model.h"
 #include "particle_filter/rotational_model.h"
+#include "particle_filter/free_model.h"
 
 template <class StateType> IdentityMotionModel<StateType>::IdentityMotionModel()
 {
@@ -76,6 +77,11 @@ template <> ArticulationModelPtr IdentityMotionModel<ArticulationModelPtr>::move
         rotational->axis_yaw += noise(9);
         state_result = static_cast<ArticulationModelPtr> (rotational);
         break;
+      }
+    case (FREE):
+      {
+        state_result.reset(new FreeModel);
+        state_result = state->getCopy();
       }
   }
   state_result->writeParamsToModel();

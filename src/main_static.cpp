@@ -130,7 +130,9 @@ int main(int argc, char **argv)
     //current marker measurement
     try
     {
-      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
+      // static marker, moving marker
+      tf_listener.lookupTransform("ar_marker_1", "/ar_marker_2", ros::Time(0), marker_static_to_marker);
+//      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
     }
     catch (tf::TransformException ex)
     {
@@ -175,7 +177,35 @@ int main(int argc, char **argv)
     if (loop_count % 10 == 0)
     {
 
-      ROS_INFO("Entropy: %f", pf.calculateEntropy(pf.particles));
+
+
+
+      if(loop_count == 20)
+      {
+        ROS_INFO_STREAM ("adding particles");
+        pf.addParticles(model_msg.track, 30, 50, 30, 2);
+      }
+
+      ROS_INFO ("executing correction step");
+      articulation_model_msgs::TrackMsg z;
+      if(loop_count < 40)
+      {
+        pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
+        pf.sortParticles(pf.particles);
+        pf.printParticles(pf.particles);
+        ROS_INFO ("Correction step executed.");
+      }
+
+
+      std::vector <Particle <ArticulationModelPtr> > temp_particles;
+      temp_particles = pf.particles;
+
+      pf.normalize(temp_particles);
+//      pf.sortParticles(temp_particles);
+//      pf.printParticles(temp_particles);
+      pf.weightsToLogWeights(temp_particles);
+
+      ROS_INFO("Entropy: %f", pf.calculateEntropy(temp_particles));
 
       /*if(loop_count >= 20 && loop_count <= 40 )
       {
@@ -212,10 +242,11 @@ int main(int argc, char **argv)
       for (std::vector<tf::Vector3>::iterator it = generated_actions.begin(); it!= generated_actions.end(); ++it)
       {
         action->setActionDirection(*it);
-        double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
+        double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(temp_particles, action, sensorNoiseCov, *sensorActionModel);
         ROS_INFO("Expected Za: %f", za_expected);
-        double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-        ROS_INFO("Expected Entropy: %f", expected_entropy);
+        ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
+        double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+        ROS_ERROR("Expected Entropy: %f", expected_entropy);
         if (expected_entropy < min_expected_entropy)
         {
           min_expected_entropy = expected_entropy;
@@ -225,50 +256,31 @@ int main(int argc, char **argv)
       action->plan(best_action);
 
 
+//      if(loop_count >= 40 && loop_count <= 50 )
+//      {
+          //hierachy = false;
+//        ROS_INFO("Executing action correction step");
 
-      if(loop_count >= 20 && loop_count < 30 )
-      {
-        ROS_INFO_STREAM ("adding particles");
-        pf.addParticles(model_msg.track, 30, 50, 30);
-      }
+//        std::cerr << "Performing action" << std::endl;
+//        tf::Vector3 x_action;
+//        if (loop_count == 30)
+//          x_action = tf::Vector3(0, 2, 1);
+//        if (loop_count == 40)
+//          x_action = tf::Vector3(0, 3, 1);
+//        if (loop_count == 50)
+//          x_action = tf::Vector3(0, 1, 0);
 
-      ROS_INFO ("executing correction step");
-      articulation_model_msgs::TrackMsg z;
-      if(loop_count != 30 && loop_count != 40 && loop_count != 50)
-      {
-        pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
-        pf.sortParticles(pf.particles);
-        pf.printParticles(pf.particles);
-        ROS_INFO ("Correction step executed.");
-      }
+//        bool success = action->execute(x_action, "ar_marker_15");
+//        std::cerr << "Action successful? " << success << std::endl;
+//        // 1 - doesnt stop
+//        int z_action = action->getActionResult();
 
-
-
-
-      if(loop_count >= 30 && loop_count <= 50 )
-      {
-        ROS_INFO("Executing action correction step");
-
-        std::cerr << "Performing action" << std::endl;
-        tf::Vector3 x_action;
-        if (loop_count == 30)
-          x_action = tf::Vector3(0, 2, 1);
-        if (loop_count == 40)
-          x_action = tf::Vector3(0, 3, 1);
-        if (loop_count == 50)
-          x_action = tf::Vector3(0, 1, 0);
-
-        bool success = action->execute(x_action, "ar_marker_15");
-        std::cerr << "Action successful? " << success << std::endl;
-        // 1 - doesnt stop
-        int z_action = action->getActionResult();
-
-        boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
-        pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModel);
-        pf.sortParticles(pf.particles);
-        pf.printParticles(pf.particles);
-        ROS_INFO("Action correction step executed");
-      }
+//        boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
+//        pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModel);
+//        pf.sortParticles(pf.particles);
+//        pf.printParticles(pf.particles);
+//        ROS_INFO("Action correction step executed");
+//      }
 
 
 
@@ -278,8 +290,10 @@ int main(int argc, char **argv)
       pf.sortParticles(pf.particles);
       Visualizer::getInstance()->publishParticles(pf.particles);
 
+      // TODO: check normalization!!!!!!!
       if (hierarchy)
       {
+        //TODO: think of free model here, but it should be fine I think...
         pf.splitArticulationModels();
         if ((!pf.normalize(pf.particles_rigid)) || (!pf.normalize(pf.particles_prismatic)) || (!pf.normalize(pf.particles_rotational)))
         {
