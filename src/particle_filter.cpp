@@ -88,7 +88,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
 template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size, articulation_model_msgs::ModelMsg& model,
                                                                  const MotionModel<ArticulationModelPtr>& motion_model, const Eigen::MatrixXd& rigid_cov,
                                                                  const Eigen::MatrixXd& rotational_cov, const Eigen::MatrixXd& prismatic_cov):
-  logLikelihoods_(true),freemodel_samples_(2)
+  logLikelihoods_(true),freemodel_samples_(1)
 {
   this->particles.resize(size);
   const double remaining_models_temp = static_cast<double> ((size - freemodel_samples_) / (MODELS_NUMBER - 1));
@@ -274,6 +274,8 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWei
     else
     {
       it->weight = it->weight - maxParticle.weight;
+      it->weight_to_print_only = it->weight;
+
     }
 // TODO: TRY to do with precision -> disgard very low weights; not sure if needed
 //    if (it->weight < -40)
@@ -307,7 +309,7 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalizeLogWei
     else
     {
       it->weight = it->weight / sumLikelihoods;
-      it->weight_to_print_only = it->weight;
+//      it->weight_to_print_only = it->weight;
     }
   }
   return true;
@@ -751,12 +753,54 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
 
 }
 
+// 1 - doesnt stop
+template <>  template <class ZType, class AType>
+double ParticleFilter<ArticulationModelPtr>::calculateExpectedDownweightAfterAction(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
+                     const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
+{
+  double change_in_log_mass = 0;
+  for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
+        it++)
+  {
+    double prob_exp = 0;
+    if (logLikelihoods_)
+    {
+      if (it->state->model == RIGID)
+      {
+        prob_exp = 1-z_exp;
+      }
+      else
+      {
+        int z_prob = 1;
+        double prob_likelihood = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
+//        ROS_ERROR("prob likelihood: %f", prob_likelihood);
+        prob_exp = (z_exp * prob_likelihood) + ((1 - z_exp) * (1 - prob_likelihood));
+      }
+//      ROS_ERROR("prob_exp: %f", prob_exp);
+//      ROS_ERROR("log(prob_exp): %f", log(prob_exp));
+//      ROS_ERROR("it->weight: %f", it->weight);
+//      ROS_ERROR("exp(it->weight): %f", exp(it->weight));
+
+
+      change_in_log_mass += log(prob_exp);
+    }
+    else
+    {
+      ROS_ERROR ("This function works only for loglikelihoods!");
+    }
+  }
+  return change_in_log_mass;
+}
+
+
 template <>  template <class ZType, class AType>
 double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
                      const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
 {
   double prob_exp = 0;
   double sum = 0;
+  double log2part = 0;
+  double prob_likelihood = 0;
   for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
         it++)
   {
@@ -769,8 +813,10 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vecto
       if (logLikelihoods_)
       {
         int z_prob = 1;
-        double prob_likelihood = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
+        prob_likelihood = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
+//        ROS_ERROR("prop likelihood : %f", prob_likelihood);
         prob_exp = (z_exp * prob_likelihood) + ((1 - z_exp) * (1 - prob_likelihood));
+//        ROS_ERROR("prop exp: %f", prob_exp);
       }
       else
       {
@@ -780,13 +826,31 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vecto
     if ( !isinf(it->weight) && !isinf(log(prob_exp)) && prob_exp != 0)
     {
       it->expected_weight = it->weight + log(prob_exp);
-      sum += exp(it->expected_weight)*log2(exp(it->expected_weight));
+
+//      ROS_ERROR("it->weight: %f", it->weight);
+//      ROS_ERROR("log(prob_exp): %f", log(prob_exp));
+
+//      ROS_ERROR("it->expected_weight: %f", it->expected_weight);
+
+      log2part = log2(exp(it->expected_weight));
+      if (isinf(log2part))
+        sum += 0;
+      else
+        sum += exp(it->expected_weight)*log2part;
     }
     else
     {
+//      ROS_ERROR("it->expected_weight: -infinity");
       sum += 0;
     }
   }
+//  ROS_ERROR("exp(it->expected_weight)*log2part: %f", exp(particles.back().expected_weight)*log2part );
+//  ROS_ERROR("back->weight: %f", particles.back().weight);
+//  ROS_ERROR("back - >log(prob_exp): %f", log(prob_exp));
+//  ROS_ERROR("back - >prob_exp: %f", prob_exp);
+//  ROS_ERROR("back - >prob_likelihood: %f", prob_likelihood);
+
+
   return -sum;
 }
 
@@ -879,4 +943,5 @@ template double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticul
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
 template double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
-
+template double ParticleFilter<ArticulationModelPtr>::calculateExpectedDownweightAfterAction(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);

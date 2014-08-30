@@ -17,6 +17,7 @@ public:
   ///the bigger the scale the more stiff the controller
   double scale;
   double log_multiplier;
+  bool exponencial_likelihood;
 };
 
 

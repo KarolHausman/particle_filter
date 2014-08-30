@@ -3,7 +3,7 @@
 
 template <class StateType, class ZType> ArtDataSensorModel<StateType, ZType>::ArtDataSensorModel()
 {
-  loglikelihood_free_model = 500;
+  loglikelihood_free_model = -0.11;//500 -0.11
 }
 
 template <class StateType, class ZType> ArtDataSensorModel<StateType, ZType>::~ArtDataSensorModel()
@@ -33,7 +33,7 @@ template <> double ArtDataSensorModel<ArticulationModelPtr, articulation_model_m
 {
   if(state->model == FREE)
   {
-    return loglikelihood_free_model;
+    return loglikelihood_free_model * state->model_msg.track.pose.size();
   }
 
   state->addTrack(z);

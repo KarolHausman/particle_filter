@@ -20,7 +20,7 @@ public:
     }
     friend std::ostream& operator << (std::ostream& stream, const Particle& p)
     {
-      stream << "weight= " << p.weight << "\n" << "state= \n" << p.state << "\n";
+      stream << "weight= " << p.weight << "\n" << "weight_to_print_only= " << p.weight_to_print_only << "\n" << "state= \n" << p.state << "\n";
       return stream;
     }
 

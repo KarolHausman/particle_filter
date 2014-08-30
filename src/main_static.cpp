@@ -122,7 +122,7 @@ int main(int argc, char **argv)
   tf::TransformListener tf_listener;
   tf::StampedTransform marker_static_to_marker;
 
-  bool hierarchy = false;
+  bool hierarchy = true;
 
   while (ros::ok())
   {
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
       if(loop_count == 20)
       {
         ROS_INFO_STREAM ("adding particles");
-        pf.addParticles(model_msg.track, 30, 50, 30, 2);
+        pf.addParticles(model_msg.track, 30, 50, 30, 0);
       }
 
       ROS_INFO ("executing correction step");
@@ -191,6 +191,18 @@ int main(int argc, char **argv)
       if(loop_count < 40)
       {
         pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
+
+        //HACK: to update free model particles to the best weight possible - for action selection
+        /*pf.sortParticles(pf.particles);
+        for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = pf.particles.begin(); it != pf.particles.end();
+             it++)
+        {
+          if (it->state->model == FREE)
+          {
+            it->weight = pf.particles.back().weight;
+          }
+        }*/
+
         pf.sortParticles(pf.particles);
         pf.printParticles(pf.particles);
         ROS_INFO ("Correction step executed.");
@@ -201,8 +213,8 @@ int main(int argc, char **argv)
       temp_particles = pf.particles;
 
       pf.normalize(temp_particles);
-//      pf.sortParticles(temp_particles);
-//      pf.printParticles(temp_particles);
+      pf.sortParticles(temp_particles);
+      pf.printParticles(temp_particles);
       pf.weightsToLogWeights(temp_particles);
 
       ROS_INFO("Entropy: %f", pf.calculateEntropy(temp_particles));
@@ -238,6 +250,8 @@ int main(int argc, char **argv)
 
       boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
       double min_expected_entropy = std::numeric_limits<double>::max();
+      double max_expected_downweight = -std::numeric_limits<double>::max();
+
       tf::Vector3 best_action;
       for (std::vector<tf::Vector3>::iterator it = generated_actions.begin(); it!= generated_actions.end(); ++it)
       {
@@ -247,11 +261,20 @@ int main(int argc, char **argv)
         ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
         double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
         ROS_ERROR("Expected Entropy: %f", expected_entropy);
+//        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+//        ROS_ERROR("Expected Downweight: %f", expected_downweight);
+
         if (expected_entropy < min_expected_entropy)
         {
           min_expected_entropy = expected_entropy;
           best_action = *it;
         }
+
+//        if (expected_downweight > max_expected_downweight)
+//        {
+//          max_expected_downweight = expected_downweight;
+//          best_action = *it;
+//        }
       }
       action->plan(best_action);
 

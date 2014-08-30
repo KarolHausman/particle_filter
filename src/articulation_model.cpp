@@ -7,9 +7,9 @@ ArticulationModel::ArticulationModel()
 {
 //  TODO: not needed yet, setId(-1);
 //  sigma_position = 0.005;
-  sigma_position = 0.04;
+  sigma_position = 0.05; //0.04
 //  sigma_orientation = 360 * M_PI/180.0;
-  sigma_orientation = 20 * M_PI/180.0;
+  sigma_orientation = 200 * M_PI/180.0; //20
 
   avg_error_position = 0;
   avg_error_orientation = 0;
@@ -413,10 +413,15 @@ double ArticulationModel::getLogLikelihood(bool estimate_outlier_ratio)
     } while( diff > 0.01 && iter < 10 );
   } else
   {
+    double max_loglikelihood_for_pose_index = - std::numeric_limits<double>::max();
     for(size_t i = 0; i < n; i++)
     {
-      sum_likelihood += getLogLikelihoodForPoseIndex(i, false);
+      double loglikelihood_for_pose_index = getLogLikelihoodForPoseIndex(i, false);
+      if (loglikelihood_for_pose_index > max_loglikelihood_for_pose_index)
+        max_loglikelihood_for_pose_index = loglikelihood_for_pose_index;
+      sum_likelihood += loglikelihood_for_pose_index;
     }
+//    ROS_ERROR ("max loglikelihood for pose index: %f", max_loglikelihood_for_pose_index);
   }
   if (estimate_outlier_ratio)
     sum_likelihood += - prior_outlier_ratio * outlier_ratio * n;
@@ -621,16 +626,13 @@ bool ArticulationModel::fitModel() {
     std::cout << "sampleConsesus failed" << std::endl;
           return false;
   }
-//  ROS_ERROR("END OF SAMPLECONSENSUS");
   if(!optimizeParameters()) {
     std::cout << "optimizeParameters failed "<< std::endl;
           return false;
   }
-//  ROS_ERROR("END OF OPTIMIZE PARAMS");
   if(!normalizeParameters()) {
           return false;
   }
-//  ROS_ERROR("END OF NORMALIZE PARAMS");
     return true;
 }
 

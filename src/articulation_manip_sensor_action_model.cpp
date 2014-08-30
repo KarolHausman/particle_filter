@@ -7,6 +7,7 @@
 template <class StateType, class ZType, class AType> ArtManipSensorActionModel<StateType, ZType, AType>::ArtManipSensorActionModel():
   scale(1.0), log_multiplier(1)
 {
+  exponencial_likelihood = false;
 }
 
 template <class StateType, class ZType, class AType> ArtManipSensorActionModel<StateType, ZType, AType>::~ArtManipSensorActionModel()
@@ -88,7 +89,15 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         angle_rad = angle_int*M_PI/180;
         angle_rad = fabs(angle_rad);
 
-        double prob = exp(-scale*angle_rad);
+        double prob = 0;
+        if(exponencial_likelihood)
+        {
+          prob = exp(-scale*angle_rad);
+        }
+        else
+        {
+          prob = -1.0/(M_PI/2) * angle_rad + 1;
+        }
 
         if (z == 1)
         {
@@ -145,7 +154,14 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         angle_rad = angle_int*M_PI/180;
         angle_rad = fabs(angle_rad);
 
-        double prob = exp(-scale*angle_rad);
+
+        double prob = 0;
+        if(exponencial_likelihood)
+          prob = exp(-scale*angle_rad);
+        else
+          prob = -1.0/(M_PI/2) * angle_rad + 1;
+
+
         if (z == 1)
         {
           loglikelihood = log(prob);
