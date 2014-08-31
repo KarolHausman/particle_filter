@@ -127,7 +127,7 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
 
-    //current marker measurement
+// ------------------ current marker measurement ------------------------------------
     try
     {
       // static marker, moving marker
@@ -168,6 +168,8 @@ int main(int argc, char **argv)
     }
 
 
+
+// ----------------- propagate particles -------------------------------------------
     ros::spinOnce();
     ROS_INFO_STREAM ("loop_count: " << loop_count);
     pf.propagate(pf.particles, u, motionNoiseCov, *motionModel);
@@ -179,72 +181,48 @@ int main(int argc, char **argv)
 
 
 
-
+// ----------------- adding particles -------------------
       if(loop_count == 20)
       {
         ROS_INFO_STREAM ("adding particles");
         pf.addParticles(model_msg.track, 30, 50, 30, 0);
       }
 
+
+
+
+
+// ----------------- marker correction step -------------------
       ROS_INFO ("executing correction step");
-      articulation_model_msgs::TrackMsg z;
-      if(loop_count < 40)
-      {
-        pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
-
-        //HACK: to update free model particles to the best weight possible - for action selection
-        /*pf.sortParticles(pf.particles);
-        for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = pf.particles.begin(); it != pf.particles.end();
-             it++)
-        {
-          if (it->state->model == FREE)
-          {
-            it->weight = pf.particles.back().weight;
-          }
-        }*/
-
-        pf.sortParticles(pf.particles);
-        pf.printParticles(pf.particles);
-        ROS_INFO ("Correction step executed.");
-      }
+      articulation_model_msgs::TrackMsg z;     
+      pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
+      ROS_INFO ("Correction step executed.");
 
 
+
+
+
+
+
+
+
+
+// ---------------- action selection -------------------------------
       std::vector <Particle <ArticulationModelPtr> > temp_particles;
       temp_particles = pf.particles;
 
       pf.normalize(temp_particles);
-      pf.sortParticles(temp_particles);
-      pf.printParticles(temp_particles);
+
+      if (hierarchy)
+      {
+        pf.sortParticles(temp_particles);
+        pf.printParticles(temp_particles);
+      }
+
       pf.weightsToLogWeights(temp_particles);
 
+
       ROS_INFO("Entropy: %f", pf.calculateEntropy(temp_particles));
-
-      /*if(loop_count >= 20 && loop_count <= 40 )
-      {
-        boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
-        tf::Vector3 action_dir, action_dir2, action_dir3;
-        action_dir = tf::Vector3(0, 0, 1);
-        action_dir2 = tf::Vector3(0, 1, 1);
-        action_dir3 = tf::Vector3(0, 1, 0);
-
-        action->setActionDirection(action_dir);
-        double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
-        ROS_INFO("Expected Za: %f", za_expected);
-        double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-        ROS_INFO("Expected Entropy: %f", expected_entropy);
-
-        action->setActionDirection(action_dir2);
-        double za_expected2 = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
-        ROS_INFO("Expected Za 2: %f", za_expected2);
-        double expected_entropy2 = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected2, action, sensorNoiseCov, *sensorActionModel);
-        ROS_INFO("Expected Entropy 2: %f", expected_entropy2);
-
-        action->setActionDirection(action_dir3);
-        double za_expected3 = pf.calculateExpectedZaArticulation<int, ActionPtr>(pf.particles, action, sensorNoiseCov, *sensorActionModel);
-        ROS_INFO("Expected Za 3: %f", za_expected3);
-        double expected_entropy3 = pf.calculateExpectedEntropy<int, ActionPtr>(pf.particles, za_expected3, action, sensorNoiseCov, *sensorActionModel);
-        ROS_INFO("Expected Entropy 3: %f", expected_entropy3);
-      }*/
 
       action_gen.publishGenActions();
 
@@ -260,7 +238,7 @@ int main(int argc, char **argv)
         ROS_INFO("Expected Za: %f", za_expected);
         ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
         double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-        ROS_ERROR("Expected Entropy: %f", expected_entropy);
+        ROS_ERROR("Expected Entropy: %f \n \n", expected_entropy);
 //        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
 //        ROS_ERROR("Expected Downweight: %f", expected_downweight);
 
@@ -279,41 +257,45 @@ int main(int argc, char **argv)
       action->plan(best_action);
 
 
-//      if(loop_count >= 40 && loop_count <= 50 )
-//      {
-          //hierachy = false;
-//        ROS_INFO("Executing action correction step");
 
-//        std::cerr << "Performing action" << std::endl;
-//        tf::Vector3 x_action;
-//        if (loop_count == 30)
-//          x_action = tf::Vector3(0, 2, 1);
-//        if (loop_count == 40)
-//          x_action = tf::Vector3(0, 3, 1);
-//        if (loop_count == 50)
-//          x_action = tf::Vector3(0, 1, 0);
 
-//        bool success = action->execute(x_action, "ar_marker_15");
+
+
+// ---------------------action execution ---------------------------
+      if(loop_count >= 40)
+      {
+        hierarchy = false;
+        pf.normalize(pf.particles);
+        pf.weightsToLogWeights(pf.particles);
+
+        ROS_INFO("Executing action correction step");
+
+
+//        bool success = action->execute(best_action, "ar_marker_15");
 //        std::cerr << "Action successful? " << success << std::endl;
 //        // 1 - doesnt stop
 //        int z_action = action->getActionResult();
+        int z_action = 0;
 
-//        boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
-//        pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModel);
-//        pf.sortParticles(pf.particles);
-//        pf.printParticles(pf.particles);
-//        ROS_INFO("Action correction step executed");
-//      }
-
+        boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
+        pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);
+        ROS_INFO("Action correction step executed");
+      }
 
 
 
-      // visualization only !!! doesnt normalize the weights
+
+// -----------------------visualization only !!! doesnt normalize the weights -----------------
       pf.normalize(pf.particles, true);
       pf.sortParticles(pf.particles);
       Visualizer::getInstance()->publishParticles(pf.particles);
 
-      // TODO: check normalization!!!!!!!
+
+
+
+
+// ----------------- normalize and resample ------------------------------------
+      ROS_INFO("Executing normalization and resampling step");
       if (hierarchy)
       {
         //TODO: think of free model here, but it should be fine I think...
@@ -328,7 +310,6 @@ int main(int argc, char **argv)
           ROS_ERROR ("no particles left, quiting");
           return -1;
         }
-  //      pf.printParticles(pf.particles);
         pf.mergeArticulationModels();
       }
       else
@@ -338,6 +319,11 @@ int main(int argc, char **argv)
           ROS_ERROR ("no particles left, quiting");
           return -1;
         }
+
+        pf.sortParticles(pf.particles);
+        pf.printParticles(pf.particles);
+
+
         if (!pf.stratifiedResample(particles_number, pf.particles))
         {
           ROS_ERROR ("no particles left, quiting");
@@ -346,8 +332,8 @@ int main(int argc, char **argv)
       }
       ROS_INFO ("Resample step executed.");
 
-
       pf.removeAddedParticleFlags(pf.particles);
+      ROS_INFO("Normalization and resampling step executed");
     }
     r.sleep();
     ++loop_count;

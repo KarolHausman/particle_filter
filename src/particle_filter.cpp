@@ -533,7 +533,8 @@ template <class ParticleType> bool ParticleFilter<ParticleType>::normalize(std::
         return false;
       }
     }
-  ROS_INFO ("switching to normal likelihoods for resampling");
+  if (!visualization_only)
+    ROS_INFO ("switching to normal likelihoods for resampling");
 //  printParticles(particles);
   return true;
 }
@@ -801,8 +802,11 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vecto
   double sum = 0;
   double log2part = 0;
   double prob_likelihood = 0;
+  double sum_to_print = 0;
+  int particles_left = particles.size();
+
   for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
-        it++)
+        it++, --particles_left)
   {
     if (it->state->model == RIGID)
     {
@@ -814,9 +818,7 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vecto
       {
         int z_prob = 1;
         prob_likelihood = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
-//        ROS_ERROR("prop likelihood : %f", prob_likelihood);
         prob_exp = (z_exp * prob_likelihood) + ((1 - z_exp) * (1 - prob_likelihood));
-//        ROS_ERROR("prop exp: %f", prob_exp);
       }
       else
       {
@@ -827,29 +829,32 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vecto
     {
       it->expected_weight = it->weight + log(prob_exp);
 
-//      ROS_ERROR("it->weight: %f", it->weight);
-//      ROS_ERROR("log(prob_exp): %f", log(prob_exp));
-
-//      ROS_ERROR("it->expected_weight: %f", it->expected_weight);
-
       log2part = log2(exp(it->expected_weight));
       if (isinf(log2part))
+      {
         sum += 0;
+      }
       else
+      {
         sum += exp(it->expected_weight)*log2part;
+        if (particles_left <= 5)
+        {
+          ROS_ERROR("prop likelihood : %f", prob_likelihood);
+          ROS_ERROR("prop exp: %f", prob_exp);
+          ROS_ERROR("it->weight: %f", it->weight);
+          ROS_ERROR("log(prob_exp): %f", log(prob_exp));
+          ROS_ERROR("it->expected_weight: %f", it->expected_weight);
+          ROS_ERROR("particle: %d, sum: %f \n", particles_left, exp(it->expected_weight)*log2part);
+          sum_to_print += exp(it->expected_weight)*log2part;
+        }
+      }
     }
     else
     {
-//      ROS_ERROR("it->expected_weight: -infinity");
       sum += 0;
     }
   }
-//  ROS_ERROR("exp(it->expected_weight)*log2part: %f", exp(particles.back().expected_weight)*log2part );
-//  ROS_ERROR("back->weight: %f", particles.back().weight);
-//  ROS_ERROR("back - >log(prob_exp): %f", log(prob_exp));
-//  ROS_ERROR("back - >prob_exp: %f", prob_exp);
-//  ROS_ERROR("back - >prob_likelihood: %f", prob_likelihood);
-
+  ROS_ERROR("sum of last printed particles: %f \n", sum_to_print);
 
   return -sum;
 }
