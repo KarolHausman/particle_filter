@@ -238,21 +238,21 @@ int main(int argc, char **argv)
         ROS_INFO("Expected Za: %f", za_expected);
         ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
         double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-        ROS_ERROR("Expected Entropy: %f \n \n", expected_entropy);
-//        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-//        ROS_ERROR("Expected Downweight: %f", expected_downweight);
+        ROS_ERROR("Expected Entropy: %f \n", expected_entropy);
+        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+        ROS_ERROR("Expected Downweight: %f \n \n", expected_downweight);
 
-        if (expected_entropy < min_expected_entropy)
-        {
-          min_expected_entropy = expected_entropy;
-          best_action = *it;
-        }
-
-//        if (expected_downweight > max_expected_downweight)
+//        if (expected_entropy < min_expected_entropy)
 //        {
-//          max_expected_downweight = expected_downweight;
+//          min_expected_entropy = expected_entropy;
 //          best_action = *it;
 //        }
+
+        if (expected_downweight > max_expected_downweight)
+        {
+          max_expected_downweight = expected_downweight;
+          best_action = *it;
+        }
       }
       action->plan(best_action);
 
