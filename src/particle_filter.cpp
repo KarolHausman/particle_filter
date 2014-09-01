@@ -780,8 +780,6 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedDownweightAfterAct
       // HACK: expected weight is equal to normal weight and normal is equal to expected, because normalization can be faster this way
       it->expected_weight = it->weight;
       it->weight = it->weight + log(prob_exp);
-//      ROS_ERROR("it->weight : %f", it->weight);
-//      ROS_ERROR("it->weight + log(prob_exp) : %f", it->weight + log(prob_exp));
     }
     else
     {
@@ -792,9 +790,15 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedDownweightAfterAct
   weightsToLogWeights(particles);
   int particles_left = particles.size();
 
+  double temp_weight_holder = 0;
   for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
         it++, --particles_left)
   {
+    // HACK: switch weights back to normal after previous hack
+    temp_weight_holder = it->expected_weight;
+    it->expected_weight = it->weight;
+    it->weight = temp_weight_holder;
+
     if (particles_left <= 3)
     {
       ROS_ERROR("exp(it->weight) : %f", exp(it->weight));

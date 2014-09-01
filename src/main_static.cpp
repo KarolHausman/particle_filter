@@ -51,6 +51,7 @@ int main(int argc, char **argv)
 
 
   // ------------------------ find handle -----------------------------------------
+//   drawer
   /*ROS_INFO("Grasping handle");
   HandleFinder hf;
   hf.findHandle("ar_marker_15");
@@ -59,6 +60,16 @@ int main(int argc, char **argv)
   Eigen::Vector3d grasp_offset(0.175, 0, 0);
   hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
   ROS_INFO("Handle grasp executed");*/
+
+  // erasers
+  /*HandleFinder hf;
+  hf.findHandle("ar_marker_2");
+  Eigen::VectorXd pregrasp_offset(6);
+  pregrasp_offset << 0.0, -0.05, 0.2, M_PI/2, M_PI/2, 0.0 ;
+  Eigen::Vector3d grasp_offset(0.0, 0.0, -0.05);
+  hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
+  ROS_INFO("Handle grasp executed");*/
+
 
   // -------------------------------- motion and sensor models ----------------
 
@@ -242,17 +253,17 @@ int main(int argc, char **argv)
         double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
         ROS_ERROR("Expected Downweight: %f \n \n", expected_downweight);
 
-//        if (expected_entropy < min_expected_entropy)
-//        {
-//          min_expected_entropy = expected_entropy;
-//          best_action = *it;
-//        }
-
-        if (expected_downweight > max_expected_downweight)
+        if (expected_entropy < min_expected_entropy)
         {
-          max_expected_downweight = expected_downweight;
+          min_expected_entropy = expected_entropy;
           best_action = *it;
         }
+
+//        if (expected_downweight > max_expected_downweight)
+//        {
+//          max_expected_downweight = expected_downweight;
+//          best_action = *it;
+//        }
       }
       action->plan(best_action);
 
@@ -270,12 +281,16 @@ int main(int argc, char **argv)
 
         ROS_INFO("Executing action correction step");
 
-
+//        drawer
 //        bool success = action->execute(best_action, "ar_marker_15");
-//        std::cerr << "Action successful? " << success << std::endl;
+
+//        eraser
+        bool both_ways = false;
+        bool success = action->execute(best_action, "ar_marker_2", both_ways);
+        std::cerr << "Action successful? " << success << std::endl;
 //        // 1 - doesnt stop
-//        int z_action = action->getActionResult();
-        int z_action = 0;
+        int z_action = action->getActionResult();
+//        int z_action = 0;
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);
