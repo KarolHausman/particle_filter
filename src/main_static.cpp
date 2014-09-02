@@ -70,6 +70,16 @@ int main(int argc, char **argv)
   hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
   ROS_INFO("Handle grasp executed");*/
 
+  //TODO
+  // cabinet
+  /*HandleFinder hf;
+  hf.findHandle("ar_marker_2");
+  Eigen::VectorXd pregrasp_offset(6);
+  pregrasp_offset << 0.0, -0.05, 0.2, M_PI/2, M_PI/2, 0.0 ;
+  Eigen::Vector3d grasp_offset(0.0, 0.0, -0.05);
+  hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
+  ROS_INFO("Handle grasp executed");*/
+
 
   // -------------------------------- motion and sensor models ----------------
 
@@ -142,8 +152,10 @@ int main(int argc, char **argv)
     try
     {
       // static marker, moving marker
-      tf_listener.lookupTransform("ar_marker_1", "/ar_marker_2", ros::Time(0), marker_static_to_marker);
+//      tf_listener.lookupTransform("ar_marker_1", "/ar_marker_2", ros::Time(0), marker_static_to_marker);
 //      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
+      tf_listener.lookupTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), marker_static_to_marker);
+
     }
     catch (tf::TransformException ex)
     {
@@ -183,7 +195,11 @@ int main(int argc, char **argv)
 // ----------------- propagate particles -------------------------------------------
     ros::spinOnce();
     ROS_INFO_STREAM ("loop_count: " << loop_count);
-    pf.propagate(pf.particles, u, motionNoiseCov, *motionModel);
+
+//    if (loop_count <= 40)
+//    {
+      pf.propagate(pf.particles, u, motionNoiseCov, *motionModel);
+//    }
 
     Visualizer::getInstance()->publishParticlesOnly(pf.particles);
 
@@ -197,6 +213,7 @@ int main(int argc, char **argv)
       {
         ROS_INFO_STREAM ("adding particles");
         pf.addParticles(model_msg.track, 30, 50, 30, 0);
+//        pf.addParticles(model_msg.track, 30, 50, 1, 0);
       }
 
 
@@ -204,10 +221,13 @@ int main(int argc, char **argv)
 
 
 // ----------------- marker correction step -------------------
-      ROS_INFO ("executing correction step");
-      articulation_model_msgs::TrackMsg z;     
-      pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
-      ROS_INFO ("Correction step executed.");
+//      if (loop_count <= 40)
+//      {
+        ROS_INFO ("executing correction step");
+        articulation_model_msgs::TrackMsg z;
+        pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
+        ROS_INFO ("Correction step executed.");
+//      }
 
 
 
@@ -250,8 +270,8 @@ int main(int argc, char **argv)
         ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
         double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
         ROS_ERROR("Expected Entropy: %f \n", expected_entropy);
-        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-        ROS_ERROR("Expected Downweight: %f \n \n", expected_downweight);
+//        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+//        ROS_ERROR("Expected Downweight: %f \n \n", expected_downweight);
 
         if (expected_entropy < min_expected_entropy)
         {
@@ -266,6 +286,7 @@ int main(int argc, char **argv)
 //        }
       }
       action->plan(best_action);
+      ROS_INFO("BEST Action: x = %f, y = %f, z = %f", best_action.getX(), best_action.getY(), best_action.getZ());
 
 
 
@@ -285,12 +306,12 @@ int main(int argc, char **argv)
 //        bool success = action->execute(best_action, "ar_marker_15");
 
 //        eraser
-        bool both_ways = false;
-        bool success = action->execute(best_action, "ar_marker_2", both_ways);
-        std::cerr << "Action successful? " << success << std::endl;
+//        bool both_ways = false;
+//        bool success = action->execute(best_action, "ar_marker_2", both_ways);
+//        std::cerr << "Action successful? " << success << std::endl;
 //        // 1 - doesnt stop
-        int z_action = action->getActionResult();
-//        int z_action = 0;
+//        int z_action = action->getActionResult();
+        int z_action = 1;
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);
