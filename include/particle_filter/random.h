@@ -20,7 +20,7 @@ namespace Random {
 
   double gaussian(double mean, double stddev);
 
-  Eigen::VectorXd multivariateGaussian(const Eigen::MatrixXd &covariance);
+  Eigen::VectorXd multivariateGaussian(const Eigen::MatrixXd &covariance, Eigen::VectorXd *mean = NULL);
 
   double gaussianDensity(double mean, double stddev, double z);
 

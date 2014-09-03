@@ -28,6 +28,10 @@
 #include "particle_filter/action_generator.h"
 
 
+#include "particle_filter/kernel_density_estimator.h"
+#include <iostream>
+#include <fstream>
+
 articulation_model_msgs::TrackMsg data_track;
 
 void trackCB(const articulation_model_msgs::TrackMsgConstPtr msg)
@@ -46,6 +50,91 @@ int main(int argc, char **argv)
 
   ros::init(argc, argv, "particle_filter");
   Visualizer::getInstance()->init();
+
+
+
+  // 1D case
+//  {
+//    std::vector<double> evaluation_data;
+
+//    for (uint i = 0; i < 200; ++i)
+//    {
+//      double x = Random::gaussian(0, 1);
+//      double y = Random::gaussian(3, 0.5);
+//      evaluation_data.push_back(x);
+//      evaluation_data.push_back(y);
+//    }
+
+//    KernelEstimator kernel_estimator;
+//    double result = 0;
+//    double increment = -5;
+//    double integral = 0;
+//    std::ofstream myfile;
+//    myfile.open ("kernel_test1D.txt");
+//    for (uint i = 0; i < 1000; ++i)
+//    {
+//      result = kernel_estimator.estimateKernelFunction1D(evaluation_data, "gaussian", 0.45, increment);
+//      myfile << increment << " " << result << "\n";
+//      integral += result * 0.01;
+//      increment += 0.01;
+//    }
+//    myfile.close();
+
+//    std::cout << "integral: " << integral << std::endl;
+//    std::cout << "result: " << result << std::endl;
+//  }
+
+
+  //2D case
+  {
+    std::vector<Eigen::VectorXd> evaluation_data2D;
+
+    Eigen::VectorXd first_mean = Eigen::Vector2d(0,0);
+    Eigen::VectorXd second_mean = Eigen::Vector2d(2,3);
+    Eigen::MatrixXd first_cov = Eigen::MatrixXd::Identity(2,2);
+    Eigen::MatrixXd second_cov = Eigen::MatrixXd::Identity(2,2);
+
+    for (uint i = 0; i < 100; ++i)
+    {
+      Eigen::VectorXd first_gaussian = Random::multivariateGaussian(first_cov, &first_mean);
+      Eigen::VectorXd second_gaussian = Random::multivariateGaussian(second_cov, &second_mean);
+      evaluation_data2D.push_back(first_gaussian);
+      evaluation_data2D.push_back(second_gaussian);
+    }
+
+    KernelEstimator kernel_estimator;
+    double result = 0;
+    double increment_y = -5;
+    double integral = 0;
+    std::ofstream myfile;
+    myfile.open ("kernel_test2D.txt");
+    Eigen::MatrixXd H = Eigen::MatrixXd::Identity(2, 2)* 0.25;
+
+    // calculate std dev
+    Eigen::MatrixXd H_Scotts = kernel_estimator.estimateH(evaluation_data2D);
+    ROS_INFO_STREAM("Scott's formula for H: " << H_Scotts);
+
+
+    for (uint i = 0; i < 100; ++i)
+    {
+      double increment_x = -5;
+      for (uint j = 0; j < 100; ++j)
+      {
+        Eigen::VectorXd sample = Eigen::Vector2d(increment_x, increment_y);
+        result = kernel_estimator.estimateKernelFunctionND(evaluation_data2D, "gaussian", H_Scotts, sample);
+        myfile << increment_x << " " << increment_y << " " << result << "\n";
+        myfile.flush();
+//      integral += result * 0.01;
+        increment_x += 0.1;
+      }
+      increment_y += 0.1;
+    }
+    myfile.close();
+
+    std::cout << "integral: " << integral << std::endl;
+    std::cout << "result: " << result << std::endl;
+  }
+
 
 
 
@@ -90,10 +179,10 @@ int main(int argc, char **argv)
 
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(10, 10);
   Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
-  Eigen::MatrixXd motionNoiseCov = covariance / 10000;
+  Eigen::MatrixXd motionNoiseCov = covariance / 100000; //10000
 
   //orientation
-  motionNoiseCov(3,3) = motionNoiseCov(4,4) = motionNoiseCov(5,5) = 0.001;
+//  motionNoiseCov(3,3) = motionNoiseCov(4,4) = motionNoiseCov(5,5) = 0.001;
   //rest
 //  motionNoiseCov(6,6) = motionNoiseCov(7,7) = motionNoiseCov(8,8) = motionNoiseCov(9,9)  = 0.001;
 
@@ -311,7 +400,7 @@ int main(int argc, char **argv)
 //        std::cerr << "Action successful? " << success << std::endl;
 //        // 1 - doesnt stop
 //        int z_action = action->getActionResult();
-        int z_action = 1;
+        int z_action = 0;
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);

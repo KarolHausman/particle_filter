@@ -33,10 +33,9 @@ namespace Random
 
   double gaussian(double mean, double stddev) {
     return gaussian()*stddev + mean;
-  }
+  } 
 
-
-  Eigen::VectorXd multivariateGaussian(const Eigen::MatrixXd &covariance){
+  Eigen::VectorXd multivariateGaussian(const Eigen::MatrixXd &covariance, Eigen::VectorXd *mean){
     int size = covariance.rows();
     Eigen::VectorXd sample(size);
     for (int i=0; i<size; i++)
@@ -45,7 +44,10 @@ namespace Random
     }
 
     Eigen::MatrixXd mL = covariance.llt().matrixL(); // Cholesky decomposition
-    return mL*sample;
+    if (mean != NULL)
+      return mL*sample + *mean;
+    else
+      return mL*sample;
   }
 
   double gaussianDensity(double mean, double stddev, double z)
