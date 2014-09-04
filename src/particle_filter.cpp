@@ -93,7 +93,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
   this->particles.resize(size);
   const double remaining_models_temp = static_cast<double> ((size - freemodel_samples_) / (MODELS_NUMBER - 1));
   const int remaining_models = static_cast<uint> (remaining_models_temp);
-  const int fitmodels_number = 9;
+  const int fitmodels_number = 300; //9
   uint i = 0;
   uint rigid_models_counter = 0;
   uint rotational_models_counter = 0;
@@ -107,7 +107,8 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       ArticulationModelPtr free_model(new FreeModel);
       model.name = "free";
       free_model->setModel(model);
-      it->state = free_model;    }
+      it->state = free_model;
+    }
     else if (i >= freemodel_samples_ && i < freemodel_samples_ + remaining_models)
     {
       ArticulationModelPtr rigid_model(new RigidModel);
@@ -119,6 +120,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       }
       else
       {
+        ROS_INFO("using motion model for initalization");
         Eigen::VectorXd noise = Random::multivariateGaussian(rigid_cov);
         Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
         rigid_model = motion_model.move(particles[freemodel_samples_].state, u, noise);
@@ -137,6 +139,7 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       }
       else
       {
+        ROS_INFO("using motion model for initalization");
         Eigen::VectorXd noise = Random::multivariateGaussian(rotational_cov);
         Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
         rotational_model = motion_model.move(particles[freemodel_samples_ + remaining_models].state, u, noise);
@@ -156,9 +159,9 @@ template <> ParticleFilter<ArticulationModelPtr>::ParticleFilter(const int& size
       }
       else
       {
+        ROS_INFO("using motion model for initalization");
         Eigen::VectorXd noise = Random::multivariateGaussian(prismatic_cov);
         Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
-
         prismatic_model = motion_model.move(particles[freemodel_samples_ + remaining_models*2].state, u, noise);
       }
       it->state = prismatic_model;
@@ -431,15 +434,89 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(std:
   return Eigen::Vector3d::Zero();
 }
 
+
+template <> void ParticleFilter<ArticulationModelPtr>::particlesToDataPoints (const std::vector<Particle <ArticulationModelPtr> >& particles, std::vector<WeightedDataPoint>& data_points)
+{
+  data_points.clear();
+  for (typename std::vector <Particle <ArticulationModelPtr> >::const_iterator it = particles.begin(); it != particles.end();
+       it++)
+  {
+    WeightedDataPoint dp;
+    if (logLikelihoods_)
+      dp.weight = exp(it->weight);
+    else
+      dp.weight = it->weight;
+
+
+    switch (it->state->model)
+    {
+      case (RIGID):
+      {
+        Eigen::VectorXd params = Eigen::VectorXd(6);
+        boost::shared_ptr<RigidModel> rigid_model = boost::dynamic_pointer_cast< RigidModel > (it->state);
+        params(0) = rigid_model->pos_x;
+        params(1) = rigid_model->pos_y;
+        params(2) = rigid_model->pos_z;
+        params(3) = rigid_model->roll;
+        params(4) = rigid_model->pitch;
+        params(5) = rigid_model->yaw;
+        dp.data_point = params;
+        data_points.push_back(dp);
+        break;
+      }
+      case (PRISMATIC):
+      {
+        Eigen::VectorXd params = Eigen::VectorXd(9);
+        boost::shared_ptr<PrismaticModel> prismatic_model = boost::dynamic_pointer_cast< PrismaticModel > (it->state);
+        params(0) = prismatic_model->pos_x;
+        params(1) = prismatic_model->pos_y;
+        params(2) = prismatic_model->pos_z;
+        params(3) = prismatic_model->roll;
+        params(4) = prismatic_model->pitch;
+        params(5) = prismatic_model->yaw;
+        params(6) = prismatic_model->axis_x;
+        params(7) = prismatic_model->axis_y;
+        params(8) = prismatic_model->axis_z;
+        dp.data_point = params;
+        data_points.push_back(dp);
+        break;
+      }
+      case (ROTATIONAL):
+      {
+        Eigen::VectorXd params = Eigen::VectorXd(10);
+        boost::shared_ptr<RotationalModel> rotational_model = boost::dynamic_pointer_cast< RotationalModel > (it->state);
+        params(0) = rotational_model->rot_center_x;
+        params(1) = rotational_model->rot_center_y;
+        params(2) = rotational_model->rot_center_z;
+        params(3) = rotational_model->roll;
+        params(4) = rotational_model->pitch;
+        params(5) = rotational_model->yaw;
+        params(6) = rotational_model->axis_roll;
+        params(7) = rotational_model->axis_pitch;
+        params(8) = rotational_model->axis_yaw;
+        params(9) = rotational_model->radius;
+        dp.data_point = params;
+        data_points.push_back(dp);
+        break;
+      }
+     }
+  }
+}
+
+
 // TODO: think of free model
-template <> void ParticleFilter<ArticulationModelPtr>::splitArticulationModels()
+template <> void ParticleFilter<ArticulationModelPtr>::splitArticulationModels(const std::vector<Particle <ArticulationModelPtr> >& particles, double &weights_rigid, double &weights_prismatic, double &weights_rotational, double &weights_free)
 {
   particles_rigid.clear();
   particles_prismatic.clear();
   particles_rotational.clear();
   particles_free.clear();
+  weights_rigid = 0;
+  weights_prismatic = 0;
+  weights_rotational = 0;
+  weights_free = 0;
 
-  for (typename std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
+  for (typename std::vector <Particle <ArticulationModelPtr> >::const_iterator it = particles.begin(); it != particles.end();
        it++)
   {
 
@@ -449,24 +526,28 @@ template <> void ParticleFilter<ArticulationModelPtr>::splitArticulationModels()
       {
         Particle<ArticulationModelPtr> p = *it;
         particles_rigid.push_back(p);
+        weights_rigid += exp(p.weight);
         break;
       }
       case (PRISMATIC):
       {
         Particle<ArticulationModelPtr> p = *it;
         particles_prismatic.push_back(p);
+        weights_prismatic += exp(p.weight);
         break;
       }
       case (ROTATIONAL):
       {
         Particle<ArticulationModelPtr> p = *it;
         particles_rotational.push_back(p);
+        weights_rotational += exp(p.weight);
         break;
       }
       case (FREE):
       {
         Particle<ArticulationModelPtr> p = *it;
         particles_free.push_back(p);
+        weights_free += exp(p.weight);
         break;
       }
     }
@@ -639,6 +720,43 @@ template <> void ParticleFilter<ArticulationModelPtr>::removeAddedParticleFlags(
   }
 }
 
+template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(const std::vector<Particle <ArticulationModelPtr> >& particles)
+{
+  double weights_rigid, weights_prismatic, weights_rotational, weights_free;
+  splitArticulationModels(particles, weights_rigid, weights_prismatic, weights_rotational, weights_free);
+  double weights_sum = weights_rigid + weights_prismatic + weights_rotational + weights_free;
+  ROS_INFO("weights: rigid: %f, prismatic: %f, rotational: %f, free: %f", weights_rigid, weights_prismatic, weights_rotational, weights_free);
+
+  std::vector<WeightedDataPoint> rigid_dps;
+  particlesToDataPoints(particles_rigid, rigid_dps);
+  std::vector<WeightedDataPoint> prismatic_dps;
+  particlesToDataPoints(particles_prismatic, prismatic_dps);
+  std::vector<WeightedDataPoint> rotational_dps;
+  particlesToDataPoints(particles_rotational, rotational_dps);
+
+  KernelEstimator kernel_estimator;
+  Eigen::MatrixXd H_rigid = kernel_estimator.estimateWeightedH(rigid_dps);
+  Eigen::MatrixXd H_prismatic = kernel_estimator.estimateWeightedH(prismatic_dps);
+  Eigen::MatrixXd H_rotational = kernel_estimator.estimateWeightedH(rotational_dps);
+
+//  std::cerr << "estimated H rigid: \n" << H_rigid << std::endl;
+//  std::cerr << "estimated H_prismatic: \n" << H_prismatic << std::endl;
+//  std::cerr << "estimated H_rotational: \n" << H_rotational << std::endl;
+
+  double entropy_rigid = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps,"gaussian",H_rigid);
+  double entropy_prismatic = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic);
+  double entropy_rotational = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational);
+  double entropy_free = calculateEntropy(particles_free);
+
+  ROS_INFO("ENTROPIES: rigid: %f, prismatic: %f, rotational: %f, free: %f", entropy_rigid, entropy_prismatic, entropy_rotational, entropy_free);
+
+  double entropy = (weights_rigid/weights_sum)*entropy_rigid + (weights_prismatic/weights_sum)*entropy_prismatic
+                   + (weights_rotational/weights_sum)*entropy_rotational + (weights_free/weights_sum)*entropy_free;
+  return entropy;
+}
+
+
+
 //particles have to be normalized
 template <class ParticleType> double ParticleFilter<ParticleType>::calculateEntropy(const std::vector<Particle <ParticleType> >& particles) const
 {
@@ -753,6 +871,58 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
   }
 
 }
+
+
+template <>  template <class ZType, class AType>
+double ParticleFilter<ArticulationModelPtr>::calculateExpectedKDEEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
+                     const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
+{
+  double prob_exp = 0;
+  double prob_likelihood = 0;
+  for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
+        it++)
+  {
+    if (logLikelihoods_)
+    {
+      if (it->state->model == RIGID)
+      {
+        prob_exp = 1-z_exp;
+      }
+      else
+      {
+        int z_prob = 1;
+        prob_likelihood = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
+        prob_exp = (z_exp * prob_likelihood) + ((1 - z_exp) * (1 - prob_likelihood));
+      }
+      // HACK: expected weight is equal to normal weight and normal is equal to expected, because normalization can be faster this way
+      it->expected_weight = it->weight;
+      it->weight = it->weight + log(prob_exp);
+    }
+    else
+    {
+      ROS_ERROR ("This function works only for loglikelihoods!");
+    }
+  }
+  //TODO: think if needed
+  normalize(particles);
+  weightsToLogWeights(particles);
+  double result = calculateKDEEntropy(particles);
+
+
+  double temp_weight_holder = 0;
+  for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
+        it++)
+  {
+    // HACK: switch weights back to normal after previous hack
+    temp_weight_holder = it->expected_weight;
+    it->expected_weight = it->weight;
+    it->weight = temp_weight_holder;
+  }
+
+  return result;
+}
+
+
 
 // 1 - doesnt stop
 template <>  template <class ZType, class AType>
@@ -975,4 +1145,6 @@ template double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticul
 template double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
 template double ParticleFilter<ArticulationModelPtr>::calculateExpectedDownweightAfterAction(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
+template double ParticleFilter<ArticulationModelPtr>::calculateExpectedKDEEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);

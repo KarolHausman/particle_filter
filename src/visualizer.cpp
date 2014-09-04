@@ -45,6 +45,7 @@ void Visualizer::publishParticlesOnly(const std::vector <Particle <ArticulationM
     it->state->setParam("weight",it->weight,articulation_model_msgs::ParamMsg::EVAL);
     particles_msg.particles.push_back(it->state->getModel());
   }
+  ROS_INFO("PUBLISHING PARTICLES ONLY");
   particles_pub_.publish(particles_msg);
 }
 

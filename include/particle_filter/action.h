@@ -19,7 +19,7 @@ public:
 
   void effortCB(const std_msgs::BoolConstPtr& msg);
   bool execute(tf::Vector3 &direction, const std::string &marker_tf, const bool &both_ways = true);
-  void plan(tf::Vector3 &direction, const bool &both_ways = true);
+  void plan(tf::Vector3 &direction, geometry_msgs::Pose &action_origin, const bool &both_ways = true);
   int getActionResult();
   void setActionDirection (const tf::Vector3& direction);
 

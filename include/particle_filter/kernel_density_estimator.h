@@ -5,6 +5,11 @@
 #include "particle_filter/random.h"
 #include <unsupported/Eigen/MatrixFunctions>
 
+struct WeightedDataPoint
+{
+  Eigen::VectorXd data_point;
+  double weight;
+};
 
 class KernelEstimator
 {
@@ -26,6 +31,52 @@ public:
       }
     }
     return result * h / n ;
+  }
+
+  double estimateWeightedEntropyKernelND(const std::vector<WeightedDataPoint>& data_points, const std::string& kernel_name, const Eigen::MatrixXd& H)
+  {
+    size_t n = data_points.size();
+    double result = 0;
+    for (uint i = 0; i < n; ++i)
+    {
+      result += log2(estimateWeightedKernelFunctionND(data_points, kernel_name, H, data_points[i].data_point));
+    }
+    return result * (-1.0/(double)n);
+  }
+
+
+  double estimateEntropyKernelND(const std::vector<Eigen::VectorXd>& data_points, const std::string& kernel_name, const Eigen::MatrixXd& H)
+  {
+    size_t n = data_points.size();
+    double result = 0;
+    for (uint i = 0; i < n; ++i)
+    {
+      result += log2(estimateKernelFunctionND(data_points, kernel_name, H, data_points[i]));
+    }
+    return result * (-1.0/(double)n);
+  }
+
+  //assumes that H is diagonal
+  double estimateWeightedKernelFunctionND(const std::vector<WeightedDataPoint>& data_points, const std::string& kernel_name, const Eigen::MatrixXd& H, const Eigen::VectorXd& x)
+  {
+    size_t n = data_points.size();
+    double result = 0;
+    double weights_sum = 0;
+    double det_H = H.determinant();
+    double det_H_pow = pow(det_H, -1/2);
+    Eigen::MatrixXd H_pow = H.inverse();
+    H_pow.diagonal() = H_pow.diagonal().array().sqrt();
+
+
+    for (uint i = 0; i < n; ++i)
+    {
+      if (kernel_name == "gaussian")
+      {
+        result += det_H_pow * data_points[i].weight * gaussianKernel( H_pow * (x - data_points[i].data_point) );
+        weights_sum += data_points[i].weight;
+      }
+    }
+    return result/weights_sum;
   }
 
   //assumes that H is diagonal
@@ -53,7 +104,7 @@ public:
   {
     uint d = data_points.front().size();
     std::vector< std::vector <double> > sigmas;
-    Eigen::MatrixXd result_H(d,d);
+    Eigen::MatrixXd result_H = Eigen::MatrixXd::Identity(d,d);
     for (uint i=0; i<d; ++i)
     {
       std::vector<double> sigmas_i;
@@ -71,7 +122,41 @@ public:
     return result_H;
   }
 
+  Eigen::MatrixXd estimateWeightedH(std::vector<WeightedDataPoint>& data_points)
+  {
+    uint d = data_points.front().data_point.size();
+    std::vector< std::vector <std::pair<double, double> > > sigmas;
+    Eigen::MatrixXd result_H = Eigen::MatrixXd::Identity(d,d);
+    for (uint i=0; i<d; ++i)
+    {
+      std::vector<std::pair<double, double> > sigmas_i;
+      for (std::vector<WeightedDataPoint>::iterator it=data_points.begin(); it!= data_points.end(); ++it)
+      {
+        sigmas_i.push_back(std::make_pair((it->data_point)(i), it->weight));
+      }
+      sigmas.push_back(sigmas_i);
+    }
+    for (uint i=0; i<sigmas.size(); ++i)
+    {
+      double scotts_i = pow( computeWeightedStdDev(sigmas[i], computeWeightedAverage(sigmas[i])) * pow( (double)data_points.size(), -1/(double)(d + 4) ) , 2);
+      result_H(i,i) = scotts_i;
+    }
+    return result_H;
+  }
+
 private:
+
+  double computeWeightedAverage(std::vector<std::pair<double, double> > v)
+  {
+    double sum = 0;
+    double sum_weights = 0;
+    for(int i = 0; i < v.size(); i++)
+    {
+      sum += v[i].first*v[i].second;
+      sum_weights += v[i].second;
+    }
+    return sum / sum_weights;
+  }
 
   double computeAverage(std::vector<double> v)
   {
@@ -87,6 +172,18 @@ private:
     for(int i = 0; i < v.size(); i++)
       E += pow(v[i] - ave, 2);
     return sqrt(1 / (double)v.size() * E);
+  }
+
+  double computeWeightedStdDev(std::vector<std::pair<double, double> > v, double ave)
+  {
+    double E = 0;
+    double sum_weights = 0;
+    for(int i = 0; i < v.size(); i++)
+    {
+      E += v[i].second * pow(v[i].first - ave, 2);
+      sum_weights += v[i].second;
+    }
+    return sqrt(1 / sum_weights * E);
   }
 
   double gaussianKernel(const double x)

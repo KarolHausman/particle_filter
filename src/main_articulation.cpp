@@ -409,7 +409,8 @@ int main(int argc, char **argv)
         pf.sortParticles(pf.particles);
         Visualizer::getInstance()->publishParticles(pf.particles);
 
-        pf.splitArticulationModels();
+        double weights_rigid, weights_prismatic, weights_rotational, weights_free;
+        pf.splitArticulationModels(pf.particles, weights_rigid, weights_prismatic, weights_rotational, weights_free);
         if ((!pf.normalize(pf.particles_rigid)) || (!pf.normalize(pf.particles_prismatic)) || (!pf.normalize(pf.particles_rotational)))
         {
           ROS_ERROR ("no particles left, quiting");

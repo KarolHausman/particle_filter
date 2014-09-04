@@ -23,13 +23,13 @@ import random
 class trackVisualizer:
 
   def __init__(self, colorize_track, colorize_obs):
-    self.pub = rospy.Publisher('visualization_marker', Marker)
+    self.pub = rospy.Publisher('visualization_action', Marker)
     self.pub_array = rospy.Publisher('visualization_marker_array', MarkerArray)
     self.colorize_track = colorize_track
     self.colorize_obs = colorize_obs
     rospy.Subscriber("model_track", ModelMsg, self.callback)
     rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
-    rospy.Subscriber("action", Pose, self.callbackAction)
+    rospy.Subscriber("action", ActionsMsg, self.callbackAction)
     rospy.Subscriber("generated_actions", ActionsMsg, self.callbackGeneratedActions)
     self.num_poses = {}
     self.num_markers = {} 
@@ -39,26 +39,29 @@ class trackVisualizer:
     self.particle_rotational_counter = 0
     self.current_pose = Pose(Point(0, 0, 0), Quaternion(0, 0, 0, 1))
 
-  def callbackAction(self, pose):    
+  def callbackAction(self, actions_msg): 
+    marker = Marker()
+    marker.header.stamp = rospy.get_rostime()
+    marker.header.frame_id = "world"
+    marker.ns = "model_visualizer_action"
+    marker.id = 0
+    marker.action = Marker.ADD
+
+    marker.scale = Vector3(0.04,0.04,0.04)
+    marker.color.a = 1
+    marker.color.g = 1
+    marker.color.r = 1
+    
+    #actions[0] - direction, actions[1] - pose
+    marker.type = Marker.ARROW
     if self.current_pose.position.x != 0:
-      marker = Marker()
-      marker.header.stamp = rospy.get_rostime()
-      marker.header.frame_id = "world"
-      marker.ns = "model_visualizer_action"
-      marker.id = 0
-      marker.action = Marker.ADD
-
-      marker.scale = Vector3(0.04,0.04,0.04)
-      marker.color.a = 1
-      marker.color.g = 1
-      marker.color.r = 1
-
-      marker.type = Marker.ARROW
       marker.pose = self.current_pose
-      marker.points.append( Point(0,0,0) )
-      marker.points.append( Point(pose.position.x, pose.position.y, pose.position.z) )
+    else:
+      marker.pose = actions_msg.actions[1]
+    marker.points.append( Point(0,0,0) )
+    marker.points.append( Point(actions_msg.actions[0].position.x, actions_msg.actions[0].position.y, actions_msg.actions[0].position.z) )
 
-      self.pub.publish(marker)
+    self.pub.publish(marker)
 
     
     
@@ -94,7 +97,6 @@ class trackVisualizer:
 
 
   def callbackParticles(self,particles):
-    #rospy.loginfo( "received particle. track %d",model.track.id)
     marker_array = MarkerArray()
     self.particle_counter = 0
     self.particle_prismatic_counter = 0
@@ -104,7 +106,6 @@ class trackVisualizer:
       self.particle_counter = self.particle_counter + 1
       self.render_particle(model, marker_array)
 
-    #rospy.loginfo( "publishing PARTICLES,marker array contains %d markers", len(marker_array.markers) )
     self.pub_array.publish(marker_array)
 
   def callback(self,model):
@@ -130,7 +131,8 @@ class trackVisualizer:
     self.pub_array.publish(marker_array)
 
   def render_particle(self, model, marker_array):
-
+    if model.name == "free":
+      return
     for param in model.params:
       if param.name == "rigid_position.x" or param.name == "rot_center.x":
         rigid_position_x = param.value
@@ -181,7 +183,7 @@ class trackVisualizer:
     marker.header.frame_id = model.track.header.frame_id
     marker.ns = "model_visualizer_particle"
     marker.id = self.particle_counter
-    marker.lifetime = rospy.Duration.from_sec(3)
+    #marker.lifetime = rospy.Duration.from_sec(3)
     marker.action = Marker.ADD
 
     marker.scale = Vector3(0.007,0.007,0.007)
@@ -217,7 +219,7 @@ class trackVisualizer:
       marker_prismatic.header.frame_id = model.track.header.frame_id
       marker_prismatic.ns = "model_visualizer_particle_prismatic_axis"
       marker_prismatic.id = self.particle_prismatic_counter
-      marker_prismatic.lifetime = rospy.Duration.from_sec(3)
+      #marker_prismatic.lifetime = rospy.Duration.from_sec(3)
       marker_prismatic.action = Marker.ADD
 
       marker_prismatic.type = Marker.LINE_STRIP
@@ -240,7 +242,7 @@ class trackVisualizer:
       marker_rotational.header.frame_id = model.track.header.frame_id
       marker_rotational.ns = "model_visualizer_particle_rotational_axis"
       marker_rotational.id = self.particle_rotational_counter
-      marker_rotational.lifetime = rospy.Duration.from_sec(3)
+      #marker_rotational.lifetime = rospy.Duration.from_sec(3)
       marker_rotational.action = Marker.ADD
 
       marker_rotational.type = Marker.LINE_STRIP
@@ -628,14 +630,15 @@ class trackVisualizer:
     marker.id = 0
     marker.action = Marker.ADD
 
-    marker.scale = Vector3(0.04,0.04,0.04)
+    marker.scale = Vector3(0.02,0.02,0.02)
     marker.color.a = 1
     marker.color.b = 1
     marker.color.r = 1
     marker.type = Marker.ARROW
     marker.pose = self.current_proj_pose
     marker.points.append( Point(0,0,0) )
-    marker.points.append( Point(prismatic_dir.x,prismatic_dir.y,prismatic_dir.z) )
+    prismatic_dir_normalized = normalize((prismatic_dir.x,prismatic_dir.y,prismatic_dir.z))
+    marker.points.append( Point(prismatic_dir_normalized[0],prismatic_dir_normalized[1],prismatic_dir_normalized[2]) )
 
     marker_array.markers.append(marker)   
 
@@ -694,7 +697,8 @@ class trackVisualizer:
       if param.name == "current_proj_pose_rot_dir.z":
         current_proj_pose_rot_dir_z = param.value
 
-    current_proj_pose_rot_dir = Point(current_proj_pose_rot_dir_x, current_proj_pose_rot_dir_y, current_proj_pose_rot_dir_z)
+    current_proj_pose_normalized = normalize((current_proj_pose_rot_dir_x, current_proj_pose_rot_dir_y, current_proj_pose_rot_dir_z))
+    current_proj_pose_rot_dir = Point(current_proj_pose_normalized[0], current_proj_pose_normalized[1], current_proj_pose_normalized[2])
 
     #rotational axis
     rot_axis = Quaternion(rot_axis_x, rot_axis_y, rot_axis_z, rot_axis_w) 
@@ -874,7 +878,7 @@ class trackVisualizer:
     marker.id = 0
     marker.action = Marker.ADD
 
-    marker.scale = Vector3(0.04,0.04,0.04)
+    marker.scale = Vector3(0.02,0.02,0.02)
     marker.color.a = 1
     marker.color.b = 1
     marker.type = Marker.ARROW

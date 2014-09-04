@@ -7,6 +7,7 @@
 #include "particle_filter/sensor_model.h"
 #include "particle_filter/sensor_action_model.h"
 #include "articulation_model.h"
+#include "particle_filter/kernel_density_estimator.h"
 
 template <class ParticleType>
 class ParticleFilter
@@ -29,7 +30,7 @@ public:
 
   void removeAddedParticleFlags(std::vector<Particle <ArticulationModelPtr> >& particles);
 
-  void splitArticulationModels();
+  void splitArticulationModels(const std::vector<Particle <ArticulationModelPtr> >& particles, double &weights_rigid, double &weights_prismatic, double &weights_rotational, double &weights_free);
 
   void mergeArticulationModels();
 
@@ -48,6 +49,13 @@ public:
   bool getLogLikelihoodsFlag() const;
 
   double calculateEntropy (const std::vector<Particle <ParticleType> >& particles) const;
+
+  double calculateKDEEntropy (const std::vector<Particle <ArticulationModelPtr> >& particles);
+
+  void particlesToDataPoints (const std::vector<Particle <ArticulationModelPtr> >& particles, std::vector<WeightedDataPoint>& data_points);
+
+  template <class ZType, class AType> double calculateExpectedKDEEntropy (std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
+                                                                              const SensorActionModel<ArticulationModelPtr, ZType, AType>& model);
 
   template <class ZType, class AType> double calculateExpectedDownweightAfterAction (std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
                                                                               const SensorActionModel<ArticulationModelPtr, ZType, AType>& model);

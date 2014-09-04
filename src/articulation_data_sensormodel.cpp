@@ -32,7 +32,7 @@ template <> double ArtDataSensorModel<ArticulationModelPtr, articulation_model_m
                                        const Eigen::MatrixXd &cov) const
 {
   if(state->model == FREE)
-  {
+  {    
     return loglikelihood_free_model * state->model_msg.track.pose.size();
   }
 

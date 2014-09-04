@@ -1,10 +1,11 @@
 #include "particle_filter/action.h"
+#include "articulation_model_msgs/ActionsMsg.h"
 
 
 Action::Action():
   distance(0.03),nh(),group("right_arm"),spinner(1),stopped(false),stopped_counter(0)
 {
-  vector_pub = nh.advertise <geometry_msgs::Pose>("action", 5);
+  vector_pub = nh.advertise <articulation_model_msgs::ActionsMsg>("action", 5);
   effort_exceeded_sub = nh.subscribe ("/r_arm_controller/effort_exceeded", 1, &Action::effortCB, this);
 }
 
@@ -42,7 +43,8 @@ bool Action::execute(tf::Vector3& direction, const std::string& marker_tf, const
   stopped = false;
   action_direction = direction;
   spinner.start();
-  plan(direction, both_ways);
+  geometry_msgs::Pose origin;
+  plan(direction, origin, both_ways);
 
   while (nh.ok() && marker2odom.stamp_.isZero())
   {
@@ -97,11 +99,17 @@ bool Action::execute(tf::Vector3& direction, const std::string& marker_tf, const
   return success && back_success;
 }
 
-void Action::plan(tf::Vector3& direction, const bool& both_ways)
+void Action::plan(tf::Vector3& direction, geometry_msgs::Pose &action_origin, const bool& both_ways)
 {
   action_direction = direction;
   geometry_msgs::Pose pose_direction;
   tf::Transform transform(tf::Quaternion(0, 0, 0, 1), direction);
   tf::poseTFToMsg(transform, pose_direction);
-  vector_pub.publish(pose_direction);
+
+  articulation_model_msgs::ActionsMsg actions_msg;
+  actions_msg.header.stamp = ros::Time::now();
+  actions_msg.header.seq = 0;
+  actions_msg.actions.push_back(pose_direction);
+  actions_msg.actions.push_back(action_origin);
+  vector_pub.publish(actions_msg);
 }

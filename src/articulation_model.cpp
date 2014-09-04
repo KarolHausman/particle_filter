@@ -7,9 +7,9 @@ ArticulationModel::ArticulationModel()
 {
 //  TODO: not needed yet, setId(-1);
 //  sigma_position = 0.005;
-  sigma_position = 0.05; //0.04
+  sigma_position = 0.04; //0.04
 //  sigma_orientation = 360 * M_PI/180.0;
-  sigma_orientation = 20 * M_PI/180.0; //20
+  sigma_orientation = 30 * M_PI/180.0; //20
 
   avg_error_position = 0;
   avg_error_orientation = 0;

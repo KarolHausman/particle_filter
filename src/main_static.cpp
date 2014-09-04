@@ -87,7 +87,9 @@ int main(int argc, char **argv)
 
   //2D case
   {
-    std::vector<Eigen::VectorXd> evaluation_data2D;
+//    std::vector<Eigen::VectorXd> evaluation_data2D;
+/*
+    std::vector<WeightedDataPoint> evaluation_data2D;
 
     Eigen::VectorXd first_mean = Eigen::Vector2d(0,0);
     Eigen::VectorXd second_mean = Eigen::Vector2d(2,3);
@@ -98,8 +100,13 @@ int main(int argc, char **argv)
     {
       Eigen::VectorXd first_gaussian = Random::multivariateGaussian(first_cov, &first_mean);
       Eigen::VectorXd second_gaussian = Random::multivariateGaussian(second_cov, &second_mean);
-      evaluation_data2D.push_back(first_gaussian);
-      evaluation_data2D.push_back(second_gaussian);
+      WeightedDataPoint dp1;
+      dp1.data_point = first_gaussian;
+      dp1.weight = 2;
+      evaluation_data2D.push_back(dp1);
+      dp1.data_point = second_gaussian;
+      dp1.weight = 1;
+      evaluation_data2D.push_back(dp1);
     }
 
     KernelEstimator kernel_estimator;
@@ -110,8 +117,9 @@ int main(int argc, char **argv)
     myfile.open ("kernel_test2D.txt");
     Eigen::MatrixXd H = Eigen::MatrixXd::Identity(2, 2)* 0.25;
 
-    // calculate std dev
-    Eigen::MatrixXd H_Scotts = kernel_estimator.estimateH(evaluation_data2D);
+
+//    Eigen::MatrixXd H_Scotts = kernel_estimator.estimateH(evaluation_data2D);
+    Eigen::MatrixXd H_Scotts = kernel_estimator.estimateWeightedH(evaluation_data2D);
     ROS_INFO_STREAM("Scott's formula for H: " << H_Scotts);
 
 
@@ -121,7 +129,7 @@ int main(int argc, char **argv)
       for (uint j = 0; j < 100; ++j)
       {
         Eigen::VectorXd sample = Eigen::Vector2d(increment_x, increment_y);
-        result = kernel_estimator.estimateKernelFunctionND(evaluation_data2D, "gaussian", H_Scotts, sample);
+        result = kernel_estimator.estimateWeightedKernelFunctionND(evaluation_data2D, "gaussian", H_Scotts, sample);
         myfile << increment_x << " " << increment_y << " " << result << "\n";
         myfile.flush();
 //      integral += result * 0.01;
@@ -133,6 +141,8 @@ int main(int argc, char **argv)
 
     std::cout << "integral: " << integral << std::endl;
     std::cout << "result: " << result << std::endl;
+    double entropy = kernel_estimator.estimateWeightedEntropyKernelND(evaluation_data2D,"gaussian",H_Scotts);
+    std::cout << "entropy: " << entropy << std::endl;*/
   }
 
 
@@ -240,9 +250,11 @@ int main(int argc, char **argv)
 // ------------------ current marker measurement ------------------------------------
     try
     {
+      //TODO: wait for transform?
       // static marker, moving marker
 //      tf_listener.lookupTransform("ar_marker_1", "/ar_marker_2", ros::Time(0), marker_static_to_marker);
 //      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
+      tf_listener.waitForTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), ros::Duration(3.0));
       tf_listener.lookupTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), marker_static_to_marker);
 
     }
@@ -279,10 +291,7 @@ int main(int argc, char **argv)
       }
     }
 
-
-
 // ----------------- propagate particles -------------------------------------------
-    ros::spinOnce();
     ROS_INFO_STREAM ("loop_count: " << loop_count);
 
 //    if (loop_count <= 40)
@@ -291,8 +300,9 @@ int main(int argc, char **argv)
 //    }
 
     Visualizer::getInstance()->publishParticlesOnly(pf.particles);
+    ros::spinOnce();
 
-    if (loop_count % 10 == 0)
+    if (loop_count % 10 == 0 || loop_count == 1)
     {
 
 
@@ -341,10 +351,10 @@ int main(int argc, char **argv)
 
       pf.weightsToLogWeights(temp_particles);
 
+      ROS_INFO("Entropy old: %f", pf.calculateEntropy(temp_particles));
+      ROS_INFO("Entropy NEW: %f", pf.calculateKDEEntropy(temp_particles));
 
-      ROS_INFO("Entropy: %f", pf.calculateEntropy(temp_particles));
-
-      action_gen.publishGenActions();
+//      action_gen.publishGenActions();
 
       boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
       double min_expected_entropy = std::numeric_limits<double>::max();
@@ -357,7 +367,7 @@ int main(int argc, char **argv)
         double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(temp_particles, action, sensorNoiseCov, *sensorActionModel);
         ROS_INFO("Expected Za: %f", za_expected);
         ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
-        double expected_entropy = pf.calculateExpectedEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+        double expected_entropy = pf.calculateExpectedKDEEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
         ROS_ERROR("Expected Entropy: %f \n", expected_entropy);
 //        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
 //        ROS_ERROR("Expected Downweight: %f \n \n", expected_downweight);
@@ -374,7 +384,9 @@ int main(int argc, char **argv)
 //          best_action = *it;
 //        }
       }
-      action->plan(best_action);
+      geometry_msgs::Pose poseMsg;
+      tf::poseTFToMsg(marker_static_to_marker, poseMsg);
+      action->plan(best_action, poseMsg);
       ROS_INFO("BEST Action: x = %f, y = %f, z = %f", best_action.getX(), best_action.getY(), best_action.getZ());
 
 
@@ -416,15 +428,13 @@ int main(int argc, char **argv)
       Visualizer::getInstance()->publishParticles(pf.particles);
 
 
-
-
-
 // ----------------- normalize and resample ------------------------------------
       ROS_INFO("Executing normalization and resampling step");
       if (hierarchy)
       {
         //TODO: think of free model here, but it should be fine I think...
-        pf.splitArticulationModels();
+        double weights_rigid, weights_prismatic, weights_rotational, weights_free;
+        pf.splitArticulationModels(pf.particles, weights_rigid, weights_prismatic, weights_rotational, weights_free);
         if ((!pf.normalize(pf.particles_rigid)) || (!pf.normalize(pf.particles_prismatic)) || (!pf.normalize(pf.particles_rotational)))
         {
           ROS_ERROR ("no particles left, quiting");
