@@ -276,8 +276,23 @@ int main(int argc, char **argv)
       tf::Transform tf_pose_proj;
       tf::poseMsgToTF(pose_proj,tf_pose_proj);
 
+      // get tf_pose_proj in the current_pose frame
+//      tf::Transform tf_pose_proj_orient = tf_pose_proj.inverseTimes(marker_static_to_marker);
+
       it->state->setParam("current_proj_pose_trans", tf_pose_proj.getOrigin(), articulation_model_msgs::ParamMsg::PRIOR);
       it->state->setParam("current_proj_pose_quat", tf_pose_proj.getRotation(), articulation_model_msgs::ParamMsg::PRIOR);
+
+      if (it->state->model_msg.name == "prismatic")
+      {
+        tf::Vector3 prismatic_dir;
+        boost::shared_ptr<PrismaticModel> prismatic_model = boost::dynamic_pointer_cast< PrismaticModel > (it->state);
+        prismatic_dir.setX(prismatic_model->axis_x);
+        prismatic_dir.setY(prismatic_model->axis_y);
+        prismatic_dir.setZ(prismatic_model->axis_z);
+        prismatic_dir = prismatic_dir * marker_static_to_marker.getBasis();
+        it->state->setParam("current_proj_pose_prismatic_dir_in_current", prismatic_dir, articulation_model_msgs::ParamMsg::PRIOR);
+      }
+
 
       if (it->state->model_msg.name == "rotational")
       {
@@ -287,6 +302,9 @@ int main(int argc, char **argv)
         tf::Vector3 rot_axis_z = rot_axis_m.getColumn(2);
         tf::Vector3 radius = tf_pose_proj.getOrigin() - rotational_model->rot_center;
         rot_proj_dir = radius.cross(rot_axis_z);
+
+        rot_proj_dir = rot_proj_dir * marker_static_to_marker.getBasis();
+
         it->state->setParam("current_proj_pose_rot_dir", rot_proj_dir, articulation_model_msgs::ParamMsg::PRIOR);
       }
     }
@@ -351,8 +369,8 @@ int main(int argc, char **argv)
 
       pf.weightsToLogWeights(temp_particles);
 
-      ROS_INFO("Entropy old: %f", pf.calculateEntropy(temp_particles));
-      ROS_INFO("Entropy NEW: %f", pf.calculateKDEEntropy(temp_particles));
+//      ROS_INFO("Entropy old: %f", pf.calculateEntropy(temp_particles));
+      ROS_INFO("Entropy NEW: %f \n\n", pf.calculateKDEEntropy(temp_particles));
 
 //      action_gen.publishGenActions();
 

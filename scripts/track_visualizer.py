@@ -23,7 +23,7 @@ import random
 class trackVisualizer:
 
   def __init__(self, colorize_track, colorize_obs):
-    self.pub = rospy.Publisher('visualization_action', Marker)
+    self.pub = rospy.Publisher('visualization_marker', Marker)
     self.pub_array = rospy.Publisher('visualization_marker_array', MarkerArray)
     self.colorize_track = colorize_track
     self.colorize_obs = colorize_obs
@@ -331,8 +331,9 @@ class trackVisualizer:
         current_proj_orient_w = param.value
 
     self.current_pose = Pose(Point(current_pos_x, current_pos_y, current_pos_z), Quaternion(current_orient_x, current_orient_y, current_orient_z, current_orient_w))
-    #self.current_proj_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(current_proj_orient_x, current_proj_orient_y, current_proj_orient_z, current_proj_orient_w))
-    self.current_proj_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(0, 0, 0, 1))
+    self.current_proj_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(current_proj_orient_x, current_proj_orient_y, current_proj_orient_z, current_proj_orient_w))
+    #self.current_proj_pose_in_current_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(current_orient_x, current_orient_y, current_orient_z, current_orient_w))
+    #self.current_proj_pose = Pose(Point(current_proj_pos_x, current_proj_pos_y, current_proj_pos_z), Quaternion(0, 0, 0, 1))
 
     #current pose
     marker = Marker()
@@ -472,7 +473,38 @@ class trackVisualizer:
     marker.pose = self.current_proj_pose
     marker.points.append( Point(0,0,0) )
 
-    marker_array.markers.append(marker)   
+    marker_array.markers.append(marker)
+
+    #orientation of above(self.current_proj_pose)
+    #marker = Marker()
+    #marker.header.stamp = rospy.get_rostime()
+    #marker.header.frame_id = model.track.header.frame_id
+    #marker.ns = "model_visualizer_rigid_proj_pose_orientation"
+    #marker.id = 0
+    #marker.lifetime = rospy.Duration.from_sec(20)
+    #marker.action = Marker.ADD
+
+    #marker.scale = Vector3(0.05,0.05,0.05)
+    #marker.color.a = 1
+    #marker.color.b = 1
+
+    #marker.type = Marker.LINE_STRIP
+    #marker.pose = self.current_proj_pose
+    #for axis in range(3):
+    #  marker.points.append( Point(0,0,0) )
+    #  marker.colors.append( ColorRGBA(0,0,0,0) )
+    #  if axis==0:
+    #    marker.points.append( Point(0.7,0,0) )
+    #    marker.colors.append( ColorRGBA(1,0,0,1) )
+    #  elif axis==1:
+    #    marker.points.append( Point(0,0.7,0) )
+    #    marker.colors.append( ColorRGBA(0,1,0,1) )
+    #  elif axis==2:
+    #    marker.points.append( Point(0,0,0.7) )
+    #    marker.colors.append( ColorRGBA(0,0,1,1) )
+
+    #marker_array.markers.append(marker)    
+   
 
 
   def render_prismatic_model(self, model, marker_array):
@@ -486,6 +518,9 @@ class trackVisualizer:
     prismatic_dir_x = 0
     prismatic_dir_y = 0
     prismatic_dir_z = 0
+    current_proj_pose_prismatic_dir_in_current_x = 0
+    current_proj_pose_prismatic_dir_in_current_y = 0
+    current_proj_pose_prismatic_dir_in_current_z = 0
     for param in model.params:
       if param.name == "rigid_position.x":
         rigid_position_x = param.value
@@ -509,6 +544,13 @@ class trackVisualizer:
         prismatic_dir_y = param.value
       if param.name == "prismatic_dir.z":
         prismatic_dir_z = param.value
+
+      if param.name == "current_proj_pose_prismatic_dir_in_current.x":
+        current_proj_pose_prismatic_dir_in_current_x = param.value
+      if param.name == "current_proj_pose_prismatic_dir_in_current.y":
+        current_proj_pose_prismatic_dir_in_current_y = param.value
+      if param.name == "current_proj_pose_prismatic_dir_in_current.z":
+        current_proj_pose_prismatic_dir_in_current_z = param.value
 
       if param.name == "weight":
         weight = param.value
@@ -623,24 +665,49 @@ class trackVisualizer:
     
     marker_array.markers.append(marker_orient)
 
-    marker = Marker()
-    marker.header.stamp = rospy.get_rostime()
-    marker.header.frame_id = model.track.header.frame_id
-    marker.ns = "model_visualizer_prismatic_proj_pose"
-    marker.id = 0
-    marker.action = Marker.ADD
+    #marker = Marker()
+    #marker.header.stamp = rospy.get_rostime()
+    #marker.header.frame_id = model.track.header.frame_id
+    #marker.ns = "model_visualizer_prismatic_proj_pose"
+    #marker.id = 0
+    #marker.action = Marker.ADD
 
-    marker.scale = Vector3(0.02,0.02,0.02)
-    marker.color.a = 1
-    marker.color.b = 1
-    marker.color.r = 1
-    marker.type = Marker.ARROW
-    marker.pose = self.current_proj_pose
-    marker.points.append( Point(0,0,0) )
-    prismatic_dir_normalized = normalize((prismatic_dir.x,prismatic_dir.y,prismatic_dir.z))
-    marker.points.append( Point(prismatic_dir_normalized[0],prismatic_dir_normalized[1],prismatic_dir_normalized[2]) )
+    #marker.scale = Vector3(0.02,0.02,0.02)
+    #marker.color.a = 1
+    #marker.color.b = 1
+    #marker.color.r = 1
+    #marker.type = Marker.ARROW
+    #current_prismatic_direction_pose = Pose(Point(self.current_proj_pose.position.x, self.current_proj_pose.position.y, self.current_proj_pose.position.z),identity_pose_orientation)
+    #marker.pose = current_prismatic_direction_pose#self.current_proj_pose
+    #print "self.current_proj_pose", self.current_proj_pose
+    #marker.points.append( Point(0,0,0) )
+    #prismatic_dir_normalized = normalize((prismatic_dir.x,prismatic_dir.y,prismatic_dir.z))
+    #print "prismatic dir normalized", prismatic_dir_normalized
+    #marker.points.append( Point(prismatic_dir_normalized[0],prismatic_dir_normalized[1],prismatic_dir_normalized[2]) )
 
-    marker_array.markers.append(marker)   
+    #marker_array.markers.append(marker)  
+
+
+    marker_additional = Marker()
+    marker_additional.header.stamp = rospy.get_rostime()
+    marker_additional.header.frame_id = model.track.header.frame_id
+    marker_additional.ns = "model_visualizer_prismatic_proj_pose_in_current"
+    marker_additional.id = 0
+    marker_additional.action = Marker.ADD
+
+    marker_additional.scale = Vector3(0.02,0.02,0.02)
+    marker_additional.color.a = 1
+    marker_additional.color.b = 1
+    marker_additional.color.r = 1
+    marker_additional.type = Marker.LINE_STRIP
+    marker_additional.pose = self.current_pose
+    marker_additional.points.append( Point(0,0,0) )
+    prismatic_dir_normalized = normalize((current_proj_pose_prismatic_dir_in_current_x,current_proj_pose_prismatic_dir_in_current_y,current_proj_pose_prismatic_dir_in_current_z))
+    #print "prismatic dir normalized", prismatic_dir_normalized
+    print "tangent prismatic: ", (current_proj_pose_prismatic_dir_in_current_x,current_proj_pose_prismatic_dir_in_current_y,current_proj_pose_prismatic_dir_in_current_z)
+    marker_additional.points.append( Point(prismatic_dir_normalized[0],prismatic_dir_normalized[1],prismatic_dir_normalized[2]) )
+
+    marker_array.markers.append(marker_additional) 
 
 
   def render_rotational_model(self, model, marker_array):
@@ -697,8 +764,9 @@ class trackVisualizer:
       if param.name == "current_proj_pose_rot_dir.z":
         current_proj_pose_rot_dir_z = param.value
 
-    current_proj_pose_normalized = normalize((current_proj_pose_rot_dir_x, current_proj_pose_rot_dir_y, current_proj_pose_rot_dir_z))
+    current_proj_pose_normalized = normalize((current_proj_pose_rot_dir_x, current_proj_pose_rot_dir_y, current_proj_pose_rot_dir_z))    
     current_proj_pose_rot_dir = Point(current_proj_pose_normalized[0], current_proj_pose_normalized[1], current_proj_pose_normalized[2])
+    #print "current_proj_pose_rot_dir: ", current_proj_pose_rot_dir
 
     #rotational axis
     rot_axis = Quaternion(rot_axis_x, rot_axis_y, rot_axis_z, rot_axis_w) 
@@ -882,9 +950,10 @@ class trackVisualizer:
     marker.color.a = 1
     marker.color.b = 1
     marker.type = Marker.ARROW
-    marker.pose = self.current_proj_pose
+    marker.pose = self.current_pose
     marker.points.append( Point(0,0,0) )
     marker.points.append( current_proj_pose_rot_dir )
+    print "current rotational tangent vector: ", current_proj_pose_rot_dir
 
     marker_array.markers.append(marker)   
       

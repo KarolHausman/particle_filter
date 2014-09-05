@@ -71,12 +71,16 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         // calculate the relative angle between prismatic axis
         boost::shared_ptr<PrismaticModel> prismatic_model = boost::dynamic_pointer_cast< PrismaticModel > (state);
 
-        tf::Vector3 model_dir = prismatic_model->prismatic_dir;
+//        tf::Vector3 model_dir = prismatic_model->prismatic_dir;
+        tf::Vector3 model_dir;
+        state->getParam("current_proj_pose_prismatic_dir_in_current", model_dir);
         tf::Vector3 action_dir = a->action_direction;
         model_dir.normalize();
         action_dir.normalize();
 
         double angle_rad = model_dir.angle(action_dir);
+//        ROS_INFO("prismatic_proj_dir: x = %f, y = %f, z = %f;   action_dir: x = %f, y = %f, z = %f", (double)model_dir.getX(), (double)model_dir.getY(), (double)model_dir.getZ(), (double)action_dir.getX(), (double)action_dir.getY(), (double)action_dir.getZ());
+//        ROS_INFO("angle_rad(degrees) unchanged : %f", angle_rad * 180/M_PI);
 
         // normalize the angle 0 < angle < 90
         double angle = angle_rad * 180/M_PI;
@@ -88,6 +92,7 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         }
         angle_rad = angle_int*M_PI/180;
         angle_rad = fabs(angle_rad);
+//        ROS_INFO("angle_rad(degrees) : %f", angle_rad* 180/M_PI);
 
         double prob = 0;
         if(exponencial_likelihood)
@@ -118,7 +123,7 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
 //        ROS_ERROR("ROTATIONAL");
 
         //get current pose_obs
-        geometry_msgs::Pose pose_obs, pose_proj;
+        /*geometry_msgs::Pose pose_obs, pose_proj;
         tf::Quaternion quad_obs;
         tf::Vector3 pos_obs;
         state->getParam("current_pose_trans", pos_obs);
@@ -137,11 +142,18 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         tf::Vector3 rot_axis_z = rot_axis_m.getColumn(2);
         tf::Vector3 radius = tf_pose_proj.getOrigin() - rotational_model->rot_center;
         tf::Vector3 rot_proj_dir = radius.cross(rot_axis_z);
+        rot_proj_dir = rot_proj_dir * tf_pose_obs.getBasis();*/
+
+        tf::Vector3 rot_proj_dir;
+        state->getParam("current_proj_pose_rot_dir", rot_proj_dir);
+
         tf::Vector3 action_dir = a->action_direction;
 
         rot_proj_dir.normalize();
         action_dir.normalize();
         double angle_rad = rot_proj_dir.angle(action_dir);
+//        ROS_INFO("rot_proj_dir: x = %f, y = %f, z = %f;   action_dir: x = %f, y = %f, z = %f", (double)rot_proj_dir.getX(), (double)rot_proj_dir.getY(), (double)rot_proj_dir.getZ(), (double)action_dir.getX(), (double)action_dir.getY(), (double)action_dir.getZ());
+//        ROS_INFO("angle_rad(degrees) unchanged : %f", angle_rad * 180/M_PI);
 
         // normalize the angle 0 < angle < 90
         double angle = angle_rad * 180/M_PI;
@@ -157,9 +169,14 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
 
         double prob = 0;
         if(exponencial_likelihood)
+        {
           prob = exp(-scale*angle_rad);
+        }
         else
+        {
           prob = -1.0/(M_PI/2) * angle_rad + 1;
+//          ROS_INFO("angle_rad(degrees) : %f", angle_rad* 180/M_PI);
+        }
 
 
         if (z == 1)

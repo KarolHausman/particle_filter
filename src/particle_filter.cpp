@@ -735,17 +735,31 @@ template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(con
   particlesToDataPoints(particles_rotational, rotational_dps);
 
   KernelEstimator kernel_estimator;
-  Eigen::MatrixXd H_rigid = kernel_estimator.estimateWeightedH(rigid_dps);
-  Eigen::MatrixXd H_prismatic = kernel_estimator.estimateWeightedH(prismatic_dps);
-  Eigen::MatrixXd H_rotational = kernel_estimator.estimateWeightedH(rotational_dps);
+  Eigen::MatrixXd H_rigid, H_prismatic, H_rotational;
+  double entropy_rigid = 0;
+  double entropy_prismatic = 0;
+  double entropy_rotational = 0;
 
-//  std::cerr << "estimated H rigid: \n" << H_rigid << std::endl;
-//  std::cerr << "estimated H_prismatic: \n" << H_prismatic << std::endl;
-//  std::cerr << "estimated H_rotational: \n" << H_rotational << std::endl;
 
-  double entropy_rigid = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps,"gaussian",H_rigid);
-  double entropy_prismatic = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic);
-  double entropy_rotational = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational);
+  if (kernel_estimator.estimateWeightedH(rigid_dps, H_rigid))
+  {
+    entropy_rigid = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps,"gaussian",H_rigid);
+    //  std::cerr << "estimated H rigid: \n" << H_rigid << std::endl;
+  }
+
+  if(kernel_estimator.estimateWeightedH(prismatic_dps, H_prismatic))
+  {
+    entropy_prismatic = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic);
+    //  std::cerr << "estimated H_prismatic: \n" << H_prismatic << std::endl;
+  }
+
+  if(kernel_estimator.estimateWeightedH(rotational_dps, H_rotational))
+  {
+    entropy_rotational = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational);
+    //  std::cerr << "estimated H_rotational: \n" << H_rotational << std::endl;
+  }
+
+
   double entropy_free = calculateEntropy(particles_free);
 
   ROS_INFO("ENTROPIES: rigid: %f, prismatic: %f, rotational: %f, free: %f", entropy_rigid, entropy_prismatic, entropy_rotational, entropy_free);
@@ -872,9 +886,22 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
 
 }
 
-
 template <>  template <class ZType, class AType>
 double ParticleFilter<ArticulationModelPtr>::calculateExpectedKDEEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
+                     const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
+{
+  ROS_ERROR("If Z=1 (thing moves)");
+  double entropy_1 = calculateExpectedMeasurementKDEEntropy(particles, 1, a, noiseCov, model);
+  ROS_ERROR("If Z=0 (thing doesnt move)");
+  double entropy_0 = calculateExpectedMeasurementKDEEntropy(particles, 0, a, noiseCov, model);
+  ROS_INFO("entropy 1: %f, entropy 0: %f", entropy_1, entropy_0);
+
+  return z_exp*entropy_1 + (1-z_exp)*entropy_0;
+
+}
+
+template <>  template <class ZType, class AType>
+double ParticleFilter<ArticulationModelPtr>::calculateExpectedMeasurementKDEEntropy(std::vector<Particle <ArticulationModelPtr> > particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
                      const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
 {
   double prob_exp = 0;
@@ -892,11 +919,13 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedKDEEntropy(std::ve
       {
         int z_prob = 1;
         prob_likelihood = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
+//        ROS_INFO("model = %s, weight = %f, prob_likelihood = %f", it->state->model_msg.name.c_str(), exp(it->weight), prob_likelihood);
         prob_exp = (z_exp * prob_likelihood) + ((1 - z_exp) * (1 - prob_likelihood));
       }
       // HACK: expected weight is equal to normal weight and normal is equal to expected, because normalization can be faster this way
       it->expected_weight = it->weight;
       it->weight = it->weight + log(prob_exp);
+//      ROS_INFO("it->weight: %f", it->weight);
     }
     else
     {
@@ -909,15 +938,15 @@ double ParticleFilter<ArticulationModelPtr>::calculateExpectedKDEEntropy(std::ve
   double result = calculateKDEEntropy(particles);
 
 
-  double temp_weight_holder = 0;
-  for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
-        it++)
-  {
-    // HACK: switch weights back to normal after previous hack
-    temp_weight_holder = it->expected_weight;
-    it->expected_weight = it->weight;
-    it->weight = temp_weight_holder;
-  }
+//  double temp_weight_holder = 0;
+//  for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
+//        it++)
+//  {
+//    // HACK: switch weights back to normal after previous hack
+//    temp_weight_holder = it->expected_weight;
+//    it->expected_weight = it->weight;
+//    it->weight = temp_weight_holder;
+//  }
 
   return result;
 }
@@ -1145,6 +1174,8 @@ template double ParticleFilter<ArticulationModelPtr>::calculateExpectedZaArticul
 template double ParticleFilter<ArticulationModelPtr>::calculateExpectedEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
 template double ParticleFilter<ArticulationModelPtr>::calculateExpectedDownweightAfterAction(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
+template double ParticleFilter<ArticulationModelPtr>::calculateExpectedMeasurementKDEEntropy(std::vector<Particle <ArticulationModelPtr> > particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
 template double ParticleFilter<ArticulationModelPtr>::calculateExpectedKDEEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);

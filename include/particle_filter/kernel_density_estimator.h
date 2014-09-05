@@ -122,9 +122,10 @@ public:
     return result_H;
   }
 
-  Eigen::MatrixXd estimateWeightedH(std::vector<WeightedDataPoint>& data_points)
+  bool estimateWeightedH(std::vector<WeightedDataPoint>& data_points, Eigen::MatrixXd& result)
   {
     uint d = data_points.front().data_point.size();
+    double weights_sum = 0;
     std::vector< std::vector <std::pair<double, double> > > sigmas;
     Eigen::MatrixXd result_H = Eigen::MatrixXd::Identity(d,d);
     for (uint i=0; i<d; ++i)
@@ -133,15 +134,23 @@ public:
       for (std::vector<WeightedDataPoint>::iterator it=data_points.begin(); it!= data_points.end(); ++it)
       {
         sigmas_i.push_back(std::make_pair((it->data_point)(i), it->weight));
+        weights_sum += it->weight;
       }
       sigmas.push_back(sigmas_i);
     }
+
+    if (weights_sum == 0)
+    {
+      return false;
+    }
+
     for (uint i=0; i<sigmas.size(); ++i)
     {
       double scotts_i = pow( computeWeightedStdDev(sigmas[i], computeWeightedAverage(sigmas[i])) * pow( (double)data_points.size(), -1/(double)(d + 4) ) , 2);
       result_H(i,i) = scotts_i;
     }
-    return result_H;
+    result = result_H;
+    return true;
   }
 
 private:

@@ -54,6 +54,9 @@ public:
 
   void particlesToDataPoints (const std::vector<Particle <ArticulationModelPtr> >& particles, std::vector<WeightedDataPoint>& data_points);
 
+  template <class ZType, class AType> double calculateExpectedMeasurementKDEEntropy (std::vector<Particle <ArticulationModelPtr> > particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
+                                                                              const SensorActionModel<ArticulationModelPtr, ZType, AType>& model);
+
   template <class ZType, class AType> double calculateExpectedKDEEntropy (std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
                                                                               const SensorActionModel<ArticulationModelPtr, ZType, AType>& model);
 
