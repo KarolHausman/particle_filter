@@ -435,7 +435,7 @@ template <> Eigen::VectorXd ParticleFilter<Eigen::VectorXd>::getWeightedAvg(std:
 }
 
 
-template <> void ParticleFilter<ArticulationModelPtr>::particlesToDataPoints (const std::vector<Particle <ArticulationModelPtr> >& particles, std::vector<WeightedDataPoint>& data_points)
+template <> void ParticleFilter<ArticulationModelPtr>::particlesToDataPoints (const std::vector<Particle <ArticulationModelPtr> >& particles, std::vector<WeightedDataPoint>& data_points, const double weight_multiplier)
 {
   data_points.clear();
   for (typename std::vector <Particle <ArticulationModelPtr> >::const_iterator it = particles.begin(); it != particles.end();
@@ -443,9 +443,13 @@ template <> void ParticleFilter<ArticulationModelPtr>::particlesToDataPoints (co
   {
     WeightedDataPoint dp;
     if (logLikelihoods_)
-      dp.weight = exp(it->weight);
+    {
+      dp.weight = exp(it->weight) * weight_multiplier;
+    }
     else
-      dp.weight = it->weight;
+    {
+      dp.weight = it->weight * weight_multiplier;
+    }
 
 
     switch (it->state->model)
@@ -734,28 +738,50 @@ template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(con
   std::vector<WeightedDataPoint> rotational_dps;
   particlesToDataPoints(particles_rotational, rotational_dps);
 
+
+
+
   KernelEstimator kernel_estimator;
   Eigen::MatrixXd H_rigid, H_prismatic, H_rotational;
   double entropy_rigid = 0;
   double entropy_prismatic = 0;
   double entropy_rotational = 0;
+  double entropy_rigid_weighted = 0;
+  double entropy_prismatic_weighted = 0;
+  double entropy_rotational_weighted = 0;
 
 
   if (kernel_estimator.estimateWeightedH(rigid_dps, H_rigid))
   {
-    entropy_rigid = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps,"gaussian",H_rigid);
-    //  std::cerr << "estimated H rigid: \n" << H_rigid << std::endl;
+    entropy_rigid_weighted = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps, "gaussian", H_rigid);
+    entropy_rigid = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps, "gaussian", H_rigid, weights_rigid/weights_sum);
+//    std::cerr << "estimated H rigid: \n" << H_rigid << std::endl;
   }
 
   if(kernel_estimator.estimateWeightedH(prismatic_dps, H_prismatic))
   {
-    entropy_prismatic = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic);
+    entropy_prismatic_weighted = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps, "gaussian", H_prismatic);
+    entropy_prismatic = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic, weights_prismatic/weights_sum);
+    double entropy_prismatic_weights_0_5 = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic, 0.5);
+    double entropy_prismatic_weights_0_9 = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic, 0.9);
+    std::cerr << "entropy prismatic with prismatic filter weights 0.5: " << entropy_prismatic_weights_0_5 << std::endl;
+    std::cerr << "entropy prismatic with prismatic filter weights 0.9: " << entropy_prismatic_weights_0_9 << std::endl;
+
+
     //  std::cerr << "estimated H_prismatic: \n" << H_prismatic << std::endl;
   }
 
   if(kernel_estimator.estimateWeightedH(rotational_dps, H_rotational))
   {
-    entropy_rotational = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational);
+    entropy_rotational_weighted = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational);
+    entropy_rotational = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational, weights_rotational/weights_sum);
+
+    double entropy_rotational_weights_0_5 = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational, 0.5);
+    double entropy_rotational_weights_0_1 = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational, 0.1);
+
+    std::cerr << "entropy rotational with rotational filter weights 0.5: " << entropy_rotational_weights_0_5 << std::endl;
+    std::cerr << "entropy rotational with rotational filter weights 0.1: " << entropy_rotational_weights_0_1 << std::endl;
+
     //  std::cerr << "estimated H_rotational: \n" << H_rotational << std::endl;
   }
 
@@ -763,9 +789,13 @@ template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(con
   double entropy_free = calculateEntropy(particles_free);
 
   ROS_INFO("ENTROPIES: rigid: %f, prismatic: %f, rotational: %f, free: %f", entropy_rigid, entropy_prismatic, entropy_rotational, entropy_free);
+  ROS_INFO("ENTROPIES WITH DENSITY: rigid: %f, prismatic: %f, rotational: %f, free: %f", entropy_rigid_weighted, entropy_prismatic_weighted, entropy_rotational_weighted, entropy_free);
 
-  double entropy = (weights_rigid/weights_sum)*entropy_rigid + (weights_prismatic/weights_sum)*entropy_prismatic
-                   + (weights_rotational/weights_sum)*entropy_rotational + (weights_free/weights_sum)*entropy_free;
+
+//  double entropy = (weights_rigid/weights_sum)*entropy_rigid + (weights_prismatic/weights_sum)*entropy_prismatic
+//                   + (weights_rotational/weights_sum)*entropy_rotational + (weights_free/weights_sum)*entropy_free;
+  double entropy = entropy_rigid + entropy_prismatic + entropy_rotational + entropy_free;
+
   return entropy;
 }
 

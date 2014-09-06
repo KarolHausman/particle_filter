@@ -33,13 +33,13 @@ public:
     return result * h / n ;
   }
 
-  double estimateWeightedEntropyKernelND(const std::vector<WeightedDataPoint>& data_points, const std::string& kernel_name, const Eigen::MatrixXd& H)
+  double estimateWeightedEntropyKernelND(const std::vector<WeightedDataPoint>& data_points, const std::string& kernel_name, const Eigen::MatrixXd& H, const double density_weight = 1)
   {
     size_t n = data_points.size();
     double result = 0;
     for (uint i = 0; i < n; ++i)
     {
-      result += log2(estimateWeightedKernelFunctionND(data_points, kernel_name, H, data_points[i].data_point));
+      result += log2(estimateWeightedKernelFunctionND(data_points, kernel_name, H, data_points[i].data_point, density_weight));
     }
     return result * (-1.0/(double)n);
   }
@@ -57,7 +57,7 @@ public:
   }
 
   //assumes that H is diagonal
-  double estimateWeightedKernelFunctionND(const std::vector<WeightedDataPoint>& data_points, const std::string& kernel_name, const Eigen::MatrixXd& H, const Eigen::VectorXd& x)
+  double estimateWeightedKernelFunctionND(const std::vector<WeightedDataPoint>& data_points, const std::string& kernel_name, const Eigen::MatrixXd& H, const Eigen::VectorXd& x, const double density_weight = 1)
   {
     size_t n = data_points.size();
     double result = 0;
@@ -76,7 +76,7 @@ public:
         weights_sum += data_points[i].weight;
       }
     }
-    return result/weights_sum;
+    return density_weight * result/weights_sum;
   }
 
   //assumes that H is diagonal
@@ -139,7 +139,7 @@ public:
       sigmas.push_back(sigmas_i);
     }
 
-    if (weights_sum == 0)
+    if (weights_sum < 0.0000000001)
     {
       return false;
     }

@@ -88,7 +88,7 @@ int main(int argc, char **argv)
   //2D case
   {
 //    std::vector<Eigen::VectorXd> evaluation_data2D;
-/*
+
     std::vector<WeightedDataPoint> evaluation_data2D;
 
     Eigen::VectorXd first_mean = Eigen::Vector2d(0,0);
@@ -111,15 +111,24 @@ int main(int argc, char **argv)
 
     KernelEstimator kernel_estimator;
     double result = 0;
+    double result_09 = 0;
+    double result_01 = 0;
+    double result_05 = 0;
+
     double increment_y = -5;
     double integral = 0;
-    std::ofstream myfile;
+    std::ofstream myfile, my_file0_9, my_file0_1, my_file0_5;
     myfile.open ("kernel_test2D.txt");
+    my_file0_9.open("kernel_2D_09.txt");
+    my_file0_1.open("kernel_2D_01.txt");
+    my_file0_5.open("kernel_2D_05.txt");
+
     Eigen::MatrixXd H = Eigen::MatrixXd::Identity(2, 2)* 0.25;
 
 
 //    Eigen::MatrixXd H_Scotts = kernel_estimator.estimateH(evaluation_data2D);
-    Eigen::MatrixXd H_Scotts = kernel_estimator.estimateWeightedH(evaluation_data2D);
+    Eigen::MatrixXd H_Scotts;
+    kernel_estimator.estimateWeightedH(evaluation_data2D, H_Scotts);
     ROS_INFO_STREAM("Scott's formula for H: " << H_Scotts);
 
 
@@ -131,18 +140,50 @@ int main(int argc, char **argv)
         Eigen::VectorXd sample = Eigen::Vector2d(increment_x, increment_y);
         result = kernel_estimator.estimateWeightedKernelFunctionND(evaluation_data2D, "gaussian", H_Scotts, sample);
         myfile << increment_x << " " << increment_y << " " << result << "\n";
+
+        result_09 = kernel_estimator.estimateWeightedKernelFunctionND(evaluation_data2D, "gaussian", H_Scotts, sample, 0.9);
+        my_file0_9 << increment_x << " " << increment_y << " " << result_09 << "\n";
+
+        result_01 = kernel_estimator.estimateWeightedKernelFunctionND(evaluation_data2D, "gaussian", H_Scotts, sample, 0.1);
+        my_file0_1 << increment_x << " " << increment_y << " " << result_01 << "\n";
+
+        result_05 = kernel_estimator.estimateWeightedKernelFunctionND(evaluation_data2D, "gaussian", H_Scotts, sample, 0.5);
+        my_file0_5 << increment_x << " " << increment_y << " " << result_05 << "\n";
+
+
         myfile.flush();
+        my_file0_9.flush();
+        my_file0_1.flush();
+        my_file0_5.flush();
+
 //      integral += result * 0.01;
         increment_x += 0.1;
       }
       increment_y += 0.1;
     }
     myfile.close();
+    my_file0_9.close();
+    my_file0_1.close();
 
     std::cout << "integral: " << integral << std::endl;
     std::cout << "result: " << result << std::endl;
     double entropy = kernel_estimator.estimateWeightedEntropyKernelND(evaluation_data2D,"gaussian",H_Scotts);
-    std::cout << "entropy: " << entropy << std::endl;*/
+
+    double entropy_09 = kernel_estimator.estimateWeightedEntropyKernelND(evaluation_data2D,"gaussian",H_Scotts, 0.9);
+
+    double entropy_01 = kernel_estimator.estimateWeightedEntropyKernelND(evaluation_data2D,"gaussian",H_Scotts, 0.1);
+
+    double entropy_05 = kernel_estimator.estimateWeightedEntropyKernelND(evaluation_data2D,"gaussian",H_Scotts, 0.5);
+
+
+    std::cout << "entropy 1 : " << entropy << std::endl;
+    std::cout << "entropy 0.9 : " << entropy_09 << std::endl;
+    std::cout << "entropy 0.1 : " << entropy_01 << std::endl;
+    std::cout << "entropy 0.9 + 0.1 : " << entropy_09 + entropy_01 << std::endl;
+
+    std::cout << "entropy 0.5 : " << entropy_05 << std::endl;
+    std::cout << "entropy 0.5*2 : " << entropy_05*2 << std::endl;
+
   }
 
 

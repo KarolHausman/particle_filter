@@ -2,15 +2,16 @@ import pylab
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+import sys
 
-def plot1D():
+def plot1D(txt_file):
 
-  datalist = pylab.loadtxt("/home/hak2pal/.ros/kernel_test.txt")
+  datalist = pylab.loadtxt(txt_file)
   pylab.plot(datalist[:,0],datalist[:,1])
   pylab.show()
 
-def plot2D():
-  datalist = pylab.loadtxt("/home/hak2pal/.ros/kernel_test2D.txt")
+def plot2D(txt_file):
+  datalist = pylab.loadtxt(txt_file)
   fig = plt.figure()
   ax = plt.axes(projection='3d')
   s1 = np.array(sorted(set(datalist[:,0])))
@@ -28,4 +29,20 @@ def plot2D():
 
   plt.show()
 
-plot2D()  
+if __name__ == '__main__':
+  plot_dim = 0  
+  txt_file =""
+  if (len(sys.argv) >= 2):
+    plot_dim = int(sys.argv[1])
+    txt_file = sys.argv[2]
+  else:
+    print "\nAborting! Wrong number of command line args"
+    print "Usage: python plot_kernel.py <number of dimensions 1 or 2> <file>"
+    sys.exit(0) 
+  if plot_dim == 1:
+    plot1D(txt_file)
+  elif plot_dim == 2: 
+    plot2D(txt_file)  
+  else:
+    print "\n Wrong number of dimensions, it needs to be 1 or 2"
+    sys.exit(0)
