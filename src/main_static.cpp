@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 
 
   //2D case
-  {
+  /*{
 //    std::vector<Eigen::VectorXd> evaluation_data2D;
 
     std::vector<WeightedDataPoint> evaluation_data2D;
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
     std::cout << "entropy 0.5 : " << entropy_05 << std::endl;
     std::cout << "entropy 0.5*2 : " << entropy_05*2 << std::endl;
 
-  }
+  }*/
 
 
 
@@ -367,25 +367,25 @@ int main(int argc, char **argv)
 
 
 // ----------------- adding particles -------------------
-      if(loop_count == 20)
-      {
-        ROS_INFO_STREAM ("adding particles");
-        pf.addParticles(model_msg.track, 30, 50, 30, 0);
-//        pf.addParticles(model_msg.track, 30, 50, 1, 0);
-      }
+//      if(loop_count == 20)
+//      {
+//        ROS_INFO_STREAM ("adding particles");
+//        pf.addParticles(model_msg.track, 30, 50, 30, 0);
+////        pf.addParticles(model_msg.track, 30, 50, 1, 0);
+//      }
 
 
 
 
 
 // ----------------- marker correction step -------------------
-//      if (loop_count <= 40)
-//      {
+      if (loop_count <= 1)
+      {
         ROS_INFO ("executing correction step");
         articulation_model_msgs::TrackMsg z;
         pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
         ROS_INFO ("Correction step executed.");
-//      }
+      }
 
 
 
@@ -402,22 +402,23 @@ int main(int argc, char **argv)
 
       pf.normalize(temp_particles);
 
-      if (hierarchy)
-      {
-        pf.sortParticles(temp_particles);
-        pf.printParticles(temp_particles);
-      }
+//      if (hierarchy)
+//      {
+//        pf.sortParticles(temp_particles);
+//        pf.printParticles(temp_particles);
+//      }
 
       pf.weightsToLogWeights(temp_particles);
 
 //      ROS_INFO("Entropy old: %f", pf.calculateEntropy(temp_particles));
-      ROS_INFO("Entropy NEW: %f \n\n", pf.calculateKDEEntropy(temp_particles));
+//      ROS_INFO("Entropy NEW: %f \n\n", pf.calculateKDEEntropy(temp_particles));
 
 //      action_gen.publishGenActions();
 
       boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
       double min_expected_entropy = std::numeric_limits<double>::max();
       double max_expected_downweight = -std::numeric_limits<double>::max();
+      double max_kldivergence = -std::numeric_limits<double>::max();
 
       tf::Vector3 best_action;
       for (std::vector<tf::Vector3>::iterator it = generated_actions.begin(); it!= generated_actions.end(); ++it)
@@ -426,22 +427,30 @@ int main(int argc, char **argv)
         double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(temp_particles, action, sensorNoiseCov, *sensorActionModel);
         ROS_INFO("Expected Za: %f", za_expected);
         ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
-        double expected_entropy = pf.calculateExpectedKDEEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-        ROS_ERROR("Expected Entropy: %f \n", expected_entropy);
+        double kl_divergence = pf.calculateKLdivergence<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+        ROS_ERROR("KL Divergence: %f \n", kl_divergence);
+
+//        double expected_entropy = pf.calculateExpectedKDEEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+//        ROS_ERROR("Expected Entropy: %f \n", expected_entropy);
 //        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
 //        ROS_ERROR("Expected Downweight: %f \n \n", expected_downweight);
 
-        if (expected_entropy < min_expected_entropy)
-        {
-          min_expected_entropy = expected_entropy;
-          best_action = *it;
-        }
+//        if (expected_entropy < min_expected_entropy)
+//        {
+//          min_expected_entropy = expected_entropy;
+//          best_action = *it;
+//        }
 
 //        if (expected_downweight > max_expected_downweight)
 //        {
 //          max_expected_downweight = expected_downweight;
 //          best_action = *it;
 //        }
+        if (kl_divergence > max_kldivergence)
+        {
+          max_kldivergence = kl_divergence;
+          best_action = *it;
+        }
       }
       geometry_msgs::Pose poseMsg;
       tf::poseTFToMsg(marker_static_to_marker, poseMsg);
@@ -454,7 +463,7 @@ int main(int argc, char **argv)
 
 
 // ---------------------action execution ---------------------------
-      if(loop_count >= 40)
+      if(loop_count >= 1)
       {
         hierarchy = false;
         pf.normalize(pf.particles);
@@ -471,7 +480,7 @@ int main(int argc, char **argv)
 //        std::cerr << "Action successful? " << success << std::endl;
 //        // 1 - doesnt stop
 //        int z_action = action->getActionResult();
-        int z_action = 0;
+        int z_action = 1;
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);

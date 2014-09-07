@@ -917,6 +917,43 @@ template <> void ParticleFilter<ArticulationModelPtr>::addParticles(const articu
 }
 
 template <>  template <class ZType, class AType>
+double ParticleFilter<ArticulationModelPtr>::calculateKLdivergence(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
+                     const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
+{
+  double prob_exp = 0;
+  double prob_likelihood = 0;
+  double result = 0;
+  for (std::vector <Particle <ArticulationModelPtr> >::iterator it = particles.begin(); it != particles.end();
+        it++)
+  {
+    if (logLikelihoods_)
+    {
+      if (it->state->model == RIGID)
+      {
+        prob_exp = 1-z_exp;
+      }
+      else
+      {
+        int z_prob = 1;
+        prob_likelihood = exp(model.senseLogLikelihood(z_prob, a, it->state, noiseCov));
+//        ROS_INFO("model = %s, weight = %f, prob_likelihood = %f", it->state->model_msg.name.c_str(), exp(it->weight), prob_likelihood);
+        prob_exp = (z_exp * prob_likelihood) + ((1 - z_exp) * (1 - prob_likelihood));
+      }
+      it->expected_weight = it->weight + log(prob_exp);
+//      ROS_INFO("it->weight: %f", it->weight);
+      result += log(it->weight / it->expected_weight) * it->weight;
+    }
+    else
+    {
+      ROS_ERROR ("This function works only for loglikelihoods!");
+    }
+  }
+
+  return result;
+}
+
+
+template <>  template <class ZType, class AType>
 double ParticleFilter<ArticulationModelPtr>::calculateExpectedKDEEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const AType a, const Eigen::MatrixXd& noiseCov,
                      const SensorActionModel<ArticulationModelPtr, ZType, AType> &model)
 {
@@ -1208,4 +1245,6 @@ template double ParticleFilter<ArticulationModelPtr>::calculateExpectedDownweigh
 template double ParticleFilter<ArticulationModelPtr>::calculateExpectedMeasurementKDEEntropy(std::vector<Particle <ArticulationModelPtr> > particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
 template double ParticleFilter<ArticulationModelPtr>::calculateExpectedKDEEntropy(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
+                                                       const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
+template double ParticleFilter<ArticulationModelPtr>::calculateKLdivergence(std::vector<Particle <ArticulationModelPtr> >& particles, const double z_exp, const ActionPtr a, const Eigen::MatrixXd& noiseCov,
                                                        const SensorActionModel<ArticulationModelPtr, int, ActionPtr> &model);
