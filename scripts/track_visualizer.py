@@ -953,7 +953,7 @@ class trackVisualizer:
     marker.pose = self.current_pose
     marker.points.append( Point(0,0,0) )
     marker.points.append( current_proj_pose_rot_dir )
-    print "current rotational tangent vector: ", current_proj_pose_rot_dir
+    #print "current rotational tangent vector: ", current_proj_pose_rot_dir
 
     marker_array.markers.append(marker)   
       

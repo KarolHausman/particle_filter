@@ -46,6 +46,8 @@ public:
 
   void printParticles( const std::vector<Particle <ParticleType> >& particles) const;
 
+  void printStatistics (const std::vector<Particle <ArticulationModelPtr> >& particles) const;
+
   bool getLogLikelihoodsFlag() const;
 
   double calculateEntropy (const std::vector<Particle <ParticleType> >& particles) const;

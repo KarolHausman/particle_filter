@@ -714,6 +714,50 @@ template <class ParticleType> void ParticleFilter<ParticleType>::weightsToLogWei
   }
 }
 
+template <> void ParticleFilter<ArticulationModelPtr>::printStatistics(const std::vector<Particle <ArticulationModelPtr> >& particles) const
+{
+  uint rigid_counter = 0;
+  uint rotational_counter = 0;
+  uint prismatic_counter = 0;
+  uint free_counter = 0;
+  for (typename std::vector <Particle <ArticulationModelPtr> >::const_iterator it = particles.begin(); it != particles.end();
+        it++)
+  {
+    switch(it->state->model)
+    {
+      case (RIGID):
+      {
+        ++rigid_counter;
+        break;
+      }
+      case (PRISMATIC):
+      {
+        ++prismatic_counter;
+        break;
+      }
+      case (ROTATIONAL):
+      {
+        ++rotational_counter;
+        break;
+      }
+      case (FREE):
+      {
+        ++free_counter;
+        break;
+      }
+    }
+  }
+  double sum_all = rigid_counter + prismatic_counter + rotational_counter + free_counter;
+  double rigid_percentage = rigid_counter/sum_all * 100;
+  double prismatic_percentage = prismatic_counter/sum_all * 100;
+  double rotational_percentage = rotational_counter/sum_all * 100;
+  double free_percentage = free_counter/sum_all * 100;
+
+  ROS_ERROR("STATS: \n RIGID: %d (%f %%) \n PRISMATIC: %d (%f %%) \n ROTATIONAL: %d (%f %%) \n FREE: %d (%f %%) \n", rigid_counter, rigid_percentage, prismatic_counter, prismatic_percentage, rotational_counter, rotational_percentage, free_counter, free_percentage);
+
+//  ROS_ERROR_STREAM("STATISTICS: \n" << "RIGID: " << rigid_percentage << "\n PRISMATIC: " << prismatic_percentage << "\n ROTATIONAL: " << rotational_percentage <<  "\n FREE: " << free_percentage << "\n");
+}
+
 
 template <> void ParticleFilter<ArticulationModelPtr>::removeAddedParticleFlags(std::vector<Particle <ArticulationModelPtr> >& particles)
 {

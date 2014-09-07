@@ -8,7 +8,7 @@
 
 template <class StateType, class ZType> ArtMarkerSensorModel<StateType, ZType>::ArtMarkerSensorModel()
 {
-  loglikelihood_free_model = 50;
+  loglikelihood_free_model =  -0.11;//500 -0.11;
 }
 
 template <class StateType, class ZType> ArtMarkerSensorModel<StateType, ZType>::~ArtMarkerSensorModel()
@@ -39,27 +39,13 @@ template <> double ArtMarkerSensorModel<ArticulationModelPtr, articulation_model
 
   if(state->model == FREE)
   {
-    return loglikelihood_free_model;
+    return loglikelihood_free_model * state->model_msg.track.pose.size();
   }
 
-
   state->setTrack(z);
-  //  state->addTrack(z);
-
   state->evaluateModel();
-  double zkgm = state->getParam("loglikelihood"); //z_k given model
 
-//  state->addTrack(z);
-//  state->evaluateModel();
-//  double zkzlgm = state->getParam("loglikelihood"); //z_k, z_lambda given model
-//  double zlgm = zkzlgm - zkgm;
-  if (state->getParam("added"))
-    ROS_ERROR_STREAM ("model: " << state->getModel().name << " Z_K = " << zkgm /*<< ", Z_FULL = " << zkzlgm << ", Z_Lambda = " << zlgm*/);
-  else
-    ROS_INFO_STREAM ("model: " << state->getModel().name << " Z_K = " << zkgm  /*<< ", Z_FULL = " << zkzlgm << ", Z_Lambda = " << zlgm*/);
-
-//  return (state->getParam("loglikelihood"));
-  return zkgm;
+  return state->getParam("loglikelihood"); //z_k given model;
 }
 
 template class ArtMarkerSensorModel<ArticulationModelPtr, articulation_model_msgs::TrackMsg>;
