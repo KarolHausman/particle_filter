@@ -8,6 +8,9 @@ template <class StateType, class ZType, class AType> ArtManipSensorActionModel<S
   scale(1.0), log_multiplier(1)
 {
   exponencial_likelihood = false;
+  linear_likelihood = false;
+  quadratic_likelihood = false;
+  quadratic_likelihood_with_zero = true;
 }
 
 template <class StateType, class ZType, class AType> ArtManipSensorActionModel<StateType, ZType, AType>::~ArtManipSensorActionModel()
@@ -99,9 +102,24 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         {
           prob = exp(-scale*angle_rad);
         }
-        else
+        else if (linear_likelihood)
         {
           prob = -1.0/(M_PI/2) * angle_rad + 1;
+        }
+        else if (quadratic_likelihood)
+        {
+          prob = 4.0/(pow(M_PI, 2)) * pow(angle_rad - M_PI/2.0, 2);
+        }
+        else if (quadratic_likelihood_with_zero)
+        {
+          if (angle_rad > 40 * M_PI/180)
+          {
+            prob = 0;
+          }
+          else
+          {
+            prob = 4.0/(pow(M_PI, 2)) * pow(angle_rad - M_PI/2.0, 2);
+          }
         }
 
         if (z == 1)
@@ -172,10 +190,25 @@ template <> double ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPt
         {
           prob = exp(-scale*angle_rad);
         }
-        else
+        else if (linear_likelihood)
         {
           prob = -1.0/(M_PI/2) * angle_rad + 1;
 //          ROS_INFO("angle_rad(degrees) : %f", angle_rad* 180/M_PI);
+        }
+        else if (quadratic_likelihood)
+        {
+          prob = 4.0/(pow(M_PI, 2)) * pow(angle_rad - M_PI/2.0, 2);
+        }
+        else if (quadratic_likelihood_with_zero)
+        {
+          if (angle_rad > 40 * M_PI/180)
+          {
+            prob = 0;
+          }
+          else
+          {
+            prob = 4.0/(pow(M_PI, 2)) * pow(angle_rad - M_PI/2.0, 2);
+          }
         }
 
 

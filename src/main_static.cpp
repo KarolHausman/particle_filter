@@ -151,7 +151,7 @@ int main(int argc, char **argv)
   tf::TransformListener tf_listener;
   tf::StampedTransform marker_static_to_marker;
 
-  bool hierarchy = true;
+  bool hierarchy = false;
 
   while (ros::ok())
   {
@@ -251,19 +251,43 @@ int main(int argc, char **argv)
         articulation_model_msgs::TrackMsg z;
         pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModelForInit);
         ROS_INFO ("Correction step executed.");
+
+        if (!pf.normalize(pf.particles))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
+//        pf.sortParticles(pf.particles);
+//        pf.printParticles(pf.particles);
+        if (!pf.stratifiedResample(particles_number, pf.particles))
+        {
+          ROS_ERROR ("no particles left, quiting");
+          return -1;
+        }
+        ROS_INFO ("PARTICLES AFTER INITIAL RESAMPLING, USING DEMONSTRATION DATA ONLY");
+        pf.printStatistics(pf.particles);
+
+//        continue;
       }
-      else
+
+//      else
       {
         ROS_INFO ("executing correction step");
         articulation_model_msgs::TrackMsg z;
 
-        //TODO: get current measurement
+        //get current measurement
+        geometry_msgs::Pose current_pose;
+        tf::poseTFToMsg(marker_static_to_marker, current_pose);
+        z.pose.push_back(current_pose);
 
         pf.correct<articulation_model_msgs::TrackMsg>(pf.particles, z, sensorNoiseCov, *sensorModel);
         ROS_INFO ("Correction step executed.");
+
       }
 
-
+      pf.normalize(pf.particles, true);
+      pf.sortParticles(pf.particles);
+      Visualizer::getInstance()->publishParticles(pf.particles);
 
 
 
@@ -278,6 +302,12 @@ int main(int argc, char **argv)
       temp_particles = pf.particles;
 
       pf.normalize(temp_particles);
+
+
+//      ROS_INFO("PARTICLES AFTER CORRECTION WITH CURRENT DATA ---------------------------------");
+//      pf.sortParticles(temp_particles);
+//      pf.printParticles(temp_particles);
+
 
       pf.weightsToLogWeights(temp_particles);
 
@@ -351,7 +381,7 @@ int main(int argc, char **argv)
 //        std::cerr << "Action successful? " << success << std::endl;
 //        // 1 - doesnt stop
 //        int z_action = action->getActionResult();
-        int z_action = 1;
+        int z_action = 0;
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);
@@ -394,8 +424,8 @@ int main(int argc, char **argv)
           return -1;
         }
 
-        pf.sortParticles(pf.particles);
-        pf.printParticles(pf.particles);
+//        pf.sortParticles(pf.particles);
+//        pf.printParticles(pf.particles);
 
 
         if (!pf.stratifiedResample(particles_number, pf.particles))
@@ -404,7 +434,7 @@ int main(int argc, char **argv)
           return -1;
         }
       }
-      ROS_INFO ("Resample step executed.");
+      ROS_INFO ("RESAMPLE STEP EXECUTED.");
 
       pf.printStatistics(pf.particles);
 

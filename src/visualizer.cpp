@@ -66,6 +66,8 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
   for (std::vector <Particle <ArticulationModelPtr> >::const_reverse_iterator it = particles.rbegin(); it != particles.rend();
       ++it)
   {
+    it->state->model_msg.header.stamp = ros::Time::now();
+    it->state->model_msg.header.frame_id = "/world";
     switch(it->state->model)
     {
       case (RIGID):

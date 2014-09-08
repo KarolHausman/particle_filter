@@ -3,7 +3,8 @@
 
 template <class StateType, class ZType> ArtDataSensorModel<StateType, ZType>::ArtDataSensorModel()
 {
-  loglikelihood_free_model = -0.11;//500 -0.11
+  loglikelihood_free_model = 2;//500 -0.11
+  // 2 works for inital loglikelihood for the cabinet door
 }
 
 template <class StateType, class ZType> ArtDataSensorModel<StateType, ZType>::~ArtDataSensorModel()

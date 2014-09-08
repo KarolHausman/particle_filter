@@ -37,6 +37,8 @@ ArticulationModel::~ArticulationModel()
 void ArticulationModel::setTrack(const articulation_model_msgs::TrackMsg& track)
 {
   this->model_msg.track = track;
+  this->model_msg.track.header.stamp = ros::Time::now();
+  this->model_msg.track.header.frame_id = "/world";
   prepareChannels();
 }
 
