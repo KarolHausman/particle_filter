@@ -74,15 +74,14 @@ int main(int argc, char **argv)
   hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
   ROS_INFO("Handle grasp executed");*/
 
-  //TODO
   // cabinet
-  /*HandleFinder hf;
-  hf.findHandle("ar_marker_2");
-  Eigen::VectorXd pregrasp_offset(6);
-  pregrasp_offset << 0.0, -0.05, 0.2, M_PI/2, M_PI/2, 0.0 ;
-  Eigen::Vector3d grasp_offset(0.0, 0.0, -0.05);
-  hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
-  ROS_INFO("Handle grasp executed");*/
+//  HandleFinder hf;
+//  hf.findHandle("ar_marker_12");
+//  Eigen::VectorXd pregrasp_offset(6);
+//  pregrasp_offset << -0.25, 0.038, -0.20, 0.0, -5.0 * M_PI/180.0, 0.0 ;
+//  Eigen::Vector3d grasp_offset(0.065, 0.0, 0.0);
+//  hf.executeHandleGrasp(pregrasp_offset, grasp_offset);
+//  ROS_INFO("Handle grasp executed");
 
 
   // -------------------------------- motion and sensor models ----------------
@@ -140,6 +139,7 @@ int main(int argc, char **argv)
 
   ActionGenerator action_gen;
   std::vector <tf::Vector3> generated_actions = action_gen.generateActionDirections(5, 3);
+//  std::vector <tf::Vector3> generated_actions = action_gen.generateActionDirections(7, 7);
 
 
   ActionPtr action(new Action);
@@ -378,10 +378,16 @@ int main(int argc, char **argv)
 //        eraser
 //        bool both_ways = false;
 //        bool success = action->execute(best_action, "ar_marker_2", both_ways);
+
+//        cabinet
+//        bool both_ways = false;
+//        bool success = action->execute(best_action, "ar_marker_12", both_ways);
 //        std::cerr << "Action successful? " << success << std::endl;
 //        // 1 - doesnt stop
 //        int z_action = action->getActionResult();
         int z_action = 0;
+        if(best_action.getX() < 0.001 && best_action.getY() < 0.001 && fabs(best_action.getZ()-1)<0.001)
+          z_action = 1;
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);
@@ -392,9 +398,9 @@ int main(int argc, char **argv)
 
 
 // -----------------------visualization only !!! doesnt normalize the weights -----------------
-      pf.normalize(pf.particles, true);
-      pf.sortParticles(pf.particles);
-      Visualizer::getInstance()->publishParticles(pf.particles);
+//      pf.normalize(pf.particles, true);
+//      pf.sortParticles(pf.particles);
+//      Visualizer::getInstance()->publishParticles(pf.particles);
 
 
 // ----------------- normalize and resample ------------------------------------

@@ -118,6 +118,16 @@ void Visualizer::publishParticles(const std::vector <Particle <ArticulationModel
       case (FREE):
       {
         ++free_counter;
+        if(free_counter == 1)
+        {
+          it->state->setParam("weight",it->weight_to_print_only,articulation_model_msgs::ParamMsg::EVAL);
+          model_pub_.publish(it->state->getModel());
+        }
+        else
+        {
+          it->state->setParam("weight",it->weight_to_print_only,articulation_model_msgs::ParamMsg::EVAL);
+          particles_msg.particles.push_back(it->state->getModel());
+        }
         break;
       }
     }

@@ -46,10 +46,10 @@ bool HandleFinder::executeHandleGrasp(const Eigen::VectorXd& offset_pregrasp, co
   geometry_msgs::Pose handle_pose;
   tf::poseTFToMsg(odom2marker, handle_pose);
 
-  ROS_INFO_STREAM ("handle pose: \n" << "x = " << handle_pose.position.x << ", y = " << handle_pose.position.y << " ,z = " << handle_pose.position.z);
   handle_pose.position.x += offset_pregrasp(0);
   handle_pose.position.y += offset_pregrasp(1);
   handle_pose.position.z += offset_pregrasp(2);
+  ROS_INFO_STREAM ("handle pose: \n" << "x = " << handle_pose.position.x << ", y = " << handle_pose.position.y << " ,z = " << handle_pose.position.z);
 
 
   tf::Quaternion quat(0,0,0,1);
