@@ -2,14 +2,23 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import date2num
 import datetime
 import numpy as np
+import matplotlib as mpl
 
 spread = 4.0
 barWidth = 0.4
 
+mpl.rcParams['text.usetex']=True
+mpl.rcParams['text.latex.unicode']=True
+
 x = np.array([1.0, 1.0 + spread, 1.0 + spread*2])
-rot = [49, 51.2, 77]
-prism=[41,48.8,23]
-free=[10,0,0]
+#rot = [49, 51.2, 77]
+#prism=[41,48.8,23]
+#free=[10,0,0]
+
+rot = [37.6, 46.6, 53.2]
+prism=[42.2,53.4,46.8]
+free=[20.2,0,0]
+
 
 particles = [49,  41, 10, 0]
 #particles = (0, 51.2, 48.8, 0)
@@ -23,7 +32,7 @@ ax.bar(x, prism,width=barWidth,color=[1,0,1],align='center')
 ax.bar(x+barWidth,free, width=barWidth,color=[0,1,0],align='center')
 
 plt.xticks([])
-plt.ylabel('Fraction of particles [%]')
+plt.ylabel(r'Fraction of particles [\%]')
 plt.ylim(0,100)
 
 #plt.show()
