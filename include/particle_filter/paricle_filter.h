@@ -52,6 +52,10 @@ public:
 
   double calculateEntropy (const std::vector<Particle <ParticleType> >& particles) const;
 
+  double calculateHMean (const std::vector<Particle <ArticulationModelPtr> >& particles);
+
+  double calculateAverageHMean (const std::vector<Particle <ArticulationModelPtr> >& particles);
+
   double calculateKDEEntropy (const std::vector<Particle <ArticulationModelPtr> >& particles);
 
   void particlesToDataPoints (const std::vector<Particle <ArticulationModelPtr> >& particles, std::vector<WeightedDataPoint>& data_points, const double weight_multiplier = 1);

@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
   //---------------------------------- particle filter initalization ----------
 
-  const int particles_number = 500;
+  const int particles_number = 200; //500
   //params for real data
   ros::NodeHandle nh;
   ros::Subscriber track_sub = nh.subscribe("marker_topic",1, trackCB);
@@ -312,7 +312,7 @@ int main(int argc, char **argv)
       pf.weightsToLogWeights(temp_particles);
 
 //      ROS_INFO("Entropy old: %f", pf.calculateEntropy(temp_particles));
-//      ROS_INFO("Entropy NEW: %f \n\n", pf.calculateKDEEntropy(temp_particles));
+//      ROS_INFO("Entropy AFTER MARKER CORRECTION: %f \n\n", pf.calculateKDEEntropy(temp_particles));
 
 //      action_gen.publishGenActions();
 
@@ -394,6 +394,12 @@ int main(int argc, char **argv)
         ROS_INFO("Action correction step executed");
       }
 
+//      std::vector <Particle <ArticulationModelPtr> > temp_particles_action;
+//      temp_particles_action = pf.particles;
+//      pf.normalize(temp_particles_action);
+//      pf.weightsToLogWeights(temp_particles_action);
+
+//      ROS_INFO("Entropy AFTER ACTION CORRECTION: %f \n\n", pf.calculateKDEEntropy(pf.particles));
 
 
 
@@ -429,6 +435,18 @@ int main(int argc, char **argv)
           ROS_ERROR ("no particles left, quiting");
           return -1;
         }
+
+        std::vector <Particle <ArticulationModelPtr> > temp_particles_hmean;
+        temp_particles_hmean = pf.particles;
+        pf.normalize(temp_particles_hmean);
+        pf.weightsToLogWeights(temp_particles_hmean);
+        ROS_INFO("\n ------------------- \nH MEAN calculation: %f \n --------------", pf.calculateAverageHMean(temp_particles_hmean));
+
+  //      ROS_INFO("PARTICLES AFTER CORRECTION WITH CURRENT DATA ---------------------------------");
+  //      pf.sortParticles(temp_particles);
+  //      pf.printParticles(temp_particles);
+
+
 
 //        pf.sortParticles(pf.particles);
 //        pf.printParticles(pf.particles);

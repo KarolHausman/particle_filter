@@ -768,6 +768,134 @@ template <> void ParticleFilter<ArticulationModelPtr>::removeAddedParticleFlags(
   }
 }
 
+//assumes only one type of particles
+template <> double ParticleFilter<ArticulationModelPtr>::calculateHMean(const std::vector<Particle <ArticulationModelPtr> >& particles)
+{
+  Model model;
+  double d = 0;
+  switch(particles[0].state->model)
+  {
+    case (RIGID):
+    {
+      model = RIGID;
+      d = 6;
+      break;
+    }
+    case (PRISMATIC):
+    {
+      model = PRISMATIC;
+      d = 8;
+      break;
+    }
+    case (ROTATIONAL):
+    {
+      model = ROTATIONAL;
+      d = 9;
+      break;
+    }
+    case (FREE):
+    {
+      return 0.0;
+      break;
+    }
+  }
+
+  tf::Vector3 rot_center, rot_center_comp, rigid_position, rigid_position_comp, prismatic_dir, prismatic_dir_comp;
+  tf::Quaternion rot_axis, rot_axis_comp;
+  tf::Quaternion rot_orientation, rot_orientation_comp, rigid_orientation, rigid_orientation_comp;
+  double rot_radius, rot_radius_comp;
+
+  int n = particles.size();
+  double H_mean = 0;
+
+  for (typename std::vector <Particle <ArticulationModelPtr> >::const_iterator it = particles.begin(); it != particles.end();
+      it++)
+  {
+    for (typename std::vector <Particle <ArticulationModelPtr> >::const_iterator it_comp = particles.begin(); it_comp != particles.end();
+         it_comp++)
+    {
+      if (it == it_comp)
+        continue;
+
+      if(model == ROTATIONAL)
+      {
+        it->state->getParam("rot_center",rot_center);
+        it->state->getParam("rot_axis",rot_axis);
+        it->state->getParam("rot_radius",rot_radius);
+        it->state->getParam("rot_orientation",rot_orientation);
+
+        it_comp->state->getParam("rot_center",rot_center_comp);
+        it_comp->state->getParam("rot_axis",rot_axis_comp);
+        it_comp->state->getParam("rot_radius",rot_radius_comp);
+        it_comp->state->getParam("rot_orientation",rot_orientation_comp);
+
+        rot_orientation.normalize();
+        rot_orientation_comp.normalize();
+        rot_axis.normalize();
+        rot_axis_comp.normalize();
+
+        H_mean += log(rot_center.distance(rot_center_comp) + rot_axis.angleShortestPath(rot_axis_comp) + fabs(rot_radius - rot_radius_comp) + rot_orientation.angleShortestPath(rot_orientation_comp));
+      }
+      else if (model == PRISMATIC)
+      {
+        it->state->getParam("rigid_position",rigid_position);
+        it->state->getParam("rigid_orientation",rigid_orientation);
+
+        it_comp->state->getParam("rigid_position",rigid_position_comp);
+        it_comp->state->getParam("rigid_orientation",rigid_orientation_comp);
+
+        rigid_orientation.normalize();
+        rigid_orientation_comp.normalize();
+
+        H_mean += log(rigid_position.distance(rigid_position_comp) + rigid_orientation.angleShortestPath(rigid_orientation_comp));
+      }
+      else if (model == RIGID)
+      {
+        it->state->getParam("rigid_position",rigid_position);
+        it->state->getParam("rigid_orientation",rigid_orientation);
+        it->state->getParam("prismatic_dir",prismatic_dir);
+
+        it_comp->state->getParam("rigid_position",rigid_position_comp);
+        it_comp->state->getParam("rigid_orientation",rigid_orientation_comp);
+        it_comp->state->getParam("prismatic_dir",prismatic_dir_comp);
+
+        rigid_orientation.normalize();
+        rigid_orientation_comp.normalize();
+
+        H_mean += log(rigid_position.distance(rigid_position_comp) + rigid_orientation.angleShortestPath(rigid_orientation_comp) + prismatic_dir.distance(prismatic_dir_comp));
+      }
+    }
+  }
+
+  return H_mean * d / (n * (n-1));
+}
+
+
+template <> double ParticleFilter<ArticulationModelPtr>::calculateAverageHMean(const std::vector<Particle <ArticulationModelPtr> >& particles)
+{
+  double weights_rigid, weights_prismatic, weights_rotational, weights_free;
+  splitArticulationModels(particles, weights_rigid, weights_prismatic, weights_rotational, weights_free);
+  double weights_sum = weights_rigid + weights_prismatic + weights_rotational + weights_free;
+  ROS_INFO("weights: rigid: %f, prismatic: %f, rotational: %f, free: %f", weights_rigid, weights_prismatic, weights_rotational, weights_free);
+  double h_mean_rigid = 0;
+  double h_mean_free = 0;
+  double h_mean_prismatic = 0;
+  double h_mean_rotational = 0;
+
+  if (particles_rigid.size() > 0)
+    h_mean_rigid = calculateHMean(particles_rigid);
+  if (particles_rotational.size() > 0)
+    h_mean_rotational = calculateHMean(particles_rotational);
+  if (particles_prismatic.size() > 0)
+    h_mean_prismatic = calculateHMean(particles_prismatic);
+  ROS_INFO("H_MEANs: rigid: %f, prismatic: %f, rotational: %f", h_mean_rigid, h_mean_prismatic, h_mean_rotational);
+
+
+  return weights_rigid/weights_sum * h_mean_rigid + weights_prismatic/weights_sum * h_mean_prismatic + weights_rotational/weights_sum * h_mean_rotational + weights_free/weights_sum;
+}
+
+
+
 template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(const std::vector<Particle <ArticulationModelPtr> >& particles)
 {
   double weights_rigid, weights_prismatic, weights_rotational, weights_free;
@@ -801,8 +929,8 @@ template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(con
   {
     if (kernel_estimator.estimateWeightedH(rigid_dps, H_rigid))
     {
-      entropy_rigid_weighted = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps, "gaussian", H_rigid);
-      entropy_rigid = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps, "gaussian", H_rigid, weights_rigid/weights_sum);
+      entropy_rigid = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps, "gaussian", H_rigid);
+      entropy_rigid_weighted = kernel_estimator.estimateWeightedEntropyKernelND(rigid_dps, "gaussian", H_rigid, weights_rigid/weights_sum);
   //    std::cerr << "estimated H rigid: \n" << H_rigid << std::endl;
     }
   }
@@ -811,8 +939,8 @@ template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(con
   {
     if(kernel_estimator.estimateWeightedH(prismatic_dps, H_prismatic))
     {
-      entropy_prismatic_weighted = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps, "gaussian", H_prismatic);
-      entropy_prismatic = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic, weights_prismatic/weights_sum);
+      entropy_prismatic = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps, "gaussian", H_prismatic);
+      entropy_prismatic_weighted = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic, weights_prismatic/weights_sum);
 //      double entropy_prismatic_weights_0_5 = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic, 0.5);
 //      double entropy_prismatic_weights_0_9 = kernel_estimator.estimateWeightedEntropyKernelND(prismatic_dps,"gaussian",H_prismatic, 0.9);
 //      std::cerr << "entropy prismatic with prismatic filter weights 0.5: " << entropy_prismatic_weights_0_5 << std::endl;
@@ -825,8 +953,8 @@ template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(con
   {
     if(kernel_estimator.estimateWeightedH(rotational_dps, H_rotational))
     {
-      entropy_rotational_weighted = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational);
-      entropy_rotational = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational, weights_rotational/weights_sum);
+      entropy_rotational = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational);
+      entropy_rotational_weighted = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational, weights_rotational/weights_sum);
 
 //      double entropy_rotational_weights_0_5 = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational, 0.5);
 //      double entropy_rotational_weights_0_1 = kernel_estimator.estimateWeightedEntropyKernelND(rotational_dps,"gaussian",H_rotational, 0.1);
@@ -846,7 +974,7 @@ template <> double ParticleFilter<ArticulationModelPtr>::calculateKDEEntropy(con
 
 //  double entropy = (weights_rigid/weights_sum)*entropy_rigid + (weights_prismatic/weights_sum)*entropy_prismatic
 //                   + (weights_rotational/weights_sum)*entropy_rotational + (weights_free/weights_sum)*entropy_free;
-  double entropy = entropy_rigid + entropy_prismatic + entropy_rotational + entropy_free;
+  double entropy = entropy_rigid_weighted + entropy_prismatic_weighted + entropy_rotational_weighted + entropy_free;
 
   return entropy;
 }

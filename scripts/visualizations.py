@@ -29,7 +29,7 @@ class modelVisualizer:
     rospy.Subscriber("model_track", ModelMsg, self.callbackBestModels)
     rospy.Subscriber("action", ActionsMsg, self.callbackAction)
     #rospy.Subscriber("generated_actions", ActionsMsg, self.callbackGeneratedActions)
-    #rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
+    rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
 
 
   def callbackParticles(self,particles):
@@ -44,11 +44,11 @@ class modelVisualizer:
       if model.name == "prismatic":
         self.particle_prismatic_counter = self.particle_prismatic_counter + 1
         (prism_pose, prism_dir) = self.read_prismatic_params(model)
-        self.visualizePrismatic(current_prism_pose,prism_dir,box_dims = [0.03,0.015,0.015], id= self.particle_prismatic_counter, arrow_dims = [0.01,0.02,0.02], arrow_offset= 0.012, arrow_length= 0.1, color_box=[1,0,0])
+        self.visualizePrismatic(current_prism_pose,prism_dir,box_dims = [0.03,0.015,0.015], duration = 3, id= self.particle_prismatic_counter, arrow_dims = [0.01,0.02,0.02], arrow_offset= 0.012, arrow_length= 0.1, color_box=[1,0,0])
       if model.name == "rotational":
         self.particle_rotational_counter = self.particle_rotational_counter + 1
         (rot_pose,radius) = self.read_revolute_params(model)
-        self.visualizeRotational(rot_pose,radius, id=self.particle_rotational_counter, axis_length=0.2, size=0.005)
+        self.visualizeRotational(rot_pose,radius,ns="particle_revolute",duration = 3, id=self.particle_rotational_counter, axis_length=0.2, size=0.005)
       if model.name == "rigid":
         self.particle_rigid_counter = self.particle_rigid_counter + 1
         rigid_pose = self.read_rigid_params(model)
@@ -129,10 +129,10 @@ class modelVisualizer:
     if model.name == "rotational":
         (rot_pose,radius) = self.read_revolute_params(model)
         #HACK: for better visualizations
-        rot_pose.orientation.x = 0.5
-        rot_pose.orientation.y = 0.5
-        rot_pose.orientation.z = 0.5
-        rot_pose.orientation.w = 0.5
+        #rot_pose.orientation.x = 0.5
+        #rot_pose.orientation.y = 0.5
+        #rot_pose.orientation.z = 0.5
+        #rot_pose.orientation.w = 0.5
         self.visualizeRotational(rot_pose,radius)
     if model.name == "prismatic":
         (prism_pose, prism_dir) = self.read_prismatic_params(model)
@@ -309,7 +309,7 @@ class modelVisualizer:
 
     #marker responsible for the circle
     ns_circle = ns + "_circle"
-    marker_circle = self.draw_rviz_circle(pose,radius,size = size,id = id, color = color_radius, ns = ns_circle)
+    marker_circle = self.draw_rviz_circle(pose,radius,size = size,id = id, color = color_radius, ns = ns_circle,duration=duration)
 
 
     marker_array = MarkerArray()
