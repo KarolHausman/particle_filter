@@ -755,6 +755,24 @@ template <> void ParticleFilter<ArticulationModelPtr>::printStatistics(const std
 
   ROS_ERROR("STATS: \n RIGID: %d (%f %%) \n PRISMATIC: %d (%f %%) \n ROTATIONAL: %d (%f %%) \n FREE: %d (%f %%) \n", rigid_counter, rigid_percentage, prismatic_counter, prismatic_percentage, rotational_counter, rotational_percentage, free_counter, free_percentage);
 
+  double entropy = 0;
+  double rigid_entropy = 0;
+  double prismatic_entropy = 0;
+  double rotational_entropy = 0;
+  double free_entropy = 0;
+  if (rigid_percentage > 0)
+    rigid_entropy = rigid_percentage/100*log2(rigid_percentage/100);
+  if (prismatic_percentage > 0)
+    prismatic_entropy = prismatic_percentage/100*log2(prismatic_percentage/100);
+  if (rotational_percentage > 0)
+    rotational_entropy = rotational_percentage/100*log2(rotational_percentage/100);
+  if (free_entropy > 0)
+    free_entropy = free_percentage/100*log2(free_percentage/100);
+
+  entropy = rigid_entropy + prismatic_entropy + rotational_entropy + free_entropy;
+
+  ROS_ERROR("ENTROPY OF MODELS: %f", -entropy);
+
 //  ROS_ERROR_STREAM("STATISTICS: \n" << "RIGID: " << rigid_percentage << "\n PRISMATIC: " << prismatic_percentage << "\n ROTATIONAL: " << rotational_percentage <<  "\n FREE: " << free_percentage << "\n");
 }
 
