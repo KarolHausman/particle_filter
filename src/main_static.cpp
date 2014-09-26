@@ -161,10 +161,12 @@ int main(int argc, char **argv)
     {
       //TODO: wait for transform?
       // static marker, moving marker
+//      tf_listener.waitForTransform("ar_marker_1", "/ar_marker_2", ros::Time(0), ros::Duration(3.0));
 //      tf_listener.lookupTransform("ar_marker_1", "/ar_marker_2", ros::Time(0), marker_static_to_marker);
-//      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
-      tf_listener.waitForTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), ros::Duration(3.0));
-      tf_listener.lookupTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), marker_static_to_marker);
+      tf_listener.waitForTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), ros::Duration(3.0));
+      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
+//      tf_listener.waitForTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), ros::Duration(3.0));
+//      tf_listener.lookupTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), marker_static_to_marker);
 
     }
     catch (tf::TransformException ex)
@@ -318,7 +320,6 @@ int main(int argc, char **argv)
 
       boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
       double min_expected_entropy = std::numeric_limits<double>::max();
-//      double max_expected_downweight = -std::numeric_limits<double>::max();
       double max_kldivergence = -std::numeric_limits<double>::max();
 
       tf::Vector3 best_action;      
@@ -328,13 +329,13 @@ int main(int argc, char **argv)
         double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(temp_particles, action, sensorNoiseCov, *sensorActionModel);
         ROS_INFO("Expected Za: %f", za_expected);
         ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
-//        double kl_divergence = pf.calculateKLdivergence<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-//        ROS_ERROR("KL Divergence: %f \n", kl_divergence);
+
+        double kl_divergence = pf.calculateKLdivergence<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+        ROS_ERROR("KL Divergence: %f \n", kl_divergence);
 
 //        double expected_entropy = pf.calculateExpectedKDEEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
 //        ROS_ERROR("Expected Entropy: %f \n", expected_entropy);
-//        double expected_downweight = pf.calculateExpectedDownweightAfterAction<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-//        ROS_ERROR("Expected Downweight: %f \n \n", expected_downweight);
+
 
 //        if (expected_entropy < min_expected_entropy)
 //        {
@@ -347,17 +348,17 @@ int main(int argc, char **argv)
 //          max_expected_downweight = expected_downweight;
 //          best_action = *it;
 //        }
-//        if (kl_divergence > max_kldivergence)
-//        {
-//          max_kldivergence = kl_divergence;
-//          best_action = *it;
-//        }
+        if (kl_divergence > max_kldivergence)
+        {
+          max_kldivergence = kl_divergence;
+          best_action = *it;
+        }
       }
 
-      srand (time(NULL));
-      int random_int = rand() % generated_actions.size();
-      ROS_ERROR("random int: %d", random_int);
-      best_action = generated_actions[random_int];
+//      srand (time(NULL));
+//      int random_int = rand() % generated_actions.size();
+//      ROS_ERROR("random int: %d", random_int);
+//      best_action = generated_actions[random_int];
 
 
       geometry_msgs::Pose poseMsg;
@@ -393,8 +394,8 @@ int main(int argc, char **argv)
 //        // 1 - doesnt stop
 //        int z_action = action->getActionResult();
         int z_action = 0;
-        if(best_action.getX() < 0.001 && best_action.getY() < 0.001 && fabs(best_action.getZ()-1)<0.001)
-          z_action = 1;
+//        if(best_action.getX() < 0.001 && best_action.getY() < 0.001 && fabs(best_action.getZ()-1)<0.001)
+//          z_action = 1;
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);
