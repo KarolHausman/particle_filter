@@ -318,18 +318,18 @@ int main(int argc, char **argv)
 
       boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModel (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
       double min_expected_entropy = std::numeric_limits<double>::max();
-      double max_expected_downweight = -std::numeric_limits<double>::max();
+//      double max_expected_downweight = -std::numeric_limits<double>::max();
       double max_kldivergence = -std::numeric_limits<double>::max();
 
-      tf::Vector3 best_action;
+      tf::Vector3 best_action;      
       for (std::vector<tf::Vector3>::iterator it = generated_actions.begin(); it!= generated_actions.end(); ++it)
       {
         action->setActionDirection(*it);
         double za_expected = pf.calculateExpectedZaArticulation<int, ActionPtr>(temp_particles, action, sensorNoiseCov, *sensorActionModel);
         ROS_INFO("Expected Za: %f", za_expected);
         ROS_INFO("Action: x = %f, y = %f, z = %f", it->getX(), it->getY(), it->getZ());
-        double kl_divergence = pf.calculateKLdivergence<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
-        ROS_ERROR("KL Divergence: %f \n", kl_divergence);
+//        double kl_divergence = pf.calculateKLdivergence<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
+//        ROS_ERROR("KL Divergence: %f \n", kl_divergence);
 
 //        double expected_entropy = pf.calculateExpectedKDEEntropy<int, ActionPtr>(temp_particles, za_expected, action, sensorNoiseCov, *sensorActionModel);
 //        ROS_ERROR("Expected Entropy: %f \n", expected_entropy);
@@ -347,12 +347,19 @@ int main(int argc, char **argv)
 //          max_expected_downweight = expected_downweight;
 //          best_action = *it;
 //        }
-        if (kl_divergence > max_kldivergence)
-        {
-          max_kldivergence = kl_divergence;
-          best_action = *it;
-        }
+//        if (kl_divergence > max_kldivergence)
+//        {
+//          max_kldivergence = kl_divergence;
+//          best_action = *it;
+//        }
       }
+
+      srand (time(NULL));
+      int random_int = rand() % generated_actions.size();
+      ROS_ERROR("random int: %d", random_int);
+      best_action = generated_actions[random_int];
+
+
       geometry_msgs::Pose poseMsg;
       tf::poseTFToMsg(marker_static_to_marker, poseMsg);
       action->plan(best_action, poseMsg);
