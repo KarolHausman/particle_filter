@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(10, 10);
   Eigen::VectorXd u = Eigen::VectorXd::Ones(10);
-  Eigen::MatrixXd motionNoiseCov = covariance / 100000; //10000
+  Eigen::MatrixXd motionNoiseCov = covariance / 10000000; //10000, 100000
 
   //orientation
 //  motionNoiseCov(3,3) = motionNoiseCov(4,4) = motionNoiseCov(5,5) = 0.001;
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
   //---------------------------------- particle filter initalization ----------
 
-  const int particles_number = 200; //500
+  const int particles_number = 300; //500,200
   //params for real data
   ros::NodeHandle nh;
   ros::Subscriber track_sub = nh.subscribe("marker_topic",1, trackCB);
@@ -163,10 +163,12 @@ int main(int argc, char **argv)
       // static marker, moving marker
 //      tf_listener.waitForTransform("ar_marker_1", "/ar_marker_2", ros::Time(0), ros::Duration(3.0));
 //      tf_listener.lookupTransform("ar_marker_1", "/ar_marker_2", ros::Time(0), marker_static_to_marker);
-      tf_listener.waitForTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), ros::Duration(3.0));
-      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
+//      tf_listener.waitForTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), ros::Duration(3.0));
+//      tf_listener.lookupTransform("ar_marker_4", "/ar_marker_15", ros::Time(0), marker_static_to_marker);
 //      tf_listener.waitForTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), ros::Duration(3.0));
 //      tf_listener.lookupTransform("ar_marker_9", "/ar_marker_12", ros::Time(0), marker_static_to_marker);
+      tf_listener.waitForTransform("ar_marker_6", "/ar_marker_7", ros::Time(0), ros::Duration(3.0));
+      tf_listener.lookupTransform("ar_marker_6", "/ar_marker_7", ros::Time(0), marker_static_to_marker);
 
     }
     catch (tf::TransformException ex)
@@ -225,7 +227,7 @@ int main(int argc, char **argv)
 
     pf.propagate(pf.particles, u, motionNoiseCov, *motionModel);
 
-
+//    if (loop_count > 1)
     Visualizer::getInstance()->publishParticlesOnly(pf.particles);
     ros::spinOnce();
 
@@ -259,6 +261,17 @@ int main(int argc, char **argv)
           ROS_ERROR ("no particles left, quiting");
           return -1;
         }
+
+
+
+//        std::vector <Particle <ArticulationModelPtr> > temp_particles_hmean;
+//        temp_particles_hmean = pf.particles;
+//        pf.normalize(temp_particles_hmean);
+//        pf.weightsToLogWeights(temp_particles_hmean);
+//        ROS_INFO("\n ------------------- \nH MEAN calculation: %f \n --------------", pf.calculateAverageHMean(temp_particles_hmean));
+//        ROS_INFO("\n ------------------- \n Entropy calculation: %f \n -------------", pf.calculateKDEEntropy(temp_particles_hmean));
+
+
 //        pf.sortParticles(pf.particles);
 //        pf.printParticles(pf.particles);
         if (!pf.stratifiedResample(particles_number, pf.particles))
@@ -269,6 +282,7 @@ int main(int argc, char **argv)
         ROS_INFO ("PARTICLES AFTER INITIAL RESAMPLING, USING DEMONSTRATION DATA ONLY");
         pf.printStatistics(pf.particles);
 
+//        ++loop_count;
 //        continue;
       }
 
@@ -394,12 +408,18 @@ int main(int argc, char **argv)
 //        // 1 - doesnt stop
 //        int z_action = action->getActionResult();
         int z_action = 0;
+//        x = -0.707107, y = -0.707107, z = 0.000000
+//        x = 0.707107, y = 0.707107, z = 0.000000
+        if ( (fabs(best_action.getX()) - 0.707107 < 0.01) && (fabs(best_action.getY()) - 0.707107 < 0.01) && (best_action.getZ() < 0.001) )
+          z_action = 1;
+
+
 //        if(best_action.getX() < 0.001 && best_action.getY() < 0.001 && fabs(best_action.getZ()-1)<0.001)
 //          z_action = 1;
 
         boost::shared_ptr < SensorActionModel<ArticulationModelPtr, int, ActionPtr> > sensorActionModelExecution (new ArtManipSensorActionModel<ArticulationModelPtr, int, ActionPtr>);
         pf.correctAction<int, ActionPtr> (pf.particles, z_action, action, sensorNoiseCov, *sensorActionModelExecution);
-        ROS_INFO("Action correction step executed");
+        ROS_INFO("Action correction step executed with outcome: %d", z_action);
       }
 
 //      std::vector <Particle <ArticulationModelPtr> > temp_particles_action;
@@ -444,11 +464,12 @@ int main(int argc, char **argv)
           return -1;
         }
 
-        std::vector <Particle <ArticulationModelPtr> > temp_particles_hmean;
-        temp_particles_hmean = pf.particles;
-        pf.normalize(temp_particles_hmean);
-        pf.weightsToLogWeights(temp_particles_hmean);
-        ROS_INFO("\n ------------------- \nH MEAN calculation: %f \n --------------", pf.calculateAverageHMean(temp_particles_hmean));
+//        std::vector <Particle <ArticulationModelPtr> > temp_particles_hmean;
+//        temp_particles_hmean = pf.particles;
+//        pf.normalize(temp_particles_hmean);
+//        pf.weightsToLogWeights(temp_particles_hmean);
+//        ROS_INFO("\n ------------------- \nH MEAN calculation: %f \n --------------", pf.calculateAverageHMean(temp_particles_hmean));
+//        ROS_INFO("\n ------------------- \n Entropy calculation: %f \n -------------", pf.calculateKDEEntropy(temp_particles_hmean));
 
   //      ROS_INFO("PARTICLES AFTER CORRECTION WITH CURRENT DATA ---------------------------------");
   //      pf.sortParticles(temp_particles);

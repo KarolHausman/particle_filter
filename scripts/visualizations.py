@@ -26,8 +26,8 @@ class modelVisualizer:
 
   def __init__(self):
     self.pub_array = rospy.Publisher('visualization_marker_array', MarkerArray)
-    rospy.Subscriber("model_track", ModelMsg, self.callbackBestModels)
-    rospy.Subscriber("action", ActionsMsg, self.callbackAction)
+    #rospy.Subscriber("model_track", ModelMsg, self.callbackBestModels)
+    #rospy.Subscriber("action", ActionsMsg, self.callbackAction)
     #rospy.Subscriber("generated_actions", ActionsMsg, self.callbackGeneratedActions)
     rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
 
