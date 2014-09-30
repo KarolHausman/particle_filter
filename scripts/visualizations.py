@@ -26,10 +26,10 @@ class modelVisualizer:
 
   def __init__(self):
     self.pub_array = rospy.Publisher('visualization_marker_array', MarkerArray)
-    #rospy.Subscriber("model_track", ModelMsg, self.callbackBestModels)
-    #rospy.Subscriber("action", ActionsMsg, self.callbackAction)
+    rospy.Subscriber("model_track", ModelMsg, self.callbackBestModels)
+    rospy.Subscriber("action", ActionsMsg, self.callbackAction)
     #rospy.Subscriber("generated_actions", ActionsMsg, self.callbackGeneratedActions)
-    rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
+    #rospy.Subscriber("model_particles", ParticlesMsg, self.callbackParticles)
 
 
   def callbackParticles(self,particles):
@@ -133,6 +133,10 @@ class modelVisualizer:
         #rot_pose.orientation.y = 0.5
         #rot_pose.orientation.z = 0.5
         #rot_pose.orientation.w = 0.5
+        # juergen params
+        #rot_pose = Pose(Point(-0.0114209492134,0.187020427431,-0.0291489658073), Quaternion(-0.127809662014,-0.0529209653851,0.397977486363,0.9069057184))
+        #radius =  0.108107574867       
+
         self.visualizeRotational(rot_pose,radius)
     if model.name == "prismatic":
         (prism_pose, prism_dir) = self.read_prismatic_params(model)
@@ -148,7 +152,7 @@ class modelVisualizer:
     #(position,orientation) = poseToArray(self.current_pose)
     #marker_arrow = self.create_marker(Marker.ARROW, [0.03,0.06,0.06], "world", "tangent_arrow", 0, 60, [0,0,1], 1, position, orientation)
     #marker_arrow.points.append( Point(0,0,0) )
-    scale = 0.3
+    #scale = 0.3
     #marker_arrow.points.append( Point(0,0,0.3) )
     #marker_array = MarkerArray()
     #marker_array.markers.append(marker_arrow)
