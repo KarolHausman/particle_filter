@@ -24,9 +24,9 @@ ran_err = [0.0385032466, 0.1055935604, 0.1540048701, 0.1941841909, 0.207557221, 
 
 # First illustrate basic pyplot interface, using defaults where possible.
 plt.figure()
-plt.errorbar(x, kld, yerr=kld_err, fmt='-o', capthick=2, label = "KLD")
-plt.errorbar(x, entr, yerr=entr_err, fmt='-o', capthick=2, label = "Min. Entropy")
-plt.errorbar(x, ran, yerr=ran_err, fmt='-o', capthick=2, label = "Random")
+plt.errorbar(x, kld, yerr=kld_err, fmt='-o', capthick=2,ls="solid", label = "KLD")
+plt.errorbar(x, entr, yerr=entr_err, fmt='-o', capthick=2,ls="dotted", label = "Min. Entropy")
+plt.errorbar(x, ran, yerr=ran_err, fmt='-o', capthick=2, ls="dashed", label = "Random")
 plt.xlim(-0.5,7.5)
 plt.ylim(0,1.05)
 plt.ylabel(r'Probability of Rotational Model')

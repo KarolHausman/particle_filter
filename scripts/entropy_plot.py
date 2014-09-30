@@ -23,9 +23,9 @@ ran_err = [0.0443342644, 0.1390013777, 0.1290776394, 0.0629977619, 0.0285690042,
 
 # First illustrate basic pyplot interface, using defaults where possible.
 plt.figure()
-plt.errorbar(x, kld, yerr=kld_err, fmt='-o', capthick=2, label = "KLD")
-plt.errorbar(x, entr, yerr=entr_err, fmt='-o', capthick=2, label = "Min. Entropy")
-plt.errorbar(x, ran, yerr=ran_err, fmt='-o', capthick=2, label = "Random")
+plt.errorbar(x, kld, yerr=kld_err, fmt='-o', capthick=2, ls="solid", label = "KLD")
+plt.errorbar(x, entr, yerr=entr_err, fmt='-o', capthick=2, ls="dotted", label = "Min. Entropy")
+plt.errorbar(x, ran, yerr=ran_err, fmt='-o', capthick=2, ls="dashed", label = "Random")
 plt.xlim(-0.5,7.5)
 plt.ylabel(r'Entropy')
 plt.xlabel(r'Push number')
@@ -33,6 +33,6 @@ plt.legend(loc='lower left', numpoints=1)
 
 #plt.title("Simplest errorbars, 0.2 in x, 0.4 in y")
 
-#plt.show()
+plt.show()
 
-plt.savefig('entropy_cabinet.svg')
+#plt.savefig('entropy_cabinet.svg')
